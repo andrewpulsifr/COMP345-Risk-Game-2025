@@ -43,9 +43,12 @@ void Territory::addArmies(int additionalArmies) { armies += additionalArmies; }
 void Territory::removeArmies(int removedArmies) { armies -= removedArmies; }
 void Territory::addAdjacent(Territory* t) { adjacentTerritories.push_back(t); }
 bool Territory::isAdjacentTo(const Territory* t) const {
+    if (t == nullptr) {
+        return false;
+    }
     const int idToFind = t->getId();
     return std::any_of(adjacentTerritories.begin(), adjacentTerritories.end(),
-                       [idToFind](const Territory* adj) { return adj->getId() == idToFind; });
+                       [idToFind](const Territory* adj) { return adj != nullptr && adj->getId() == idToFind; });
 }
 const std::vector<Territory*>& Territory::getAdjacents() const { return adjacentTerritories; }
 
