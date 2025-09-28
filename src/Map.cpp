@@ -43,7 +43,9 @@ void Territory::addArmies(int additionalArmies) { armies += additionalArmies; }
 void Territory::removeArmies(int removedArmies) { armies -= removedArmies; }
 void Territory::addAdjacent(Territory* t) { adjacentTerritories.push_back(t); }
 bool Territory::isAdjacentTo(const Territory* t) const {
-    return true; // TO DO: Implement actual adjacency check
+    const int idToFind = t->getId();
+    return std::any_of(adjacentTerritories.begin(), adjacentTerritories.end(),
+                       [idToFind](const Territory* adj) { return adj->getId() == idToFind; });
 }
 const std::vector<Territory*>& Territory::getAdjacents() const { return adjacentTerritories; }
 
