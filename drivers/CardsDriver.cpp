@@ -23,9 +23,6 @@ int main() {
 
 
     //After adding the cards, the deck has 5 cards.
-    deck.showDeck();
-    // Shuffling the deck will change the order of the cards.
-    deck.shuffleCards();
     std::cout <<"----------------------------" << std::endl;
     deck.showDeck();
     // Hand is empty for now.
@@ -36,6 +33,8 @@ int main() {
     std::cout <<"----------------------------" << std::endl;
     std::cout <<"The 1st Drawn card is: " << drawnCard << std::endl;
     std::cout <<"----------------------------" << std::endl;
+    
+    // After drawing a card, the deck has 4 cards and hand, 1 card.
     deck.showDeck();
     hand.showHand();
 
@@ -43,6 +42,8 @@ int main() {
     std::string drawnCardAgain = deck.draw(hand);
     std::cout <<"The 2nd Drawn card is: " << drawnCardAgain << std::endl;
     std::cout <<"----------------------------" << std::endl;
+
+    // After drawing a card again, the deck has 3 cards and the hand, 2 cards.
     deck.showDeck();
     hand.showHand();
 
@@ -53,6 +54,10 @@ int main() {
     
     deck.showDeck();
     hand.showHand();
+
+    // Destructor called for Deck and Hand, to delete Card* pointers.
+    deck.~Deck();
+    hand.~Hand();
     
     return 0;
 }

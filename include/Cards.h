@@ -3,6 +3,7 @@
 #include <vector>
 #include <random>
 #include <string>
+#include <cstdlib>
 //using namespace std;
 
 // Three classes are implemented in Cards.
@@ -17,10 +18,10 @@ class Deck {
         Deck();
         void addCard(Card* card);
         void removeCard(Card* card);
-        void shuffleCards();
         std::vector<Card*> getCardsOnDeck();
         std::string draw(Hand &hand);
         void showDeck();
+        ~Deck(); // Destructor for Card*.
     private:
         std::vector<Card*> cardsOnDeck;
     
@@ -55,7 +56,10 @@ class Hand {
         void addCard(Card* card);
         void removeCard(Card* card);
         void showHand();
+        ~Hand(); // Destructor.
 
     private:
         std::vector<Card*> cardsOnHand;
 };
+
+std::ostream & operator << (std::ostream &os, const Card &card); //stream overloadding for Cards.
