@@ -27,8 +27,6 @@ void testCards() {
     // Drawing a card from the deck. Should be removed from deck and added to the hand.
     std::string drawnCard = deck.draw(hand);
     std::cout <<"----------------------------" << std::endl;
-    std::cout <<"The 1st Drawn card is: " << drawnCard << std::endl;
-    std::cout <<"----------------------------" << std::endl;
     
     // After drawing a card, the deck has 4 cards and hand, 1 card.
     deck.showDeck();

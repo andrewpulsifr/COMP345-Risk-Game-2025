@@ -2,12 +2,6 @@
 
 
 
-// // Stream overloading for card.
-// std::ostream & operator << (std::ostream &os, Card::typeOfCard cardType) {
-//     os << cardToString(cardType);
-//     return os;
-// }
-
 // // Stream overloading for Hand.
 // std::ostream & operator << (std::ostream &os, std::vector<Card*> cardsOnHand) {
 //     for(int i = 0; i < cardsOnHand.size(); i++) {
@@ -41,6 +35,12 @@ std::string cardToString(Card::typeOfCard cardType) {
         default: 
             return "Invalid Card";
     }
+}
+
+// Stream overloading for card.
+std::ostream & operator << (std::ostream &os, Card::typeOfCard cardType) {
+    os << cardToString(cardType);
+    return os;
 }
 
 //Returns the type of card.
@@ -160,23 +160,23 @@ std::vector<Card*> Deck::getCardsOnDeck() {
 // To Draw a card from the Deck and place it in Hand.
 std::string Deck::draw(Hand &hand) {
     Card* cardDrawn = nullptr;
-     std::string cardString = "";
+    std::string cardDrawnString = "";
     
     if(cardsOnDeck.size() > 0) {
 
-         //Generating a random number to pick a card from.
+         //Generating a random index and drawing the card from that index.
         srand(time(0));
         int randomIndex = rand() % cardsOnDeck.size();
         cardDrawn = cardsOnDeck[randomIndex];
 
         // Erase card after drawing it.
         cardsOnDeck.erase(cardsOnDeck.begin() + randomIndex);
-        cardString = cardToString(cardDrawn->getCard());
+        cardDrawnString = cardToString(cardDrawn->getCard());
         
         // Add drawn card to hand.
         hand.addCard(cardDrawn);
 
-        std::cout << "The " << cardString << " card is drawn from the deck, and added to hand." << std::endl;
+        std::cout << "The " << cardDrawnString << " card is drawn from the deck, and added to hand." << std::endl;
     } else {
         std::cout << "The deck is empty." << std::endl;
        
