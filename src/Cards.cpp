@@ -1,9 +1,23 @@
 #include "../include/Cards.h"
 
 
+
+// // Stream overloading for Hand.
+// std::ostream & operator << (std::ostream &os, std::vector<Card*> cardsOnHand) {
+//     for(int i = 0; i < cardsOnHand.size(); i++) {
+//         os << "Index " << i << ": " << cardsOnHand[i]->getCard() << std::endl;
+//     }
+//     return os;
+// }
+
 //Implementation of Card.
 // Constructor for Card
 Card::Card(typeOfCard cardType) : card(cardType) {} 
+
+// Copy constructor for Card.
+Card::Card(Card &card) {
+    this->card = card.getCard();
+}
 
 // Cards are converted into a string to be displayed when printed.
 std::string cardToString(Card::typeOfCard cardType) {
@@ -23,7 +37,7 @@ std::string cardToString(Card::typeOfCard cardType) {
     }
 }
 
-// Stream overloadding for card.
+// Stream overloading for card.
 std::ostream & operator << (std::ostream &os, Card::typeOfCard cardType) {
     os << cardToString(cardType);
     return os;
@@ -70,7 +84,15 @@ void Card::play(Card* cardPlayed, Deck &deck, Hand &hand) {
 
 
 //Implementation of Hand.
-Hand::Hand() : cardsOnHand() {}
+Hand::Hand() : cardsOnHand() {} // Default constructor.
+
+Hand::Hand(Hand &hand) {
+    for(int i = 0; i < hand.cardsOnHand.size(); i++) {
+        this->cardsOnHand[i] = hand.getCardsOnHand()[i];
+    }
+}
+
+
 
 // To get the private vector of cards on Hand.
 std::vector<Card*> Hand::getCardsOnHand() {
@@ -112,9 +134,17 @@ Hand::~Hand() {
 // Imeplementation of Deck.
 Deck::Deck() : cardsOnDeck() {}
 
+// Copy constructor for Deck.
+Deck::Deck(Deck &deck){
+    for(int i = 0; i < deck.cardsOnDeck.size(); i++) {
+        this->cardsOnDeck[i] = deck.getCardsOnDeck()[i];
+    }
+}
+
 // To add a card to the Deck.
 void Deck::addCard(Card* card) {
     cardsOnDeck.push_back(card);
+
 }
 
 //To remove a card from the Deck.
@@ -130,29 +160,29 @@ std::vector<Card*> Deck::getCardsOnDeck() {
 // To Draw a card from the Deck and place it in Hand.
 std::string Deck::draw(Hand &hand) {
     Card* cardDrawn = nullptr;
+    std::string cardDrawnString = "";
     
     if(cardsOnDeck.size() > 0) {
-        cardDrawn = cardsOnDeck.back();
+
+         //Generating a random index and drawing the card from that index.
+        srand(time(0));
+        int randomIndex = rand() % cardsOnDeck.size();
+        cardDrawn = cardsOnDeck[randomIndex];
+
+        // Erase card after drawing it.
+        cardsOnDeck.erase(cardsOnDeck.begin() + randomIndex);
+        cardDrawnString = cardToString(cardDrawn->getCard());
+        
+        // Add drawn card to hand.
         hand.addCard(cardDrawn);
-        cardsOnDeck.pop_back();
-        std::cout << "The " << cardDrawn->getCard() <<" card is drawn from the deck, and added to hand." << std::endl;
+
+        std::cout << "The " << cardDrawnString << " card is drawn from the deck, and added to hand." << std::endl;
     } else {
         std::cout << "The deck is empty." << std::endl;
        
     }
-
-
-    //Shuffle deck after a card is drawn.
-
-    //Generating a random number and shuffle.
-    std::random_device randomNum;
-    std::mt19937 g(randomNum());
-    shuffle(cardsOnDeck.begin(), cardsOnDeck.end(),g);
-
-
-     //If deck is empty, return nullptr, if not, return a card.
-    std::string card = cardToString(cardDrawn->getCard());
-    return card;
+    
+    return cardString;
 }
 
 

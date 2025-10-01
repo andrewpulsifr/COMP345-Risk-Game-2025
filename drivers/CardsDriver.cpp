@@ -1,10 +1,6 @@
 #include "../include/Cards.h"
 
 void testCards() {
-    // Can move the code from main() to here, but works on execution when in main().
-}
-
-int main() {
     Deck deck;
     Hand hand;
 
@@ -31,8 +27,6 @@ int main() {
     // Drawing a card from the deck. Should be removed from deck and added to the hand.
     std::string drawnCard = deck.draw(hand);
     std::cout <<"----------------------------" << std::endl;
-    std::cout <<"The 1st Drawn card is: " << drawnCard << std::endl;
-    std::cout <<"----------------------------" << std::endl;
     
     // After drawing a card, the deck has 4 cards and hand, 1 card.
     deck.showDeck();
@@ -58,6 +52,4 @@ int main() {
     // Destructor called for Deck and Hand, to delete Card* pointers.
     deck.~Deck();
     hand.~Hand();
-    
-    return 0;
 }
