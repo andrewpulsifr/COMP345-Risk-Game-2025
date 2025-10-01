@@ -13,9 +13,9 @@ void testCards();
 int main() {
     std::cout << "=== Starting Warzone Test Drivers ===\n\n";
 
-    // testLoadMaps();
-    // testPlayers();
-    // testOrdersLists();
+    testLoadMaps();
+    testPlayers();
+    testOrdersLists();
     testCards();
     std::cout << "\n=== Program finished successfully ===\n";
     return 0;
