@@ -1,10 +1,6 @@
 #include "../include/Cards.h"
 
 void testCards() {
-    // Can move the code from main() to here, but works on execution when in main().
-}
-
-int main() {
     Deck deck;
     Hand hand;
 
@@ -58,6 +54,4 @@ int main() {
     // Destructor called for Deck and Hand, to delete Card* pointers.
     deck.~Deck();
     hand.~Hand();
-    
-    return 0;
 }

@@ -13,9 +13,9 @@ class Hand;
 
 // Deck class holds a collection of cards.
 class Deck {
-
     public:
         Deck();
+        Deck(Deck &deck); // Copy constructor for Deck.
         void addCard(Card* card);
         void removeCard(Card* card);
         std::vector<Card*> getCardsOnDeck();
@@ -38,7 +38,8 @@ class Card {
             Diplomacy
         };
 
-        Card(typeOfCard cardType);
+        Card(typeOfCard cardType); // Constructor.
+        Card(Card & card); // Copy constructor for Card.
         std::string cardToString(typeOfCard cardType); //typeOfCard returns a number value, so we have to convert to string.
         typeOfCard getCard();
         void play(Card* cardPlayed, Deck &deck, Hand &hand); // Cards can be played, but they will be removed from hand and returned to deck afterwards.
@@ -52,6 +53,7 @@ class Card {
 class Hand {
     public:
         Hand();
+        Hand(Hand &hand); // Copy constructor for Hand.
         std::vector<Card*> getCardsOnHand();
         void addCard(Card* card);
         void removeCard(Card* card);
@@ -62,4 +64,8 @@ class Hand {
         std::vector<Card*> cardsOnHand;
 };
 
-std::ostream & operator << (std::ostream &os, const Card &card); //stream overloadding for Cards.
+
+// Stream overloaders for each class: Cards, Deck, and Hand.
+std::ostream & operator << (std::ostream &os, const Card &card); // stream overloading for Cards.
+std::ostream & operator << (std::ostream &os, const std::vector<Card*> &cardsOnDeck); // stream overloading for Deck.
+std::ostream & operator << (std::ostream &os, const std::vector<Card*> &cardsOnHand); // stream overloading for Hand.
