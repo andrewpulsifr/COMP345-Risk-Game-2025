@@ -42,3 +42,14 @@
 
 # VSCode settings
 .vscode/
+
+# JetBrains IDE settings
+.idea/
+
+# Makefile auto-generated files
+Makefile~
+CMakeFiles/
+
+# Temporary files
+warzone_test.dSYM/
+warzone_test
