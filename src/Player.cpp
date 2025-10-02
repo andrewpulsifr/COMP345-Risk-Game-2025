@@ -1,36 +1,38 @@
 #include "../include/Player.h"
 #include "../include/Map.h"
+#include "../include/Orders.h"
 #include <algorithm>
 #include <iostream>
 
 
 //Player
 
-Player::Player() : playerName("defaultName"), /*playerHand(),*/ ownedTerritories(), playerOrders() {}
+Player::Player() : playerName("defaultName"), playerHand(), ownedTerritories(), orders_() {}
 
 Player::Player(const Player& copyPlayer)
 	: playerName(copyPlayer.playerName),
-	// playerHand(copyPlayer.playerHand),
+	playerHand(copyPlayer.playerHand),
 	ownedTerritories(copyPlayer.ownedTerritories),
-	playerOrders(copyPlayer.playerOrders) {
+	orders_(copyPlayer.orders_) {
 }
 
 Player& Player::operator=(const Player& copyPlayer) {
     if (this != &copyPlayer) {
         playerName = copyPlayer.playerName;
-        // playerHand = copyPlayer.playerHand;
+        playerHand = copyPlayer.playerHand;
         ownedTerritories = copyPlayer.ownedTerritories;
-        playerOrders = copyPlayer.playerOrders;
+        delete orders_;
+        orders_ = new OrdersList(*copyPlayer.orders_);
     }
     return *this;
 }
 
-Player::Player(std::string name) : playerName(name), /*playerHand(),*/ ownedTerritories(), playerOrders() {}
+Player::Player(std::string name) : playerName(name), playerHand(), ownedTerritories(), orders_() {}
 
 Player::~Player() {
-    // playerHand.clear();
+    playerHand.clear();
     ownedTerritories.clear();
-    playerOrders.clear();
+    delete orders_;
 }
 
 std::string Player::getPlayerName() const {
@@ -59,34 +61,38 @@ std::vector<Territory*> Player::getOwnedTerritories() const {
 //Attack / Defend Lists
 
 std::vector<Territory*> Player::toDefend() {
-        //TODO Implement toDefend() fully
     return ownedTerritories;
 }
 
 //Checks adjacent territories to owned ones and returns a vector with the attackable territories
 std::vector<Territory*> Player::toAttack() {
     std::vector<Territory*> attackList;
-
-    //TODO Implement toAttack() fully
+    for (Territory* mine : ownedTerritories) {
+        for (Territory* adj : mine->getAdjacents()) {
+            if (adj->getOwner() != this &&
+                std::find(attackList.begin(), attackList.end(), adj) == attackList.end()) {
+                attackList.push_back(adj);
+            }
+        }
+    }
     return attackList;
 }
 
-//TODO Implement Card Functionality, here's an Idea as to what itll probably look like once Person D does it
 //Cards
-// void Player::addCard(Card* card) {
-//     playerHand.push_back(card);
-// }
+void Player::addCard(Card* card) {
+    playerHand.push_back(card);
+}
 
-// void Player::removeCard(Card* card) {
-//     auto it = std::find(playerHand.begin(), playerHand.end(), card);
-//     if (it != playerHand.end())
-//         playerHand.erase(it);
-// }
+void Player::removeCard(Card* card) {
+    auto it = std::find(playerHand.begin(), playerHand.end(), card);
+    if (it != playerHand.end())
+        playerHand.erase(it);
+}
 
 //Orders
 
 void Player::issueOrder(Order* orderIssued) {
-    playerOrders.push_back(orderIssued);
+    orders_->add(orderIssued);
 }
 
 //Debug / Print

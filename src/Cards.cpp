@@ -182,7 +182,7 @@ std::string Deck::draw(Hand &hand) {
        
     }
     
-    return cardString;
+    return cardDrawnString;
 }
 
 
