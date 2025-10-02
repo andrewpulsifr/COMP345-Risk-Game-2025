@@ -192,7 +192,7 @@ vector<string> MapLoader::getMapFiles() {
 }
 
 /** Display map files from the list */
-string MapLoader::printMapFiles(const vector<string>& mapFiles) {
+void MapLoader::printMapFiles(const vector<string>& mapFiles) {
     if (mapFiles.empty()) {
         throw runtime_error("No map files found.");
     }

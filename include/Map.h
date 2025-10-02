@@ -197,7 +197,7 @@ public:
 
     bool loadMap(const string& filename, Map& mapOutput); // load a map from a .map file
     vector<string> getMapFiles(); // get list of map files
-    string printMapFiles(const vector<string>& mapFiles); // print a list of map files
+    void printMapFiles(const vector<string>& mapFiles); // print a list of map files
 private:
     bool parseMapFile(istream& inputMap, Map& mapOutput); // helper function to parse the file
     // TO DO: add any additional helper functions or data members as needed
