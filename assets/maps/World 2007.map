@@ -1,3 +1,5 @@
+; Invalid map for assignment
+; Will correctly fail validation
 [Map]
 image=World 2007.bmp
 wrap=yes
