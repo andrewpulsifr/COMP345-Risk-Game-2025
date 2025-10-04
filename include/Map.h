@@ -22,8 +22,6 @@
 #include <string>
 #include <iosfwd>
 
-using namespace std;
-
 class Player;
 class Continent;
 enum class MapFileSections { None, Map, Continents, Territories };
@@ -57,18 +55,20 @@ class Territory{
 public:
     Territory(); // default constructor
     Territory(const Territory& other); // copy constructor
-    Territory(int id, const string& name, Player* owner, int armies); // parameterized constructor
+    Territory(int id, const std::string& name, Player* owner, int armies); // parameterized constructor
+    Territory(int id, const std::string& name); // parameterized constructor
     ~Territory(); // destructor
 
     Territory& operator=(const Territory& other); // copy assignment operator
-    friend ostream& operator<<(ostream& os, const Territory& territory);
+    friend std::ostream& operator<<(std::ostream& os, const Territory& territory);
 
     // note some setter might not be needed but added for completeness
     int getId() const;
-    string getName() const;
+    std::string getName() const;
     Player* getOwner() const;
-    Continent* getContinent() const;
-    void setContinent(Continent* c);
+    const std::vector<Continent*>& getContinents() const;
+    void addContinent(Continent* c);
+    void clearContinents();
     int getArmies() const;
     void setOwner(Player* newOwner);
     void setArmies(int newArmies);
@@ -76,15 +76,15 @@ public:
     void removeArmies(int removedArmies);
     void addAdjacent(Territory* t);
     bool isAdjacentTo(const Territory* t) const;
-    const vector<Territory*>& getAdjacents() const;
+    const std::vector<Territory*>& getAdjacents() const;
 
 private:
     int id;
-    string name;
-    Continent* continent; // pointer to the continent the territory belongs to
+    std::string name;
+    std::vector<Continent*> continents; // pointer to the continent(s) the territory belongs to
     Player* owner; // pointer to the player who owns the territory
     int armies; // number of armies in the territory
-    vector<Territory*> adjacentTerritories; // list of pointers to adjacent territories
+    std::vector<Territory*> adjacentTerritories; // list of pointers to adjacent territories
 };
 
 /**
@@ -107,22 +107,22 @@ class Continent {
 public:
     Continent(); // default constructor
     Continent(const Continent& other); // copy constructor
-    Continent(int id, const string& name); // parameterized constructor
+    Continent(int id, const std::string& name); // parameterized constructor
     ~Continent();
 
     Continent& operator=(const Continent& other); // copy assignment operator
 
     int getId() const;
-    string getName() const;
+    std::string getName() const;
     void addTerritory(Territory* territory);
-    const vector<Territory*>& getTerritories() const;
+    const std::vector<Territory*>& getTerritories() const;
 
-    friend ostream& operator<<(ostream& os, const Continent& continent);
+    friend std::ostream& operator<<(std::ostream& os, const Continent& continent);
 
 private:
     int id;
-    string name;
-    vector<Territory*> territories; // list of pointers to territories in the continent
+    std::string name;
+    std::vector<Territory*> territories; // list of pointers to territories in the continent
 };
 
 /**
@@ -154,19 +154,19 @@ public:
 
     void addTerritory(Territory* territory);
     void addContinent(Continent* continent);
-    const vector<Territory*>& getTerritories() const;
-    const vector<Continent*>& getContinents() const;
+    const std::vector<Territory*>& getTerritories() const;
+    const std::vector<Continent*>& getContinents() const;
 
     // 1) map connected
     // 2) each continent is connected subgraph
     // 3) each territory in exactly one continent
     bool validate() const;
 
-    friend ostream& operator<<(ostream& os, const Map& map);
+    friend std::ostream& operator<<(std::ostream& os, const Map& map);
 
 private:
-    vector<Territory*> territories; // list of pointers to all territories in the map
-    vector<Continent*> continents; // list of pointers to all continents in the map
+    std::vector<Territory*> territories; // list of pointers to all territories in the map
+    std::vector<Continent*> continents; // list of pointers to all continents in the map
 
 };
 
@@ -193,14 +193,13 @@ public:
     ~MapLoader();
 
     MapLoader& operator=(const MapLoader&);   // copy assignment operator
-    friend ostream& operator<<(ostream& os, const MapLoader& ml);
+    friend std::ostream& operator<<(std::ostream& os, const MapLoader& ml);
 
-    bool loadMap(const string& filename, Map& mapOutput); // load a map from a .map file
-    vector<string> getMapFiles(); // get list of map files
-    void printMapFiles(const vector<string>& mapFiles); // print a list of map files
+    bool loadMap(const std::string& filename, Map& mapOutput); // load a map from a .map file
+    std::vector<std::string> getMapFiles(); // get list of map files
+    void printMapFiles(const std::vector<std::string>& mapFiles); // print a list of map files
 private:
-    bool parseMapFile(istream& inputMap, Map& mapOutput); // helper function to parse the file
-    // TO DO: add any additional helper functions or data members as needed
+    void parseMapFileSections(std::istream& inputMap, Map& mapOutput); // helper function to parse the file
 };
 
 /**
