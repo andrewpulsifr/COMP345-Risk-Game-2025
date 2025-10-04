@@ -156,6 +156,7 @@ public:
     void addContinent(Continent* continent);
     const std::vector<Territory*>& getTerritories() const;
     const std::vector<Continent*>& getContinents() const;
+    void clear(); // Clean up all dynamically allocated objects
 
     // 1) map connected
     // 2) each continent is connected subgraph

@@ -51,7 +51,7 @@ namespace {
             start = end + 1;
             end = str.find(',', start);
         }
-        result.push_back(string(str.substr(start))); // Add the last token
+        result.push_back(string(trim(str.substr(start)))); // Add the last token (trimmed)
         return result;
     }
 
@@ -344,20 +344,84 @@ ostream& operator<<(ostream& os, const Continent& continent) {
 
 // ======================= Map =======================
 Map::Map() : territories(), continents() {}
-Map::Map(const Map& other)
-    : territories(other.territories), continents(other.continents) {}
-Map::~Map() {}
+
+Map::Map(const Map& other) : territories(), continents() {
+    // Deep copy territories
+    for (const Territory* t : other.territories) {
+        if (t) {
+            Territory* newTerritory = new Territory(*t);  // Create deep copy
+            territories.push_back(newTerritory);
+        }
+    }
+    
+    // Deep copy continents
+    for (const Continent* c : other.continents) {
+        if (c) {
+            Continent* newContinent = new Continent(*c);  // Create deep copy
+            continents.push_back(newContinent);
+        }
+    }
+}
+
+Map::~Map() {
+    // Clean up all dynamically allocated territories
+    for (Territory* territory : territories) {
+        delete territory;  // Free each Territory object
+    }
+    territories.clear();  // Clear the vector
+    
+    // Clean up all dynamically allocated continents  
+    for (Continent* continent : continents) {
+        delete continent;  // Free each Continent object
+    }
+    continents.clear();  // Clear the vector
+}
+
 Map& Map::operator=(const Map& other) {
     if (this != &other) {
-        territories = other.territories;
-        continents = other.continents;
+        // Clean up existing objects first
+        for (Territory* territory : territories) {
+            delete territory;
+        }
+        for (Continent* continent : continents) {
+            delete continent;
+        }
+        territories.clear();
+        continents.clear();
+        
+        // Deep copy from other
+        for (const Territory* t : other.territories) {
+            if (t) {
+                Territory* newTerritory = new Territory(*t);
+                territories.push_back(newTerritory);
+            }
+        }
+        for (const Continent* c : other.continents) {
+            if (c) {
+                Continent* newContinent = new Continent(*c);
+                continents.push_back(newContinent);
+            }
+        }
     }
     return *this;
 }
 void Map::addTerritory(Territory* territory) { territories.push_back(territory); }
 void Map::addContinent(Continent* continent) { continents.push_back(continent); }
 const vector<Territory*>& Map::getTerritories() const { return territories; }
-const vector<Continent*>& Map::getContinents() const { return continents; }  
+const vector<Continent*>& Map::getContinents() const { return continents; }
+
+void Map::clear() {
+    // Helper method to clean up all objects
+    for (Territory* territory : territories) {
+        delete territory;
+    }
+    territories.clear();
+    
+    for (Continent* continent : continents) {
+        delete continent;
+    }
+    continents.clear();
+}  
 bool Map::validate() const {
     // 1) map connected
     if(!validateAllTerritories(*this)) return false;
@@ -446,7 +510,7 @@ void MapLoader::printMapFiles(const vector<string>& mapFiles) {
     }
     
     cout << "Available map files:" << endl;
-    for (size_t i = 0; i <= mapFiles.size(); ++i) {
+    for (size_t i = 0; i < mapFiles.size() + 1; ++i) {
         if(i == mapFiles.size()) {
             cout << i + 1 << ". Exit" << endl;
             break;
