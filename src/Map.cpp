@@ -100,7 +100,7 @@ namespace {
         }
 
         // Create the territory and add to map
-        string territoryName = trim(tokens[0]);
+        string territoryName = tokens[0];
         Territory* newTerritory = new Territory(context.currentTerritoryId++, territoryName);
         mapOutput.addTerritory(newTerritory);
         context.territoryMap[territoryName] = newTerritory;
@@ -116,7 +116,7 @@ namespace {
         // ignore X, Y for now
 
         // Get the continent name
-        string continentName = trim(tokens[3]);
+        string continentName = tokens[3];
         if (context.continentMap.find(continentName) != context.continentMap.end()) {
             newTerritory->addContinent(context.continentMap[continentName]);
             context.continentMap[continentName]->addTerritory(newTerritory);
@@ -124,7 +124,7 @@ namespace {
 
         // Add connections to adjacent territories
         for (size_t i = 4; i < tokens.size(); ++i) {
-            string adjacentName = trim(tokens[i]);
+            string adjacentName = tokens[i];
             if (context.territoryMap.find(adjacentName) != context.territoryMap.end()) {
                 newTerritory->addAdjacent(context.territoryMap[adjacentName]);
             } else {
