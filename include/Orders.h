@@ -15,7 +15,7 @@ protected:
 public:
     explicit Order(std::string desc);
     virtual ~Order();
-
+    virtual Order* clone() const = 0; //For copying orderslists mostly
 
     virtual bool validate() const = 0;
     virtual void execute() = 0;
@@ -34,10 +34,11 @@ class DeployOrder : public Order {
 public:
     DeployOrder(); 
     DeployOrder(Player* issuer, Territory* target, int amount);
+    Order* clone() const override;
 
     bool validate() const override;
     void execute() override;
-    std::string name() const override { return "Deploy"; }
+    std::string name() const override;
 
 private:
     Player* issuer_ = nullptr;
@@ -49,10 +50,11 @@ class AdvanceOrder : public Order {
 public:
     AdvanceOrder();
     AdvanceOrder(Player* issuer, Territory* source, Territory* target, int amount);
+    Order* clone() const override;
 
     bool validate() const override;
     void execute() override;
-    std::string name() const override { return "Advance"; }
+    std::string name() const override;
 
 private:
     Player* issuer_ = nullptr;
@@ -65,10 +67,11 @@ class BombOrder : public Order {
 public:
     BombOrder();
     BombOrder(Player* issuer, Territory* target);
+    Order* clone() const override;
 
     bool validate() const override;
     void execute() override;
-    std::string name() const override { return "Bomb"; }
+    std::string name() const override;
 
 private:
     Player* issuer_ = nullptr;
@@ -79,10 +82,11 @@ class BlockadeOrder : public Order {
 public:
     BlockadeOrder();
     BlockadeOrder(Player* issuer, Territory* target);
+    Order* clone() const override;
 
     bool validate() const override;
     void execute() override;
-    std::string name() const override { return "Blockade"; }
+    std::string name() const override;
 
 private:
     Player* issuer_ = nullptr;
@@ -93,11 +97,11 @@ class AirliftOrder : public Order {
 public:
     AirliftOrder();
     AirliftOrder(Player* issuer, Territory* source, Territory* target, int amount);
+    Order* clone() const override;
 
     bool validate() const override;
     void execute() override;
-    std::string name() const override { return "Airlift"; }
-
+    std::string name() const override;
 private:
     Player* issuer_ = nullptr;
     Territory* source_ = nullptr;
@@ -109,10 +113,11 @@ class NegotiateOrder : public Order {
 public:
     NegotiateOrder();
     NegotiateOrder(Player* issuer, Player* other);
+    Order* clone() const override;
 
     bool validate() const override;
     void execute() override;
-    std::string name() const override { return "Negotiate"; }
+    std::string name() const override;
 
 private:
     Player* issuer_ = nullptr;
@@ -122,19 +127,21 @@ private:
 // ======================= OrdersList =======================
 class OrdersList {
 private:
-    std::vector<Order*> orders;
+    std::vector<Order*> orders; 
 
 public:
+    OrdersList() = default;
     ~OrdersList();
 
-    OrdersList() = default;
-    OrdersList(const OrdersList&) = delete;
-    OrdersList& operator=(const OrdersList&) = delete;
+    OrdersList(const OrdersList& other);             
+    OrdersList& operator=(const OrdersList& other);     
+    OrdersList(OrdersList&& other) noexcept;            
+    OrdersList& operator=(OrdersList&& other) noexcept;  
 
-    void add(Order* o);          
-    void remove(int index);      
-    void move(int from, int to); 
-    void print() const;          
+    void add(Order* o);
+    void remove(int index);
+    void move(int from, int to);
+    void print() const;
 
     friend std::ostream& operator<<(std::ostream& os, const OrdersList& ol);
 };

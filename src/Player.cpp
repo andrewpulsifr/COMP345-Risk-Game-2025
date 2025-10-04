@@ -7,32 +7,44 @@
 
 //Player
 
-Player::Player() : playerName("defaultName"), playerHand(), ownedTerritories(), orders_() {}
+
+Player::Player()
+    : playerName("defaultName"),
+      playerHand(),
+      ownedTerritories(),
+      orders_(new OrdersList()) {}
+
 
 Player::Player(const Player& copyPlayer)
-	: playerName(copyPlayer.playerName),
-	playerHand(copyPlayer.playerHand),
-	ownedTerritories(copyPlayer.ownedTerritories),
-	orders_(copyPlayer.orders_) {
-}
+    : playerName(copyPlayer.playerName),
+      playerHand(copyPlayer.playerHand),
+      ownedTerritories(copyPlayer.ownedTerritories),
+      orders_(new OrdersList(*copyPlayer.orders_))
+{}
+
+Player::Player(std::string name)
+    : playerName(std::move(name)),
+      playerHand(),
+      ownedTerritories(),
+      orders_(new OrdersList()) {}
+
 
 Player& Player::operator=(const Player& copyPlayer) {
     if (this != &copyPlayer) {
         playerName = copyPlayer.playerName;
         playerHand = copyPlayer.playerHand;
         ownedTerritories = copyPlayer.ownedTerritories;
-        delete orders_;
-        orders_ = new OrdersList(*copyPlayer.orders_);
+        // deep copy into existing list
+        *orders_ = *copyPlayer.orders_;
     }
     return *this;
 }
-
-Player::Player(std::string name) : playerName(name), playerHand(), ownedTerritories(), orders_() {}
 
 Player::~Player() {
     playerHand.clear();
     ownedTerritories.clear();
     delete orders_;
+    orders_ = nullptr;
 }
 
 std::string Player::getPlayerName() const {
@@ -92,8 +104,23 @@ void Player::removeCard(Card* card) {
 //Orders
 
 void Player::issueOrder(Order* orderIssued) {
+    if (!orders_ || !orderIssued) return;
     orders_->add(orderIssued);
 }
+
+Order* Player::issueOrder(const std::string& type) {
+    Order* o = nullptr;
+    if (type == "deploy")      o = new DeployOrder();
+    else if (type == "advance")   o = new AdvanceOrder();
+    else if (type == "bomb")      o = new BombOrder();
+    else if (type == "blockade")  o = new BlockadeOrder();
+    else if (type == "airlift")   o = new AirliftOrder();
+    else if (type == "negotiate") o = new NegotiateOrder();
+
+    if (o) orders_->add(o);
+    return o;
+}
+
 
 //Debug / Print
 

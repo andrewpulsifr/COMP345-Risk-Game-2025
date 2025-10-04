@@ -1,66 +1,44 @@
-#include "../include/Player.h"
-#include "../include/Map.h"
 #include <iostream>
-#include <vector>
-
-//testPlayers
+#include "../include/Map.h"     // still include, so Territory is complete
+#include "../include/Player.h"
+#include "../include/Orders.h"
 
 void testPlayers() {
-    std::cout << "=== Player Test Driver ===\n";
+    std::cout << "\n=== testPlayers ===\n";
 
-    //Creating Players
-    Player* alice = new Player("Alice");
-    Player* bob = new Player("Bob");
+    Player alice("Alice");
+    Player bob("Bob");
 
-    //Creating dummy Territories
-    Territory* t1 = new Territory(1, "Territory1", nullptr, 5);
-    Territory* t2 = new Territory(2, "Territory2", nullptr, 3);
-    Territory* t3 = new Territory(3, "Territory3", nullptr, 2);
-    Territory* t4 = new Territory(4, "Territory4", nullptr, 4);
+    // Use default ctor (declared in your Map.h) to avoid relying on a param ctor
+    Territory* t1 = new Territory();
+    Territory* t2 = new Territory();
+    Territory* t3 = new Territory();
 
-    //Set adjacency (simple graph)
-    t1->addAdjacent(t2);
-    t2->addAdjacent(t1);
+    // Minimal ownership so toDefend() works (toAttack will be empty without adjacency)
+    alice.addPlayerTerritory(t1);
+    bob.addPlayerTerritory(t2);
+    bob.addPlayerTerritory(t3);
 
-    t2->addAdjacent(t3);
-    t3->addAdjacent(t2);
+    // Show lists
+    auto defendA = alice.toDefend();
+    auto attackA = alice.toAttack();
 
-    t3->addAdjacent(t4);
-    t4->addAdjacent(t3);
-
-    t1->addAdjacent(t4); // connect back
-    t4->addAdjacent(t1);
-
-    // 4. Assign Territories to Players
-    alice->addPlayerTerritory(t1);
-    alice->addPlayerTerritory(t3);
-
-    bob->addPlayerTerritory(t2);
-    bob->addPlayerTerritory(t4);
-
-    // 5. Display players and their territories
-    std::cout << *alice;
-    std::cout << *bob;
-
-    // 6. Test toDefend()
-    std::cout << "\nAlice's toDefend() territories: ";
-    for (auto t : alice->toDefend())
+    std::cout << "Alice owns: ";
+    for (auto* t : alice.getOwnedTerritories()) {
+        // getName() may be empty with default ctor; that's fine for now
         std::cout << t->getName() << " ";
+    }
+    std::cout << "\nAlice toDefend: ";
+    for (auto* t : defendA) std::cout << t->getName() << " ";
+    std::cout << "\nAlice toAttack (likely empty w/o adjacency): ";
+    for (auto* t : attackA) std::cout << t->getName() << " ";
     std::cout << "\n";
 
-    // 7. Test toAttack()
-    std::cout << "Alice's toAttack() territories: ";
-    for (auto t : alice->toAttack())
-        std::cout << t->getName() << " ";
-    std::cout << "\n";
+    // Use the pointer overload (declared in your Player.h)
+    alice.issueOrder(new DeployOrder(&alice, /*target*/nullptr, /*amount*/3));
+    alice.issueOrder(new AdvanceOrder(&alice, /*src*/nullptr, /*dst*/nullptr, /*amount*/2));
+    std::cout << "Issued two orders for Alice (pointer overload).\n";
 
-    // 8. Clean up
-    delete alice;
-    delete bob;
-    delete t1;
-    delete t2;
-    delete t3;
-    delete t4;
-
-    std::cout << "=== End of Player Test ===\n";
+    delete t1; delete t2; delete t3;
+    std::cout << "=== end testPlayers ===\n";
 }

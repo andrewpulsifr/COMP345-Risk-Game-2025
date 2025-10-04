@@ -40,7 +40,8 @@ public:
 	void removeCard(Card* card); //Removes a card from the player's hand
 
 	void issueOrder(Order* orderIssued); //Adds an Order to be issued
-
+	Order* issueOrder(const std::string& type);
+	
 private:
 	std::string playerName; //Player's Name
 	std::vector<Card*> playerHand; //Player's Hand

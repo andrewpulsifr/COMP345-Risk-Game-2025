@@ -1,5 +1,5 @@
 #include "../include/Cards.h"
-
+#include <algorithm>
 
 
 // // Stream overloading for Hand.
@@ -146,7 +146,6 @@ void Deck::addCard(Card* card) {
     cardsOnDeck.push_back(card);
 
 }
-
 //To remove a card from the Deck.
 void Deck::removeCard(Card* card) {
     cardsOnDeck.erase(std::remove(cardsOnDeck.begin(), cardsOnDeck.end(), card), cardsOnDeck.end());
