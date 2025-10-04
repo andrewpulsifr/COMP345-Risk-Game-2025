@@ -1,4 +1,4 @@
-#include "../include/Map.h"
+#include "../include/Map.h" 
 #include <iostream>
 #include <vector>
 #include <string>
@@ -170,7 +170,10 @@ void testLoadMaps(){
 
     assertSmallWorld(smallWorldMap);
     cout << "Assertions passed.\n";
-    smallWorldMap.validate();
+    if (!smallWorldMap.validate()) {
+        cerr << "Validation failed for World (small).map\n";
+        exit(EXIT_FAILURE);
+    }
     cout << "Validation passed.\n";
     cout << "--------------------------------\n";
     cout << "Test of World (small).map OK\n";
@@ -179,12 +182,15 @@ void testLoadMaps(){
     cout << "\n=== Test Validation for all maps ===" << endl;
 
     vector<string> mapFiles = mapLoader.getMapFiles();
-    for (const string& mapFile : mapFiles) {
+    for (const string& mapFilename : mapFiles) {
             Map tempMap;
-            mapLoader.loadMap(mapFile, tempMap);
-            cout << "Loaded " << mapFile << " OK\n";
-            tempMap.validate();
-            cout << "Validation passed.\n";
+            mapLoader.loadMap(mapFilename, tempMap);
+            cout << "Loaded " << mapFilename << " OK" << endl;
+            if (tempMap.validate()) {
+                cout << "Validation passed.\n";
+            } else {
+                cerr << "Validation failed for " << mapFilename << ".\n";
+            }
             cout << "--------------------------------\n";
     }
 
