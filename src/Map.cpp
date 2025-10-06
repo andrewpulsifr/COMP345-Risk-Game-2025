@@ -145,31 +145,42 @@ namespace {
      * @param context Parsing context for state management
      * @param mapOutput Target map to add the parsed continent to
      * 
-     * @throws std::runtime_error if line format is invalid (missing '=' separator)
+     * @throws std::runtime_error if line format is invalid (missing '=' separator or invalid bonus value)
      * 
      * @details Expected format: "ContinentName=BonusValue"
-     * - Creates new continent with auto-generated ID
-     * - Ignores bonus value (after '=') in current implementation
+     * - Creates new continent with auto-generated ID and parsed bonus value
+     * - Parses and validates bonus value (integer after '=')
      * - Uses RAII with unique_ptr for exception safety during construction
      * 
-     * @pre line must be a valid continent definition line
-     * @post New continent added to map and indexed in parsing context
+     * @pre line must be a valid continent definition line with valid integer bonus
+     * @post New continent with bonus value added to map and indexed in parsing context
      */
     static void parseContinents(string_view line, ParseContext& context, Map& mapOutput){
         if(line.find('=') == string_view::npos) {
             throw runtime_error("Invalid continent line: " + string(line));
         }
-        string continentName = trim(line.substr(0, line.find('=')));
+        
+        size_t equalPos = line.find('=');
+        string continentName = trim(line.substr(0, equalPos));
+        string bonusStr = trim(line.substr(equalPos + 1));
+        
+        // Parse bonus value with error handling
+        int bonus = 0;
+        try {
+            bonus = stoi(bonusStr);
+        } catch (const invalid_argument& e) {
+            throw runtime_error("Invalid bonus value '" + bonusStr + "' for continent '" + continentName + "'");
+        } catch (const out_of_range& e) {
+            throw runtime_error("Bonus value '" + bonusStr + "' out of range for continent '" + continentName + "'");
+        }
 
-        // Create continent using RAII for exception safety during construction
-        auto newContinent = make_unique<Continent>(context.nextContinentId++, continentName);
+        // Create continent with bonus value using RAII for exception safety during construction
+        auto newContinent = make_unique<Continent>(context.nextContinentId++, continentName, bonus);
         Continent* rawPointer = newContinent.get(); // Keep raw pointer for map ownership transfer
 
         mapOutput.addContinent(rawPointer); // Transfer ownership to map
         newContinent.release(); // Release unique_ptr ownership
         context.continentMap[continentName] = rawPointer; // Index for fast lookup during parsing
-
-        // TODO: Parse and store bonus value after '=' for continent ownership bonuses
     }
 
     /**
@@ -457,16 +468,19 @@ bool Territory::isAdjacentTo(const Territory* t) const {
 const vector<Territory*>& Territory::getAdjacents() const { return adjacentTerritories; }
 
 // ======================= Continent =======================
-Continent::Continent() : id(0), name(""), territories() {}
+Continent::Continent() : id(0), name(""), bonus(0), territories() {}
 
 /** Copy constructor does not deep copy territories
  This is intentional as Map copy constructor will rebuild these links */
 Continent::Continent(const Continent& other)
-    : id(other.id), name(other.name), territories() {
+    : id(other.id), name(other.name), bonus(other.bonus), territories() {
 }
 
 Continent::Continent(int id, const string& name)
-    : id(id), name(name), territories() {}
+    : id(id), name(name), bonus(0), territories() {}
+
+Continent::Continent(int id, const string& name, int bonus)
+    : id(id), name(name), bonus(bonus), territories() {}
 
 Continent::~Continent() {}
 
@@ -476,6 +490,7 @@ Continent& Continent::operator=(const Continent& other) {
     if (this != &other) {
         id = other.id;
         name = other.name;
+        bonus = other.bonus;
         territories.clear(); // Clear existing territories
         // No deep copy of territories as Map copy will rebuild these links
     }
@@ -484,13 +499,15 @@ Continent& Continent::operator=(const Continent& other) {
 
 int Continent::getId() const { return id; }
 string Continent::getName() const { return name; }
+int Continent::getBonus() const { return bonus; }
+void Continent::setBonus(int bonus) { this->bonus = bonus; }
 void Continent::addTerritory(Territory* territory) { territories.push_back(territory); }
 void Continent::clearTerritories() { territories.clear(); } // Clear existing territories
 const vector<Territory*>& Continent::getTerritories() const { return territories; }
 
 /** ostream overload for easy printing of continent details */
 ostream& operator<<(ostream& os, const Continent& continent) {
-    os << "Continent: " << continent.name << " (ID: " << continent.id << ")\n";
+    os << "Continent: " << continent.name << " (ID: " << continent.id << ", Bonus: " << continent.bonus << ")\n";
     os << "  Territories: ";
     if(continent.territories.empty()) {
         os << "None";

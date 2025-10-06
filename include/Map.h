@@ -109,12 +109,15 @@ public:
     Continent(); // default constructor
     Continent(const Continent& other); // copy constructor
     Continent(int id, const std::string& name); // parameterized constructor
+    Continent(int id, const std::string& name, int bonus); // parameterized constructor with bonus
     ~Continent();
 
     Continent& operator=(const Continent& other); // copy assignment operator
 
     int getId() const;
     std::string getName() const;
+    int getBonus() const;
+    void setBonus(int bonus);
     void addTerritory(Territory* territory);
     void clearTerritories();
     const std::vector<Territory*>& getTerritories() const;
@@ -124,6 +127,7 @@ public:
 private:
     int id;
     std::string name;
+    int bonus; // bonus armies awarded for controlling the entire continent
     std::vector<Territory*> territories; // list of pointers to territories in the continent
 };
 
