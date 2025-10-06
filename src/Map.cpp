@@ -451,18 +451,17 @@ Map::~Map() {
 }
 
 
-// Forward declaration of swap for Map
-void swap(Map& a, Map& b) noexcept;
-
-Map& Map::operator=(const Map& other) {
-    swap(*this, const_cast<Map&>(other));   // *this owns the new graph
-    return *this;         // old graph is freed when other goes out of scope
-}
-// Implement swap as a non-member function
+/* Implement swap as a non-member function */
 void swap(Map& a, Map& b) noexcept {
     using std::swap;
     swap(a.territories, b.territories);
     swap(a.continents,  b.continents);
+}
+
+/** Copy assignment operator using copy-and-swap idiom for strong exception safety */
+Map& Map::operator=(const Map& other) {
+    swap(*this, const_cast<Map&>(other));   // *this owns the new graph
+    return *this;    // old graph is freed when other goes out of scope
 }
 
 void Map::addTerritory(Territory* t) { 

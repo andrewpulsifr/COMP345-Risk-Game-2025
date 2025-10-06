@@ -150,14 +150,10 @@ class Map {
 public:
     Map(); // default constructor
     Map(const Map& other); // copy constructor
-    Map(Map&&) noexcept = default; // move constructor
-    Map& operator=(Map other);// copy-and-swap
-    Map& operator=(Map&&) noexcept = default; // move assignment
+    Map& operator=(const Map& other);// copy-and-swap
 
     friend void swap(Map& a, Map& b) noexcept;
     ~Map();
-
-    Map& operator=(const Map& other); // copy assignment operator
 
     void addTerritory(Territory* territory);
     void addContinent(Continent* continent);
@@ -197,10 +193,10 @@ private:
 class MapLoader {
 public:
     MapLoader(); // default constructor
-    MapLoader(const MapLoader&);              // copy constructor
+    MapLoader(const MapLoader&); // copy constructor
     ~MapLoader();
 
-    MapLoader& operator=(const MapLoader&);   // copy assignment operator
+    MapLoader& operator=(const MapLoader&);// copy assignment operator
     friend std::ostream& operator<<(std::ostream& os, const MapLoader& ml);
 
     bool loadMap(const std::string& filename, Map& mapOutput); // load a map from a .map file
