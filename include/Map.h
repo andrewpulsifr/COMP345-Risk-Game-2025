@@ -150,7 +150,7 @@ class Map {
 public:
     Map(); // default constructor
     Map(const Map& other); // copy constructor
-    Map& operator=(const Map& other);// copy-and-swap
+    Map& operator=(Map other); // copy-and-swap
 
     friend void swap(Map& a, Map& b) noexcept;
     ~Map();

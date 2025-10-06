@@ -588,9 +588,9 @@ void swap(Map& a, Map& b) noexcept {
 }
 
 /** Copy assignment operator using copy-and-swap idiom for strong exception safety */
-Map& Map::operator=(const Map& other) {
-    swap(*this, const_cast<Map&>(other));   // *this owns the new graph
-    return *this;    // old graph is freed when other goes out of scope
+Map& Map::operator=(Map other) { // note: pass by value
+    swap(*this, other);          // now *this has the new graph; 'other' holds the old
+    return *this;                // old graph is destroyed when 'other' goes out of scope
 }
 
 /**
