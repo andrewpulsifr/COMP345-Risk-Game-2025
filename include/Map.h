@@ -150,6 +150,11 @@ class Map {
 public:
     Map(); // default constructor
     Map(const Map& other); // copy constructor
+    Map(Map&&) noexcept = default; // move constructor
+    Map& operator=(Map other);// copy-and-swap
+    Map& operator=(Map&&) noexcept = default; // move assignment
+
+    friend void swap(Map& a, Map& b) noexcept;
     ~Map();
 
     Map& operator=(const Map& other); // copy assignment operator

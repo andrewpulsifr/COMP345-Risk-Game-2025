@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <limits>
 #include <filesystem>
+#include <utility> 
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -21,11 +22,11 @@ namespace {
         unordered_map<string, Territory*> territoryMap; // Fast lookup of name to Territory*
         // Territories waiting for adjacency resolution
         unordered_map<string, vector<Territory*>> waitingTerritories;
-        int currentContinentId = 0; 
-        int currentTerritoryId = 0;
+        int nextContinentId = 0; 
+        int nextTerritoryId = 0;
     };
 
-    // inline helper to trim whitespace
+    /* inline helper to trim whitespace */
     inline string trim(string_view rawLine) {
         constexpr char whitespace[] = " \t\n\r\f\v";
 
@@ -55,7 +56,7 @@ namespace {
         return result;
     }
 
-    // List all .map files in a directory sorted by filename
+    /* List all .map files in a directory sorted by filename */
     static vector<fs::path> listMapFiles(const fs::path& dir) {
         vector<fs::path> mapFiles;
 
@@ -87,7 +88,7 @@ namespace {
         string continentName = trim(line.substr(0, line.find('=')));
 
         // Create the continent and add to map using unique_ptr for exception safety
-        auto newContinent = make_unique<Continent>(context.currentContinentId++, continentName);
+        auto newContinent = make_unique<Continent>(context.nextContinentId++, continentName);
         Continent* rawPointer = newContinent.get(); // Keep a raw pointer for wiring
 
         mapOutput.addContinent(rawPointer); // Add to map
@@ -98,6 +99,7 @@ namespace {
         // ignore the value after '=' for now
     }
 
+    /* Helper function to parse territories from the map file */
     static void parseTerritories(const string& line, ParseContext& context, Map& mapOutput){
         // Expected format: TerritoryName, X, Y, Continent, Adjacent1, Adjacent2, ...
         vector<string> tokens = csvParse(line);
@@ -107,7 +109,7 @@ namespace {
         string territoryName = tokens[0];
     
         // Create the territory and add to map
-        auto newTerritory = std::make_unique<Territory>(context.currentTerritoryId++, territoryName);
+        auto newTerritory = std::make_unique<Territory>(context.nextTerritoryId++, territoryName);
         Territory* rawPointer = newTerritory.get(); // Keep a raw pointer for wiring
 
         mapOutput.addTerritory(rawPointer); // Add to map
@@ -228,8 +230,8 @@ namespace {
 // ======================= Territory =======================
 Territory::Territory() : id(0), name(""), continents(), owner(nullptr), armies(0) {}
 
-// Copy constructor does not deep copy continents or adjacents 
-// This is intentional as Map copy constructor will rebuild these links
+/* Copy constructor does not deep copy continents or adjacents 
+   This is intentional as Map copy constructor will rebuild these links */
 Territory::Territory(const Territory& other)
     : id(other.id),
       name(other.name),
@@ -247,8 +249,8 @@ Territory::Territory(int id, const string& name)
 
 Territory::~Territory() {}
 
-// Copy assignment operator does not deep copy continents or adjacents
-// This is intentional as Map copy assignment will rebuild these links
+/* Copy assignment operator does not deep copy continents or adjacents
+   This is intentional as Map copy assignment will rebuild these links */
 Territory& Territory::operator=(const Territory& other) {
     if (this != &other) {
         id = other.id;
@@ -309,11 +311,15 @@ void Territory::addArmies(int additionalArmies) { armies += additionalArmies; }
 void Territory::removeArmies(int removedArmies) { armies -= removedArmies; }
 void Territory::addAdjacent(Territory* t) { adjacentTerritories.push_back(t); }
 void Territory::clearAdjacents() { adjacentTerritories.clear(); }
+
+/** Check if this territory is adjacent to another territory */
 bool Territory::isAdjacentTo(const Territory* t) const {
     if (t == nullptr) {
         return false;
     }
-    const int idToFind = t->getId();
+
+    // Check if the territory is in the adjacent list
+    const int idToFind = t->getId(); // Compare by ID to avoid pointer issues
     return any_of(adjacentTerritories.begin(), adjacentTerritories.end(),
                        [idToFind](const Territory* adj) {
                            return adj != nullptr && adj->getId() == idToFind;
@@ -324,8 +330,8 @@ const vector<Territory*>& Territory::getAdjacents() const { return adjacentTerri
 // ======================= Continent =======================
 Continent::Continent() : id(0), name(""), territories() {}
 
-// Copy constructor does not deep copy territories
-// This is intentional as Map copy constructor will rebuild these links
+/** Copy constructor does not deep copy territories
+ This is intentional as Map copy constructor will rebuild these links */
 Continent::Continent(const Continent& other)
     : id(other.id), name(other.name), territories() {
 }
@@ -335,7 +341,8 @@ Continent::Continent(int id, const string& name)
 
 Continent::~Continent() {}
 
-//
+/** Copy assignment operator does not deep copy territories
+ This is intentional as Map copy assignment will rebuild these links */
 Continent& Continent::operator=(const Continent& other) {
     if (this != &other) {
         id = other.id;
@@ -349,9 +356,10 @@ Continent& Continent::operator=(const Continent& other) {
 int Continent::getId() const { return id; }
 string Continent::getName() const { return name; }
 void Continent::addTerritory(Territory* territory) { territories.push_back(territory); }
-void Continent::clearTerritories() { territories.clear(); }
+void Continent::clearTerritories() { territories.clear(); } // Clear existing territories
 const vector<Territory*>& Continent::getTerritories() const { return territories; }
 
+/** ostream overload for easy printing of continent details */
 ostream& operator<<(ostream& os, const Continent& continent) {
     os << "Continent: " << continent.name << " (ID: " << continent.id << ")\n";
     os << "  Territories: ";
@@ -372,6 +380,8 @@ ostream& operator<<(ostream& os, const Continent& continent) {
 
 // ======================= Map =======================
 Map::Map() : territories(), continents() {}
+
+/** Copy constructor deep copy of territories and continents */
 Map::Map(const Map& other) : territories(), continents() {
 
     // Build lookup of continent pointers in map for easy reference
@@ -423,11 +433,9 @@ Map::Map(const Map& other) : territories(), continents() {
             }
         }
     }
-
-
-   
 }
 
+/** Destructor to clean up dynamically allocated territories and continents */
 Map::~Map() {
     // Clean up all dynamically allocated territories
     for (Territory* territory : territories) {
@@ -442,32 +450,26 @@ Map::~Map() {
     continents.clear();  // Clear the vector
 }
 
+
+// Forward declaration of swap for Map
+void swap(Map& a, Map& b) noexcept;
+
 Map& Map::operator=(const Map& other) {
-    if (this != &other) {
-        // Clean up existing objects first
-        clear();
-        
-        // Simple deep copy - create new objects but don't rebuild complex relationships
-        // The adjacencies and continent relationships from the copy constructor will be used
-        for (const Territory* t : other.territories) {
-            if (t) {
-                Territory* newTerritory = new Territory(*t);
-                territories.push_back(newTerritory);
-            }
-        }
-        for (const Continent* c : other.continents) {
-            if (c) {
-                Continent* newContinent = new Continent(*c);
-                continents.push_back(newContinent);
-            }
-        }
-    }
-    return *this;
+    swap(*this, const_cast<Map&>(other));   // *this owns the new graph
+    return *this;         // old graph is freed when other goes out of scope
 }
+// Implement swap as a non-member function
+void swap(Map& a, Map& b) noexcept {
+    using std::swap;
+    swap(a.territories, b.territories);
+    swap(a.continents,  b.continents);
+}
+
 void Map::addTerritory(Territory* t) { 
     territories.push_back(t); // Add the raw pointer to the map
 }
-// TO DO: Consider revising to use unique_ptr for continents 
+
+/* TO DO: Consider revising to use unique_ptr for continents */
 void Map::addContinent(Continent* c) { 
     continents.push_back(c); // Add the raw pointer to the map
 }
