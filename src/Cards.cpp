@@ -101,7 +101,7 @@ std::vector<Card*> Hand::getCardsOnHand() {
 std::ostream& operator<<(std::ostream &os, Hand &hand) {
     os << "There are " << hand.getCardsOnHand().size() << " cards on Hand:" << std::endl;
     for(int i = 0; i < hand.getCardsOnHand().size(); i++) {
-        os << "Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
+        os << "  Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
     }
     return os;
 }

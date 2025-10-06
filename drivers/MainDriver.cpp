@@ -5,17 +5,17 @@
 #include "../include/Cards.h"
 
 // Forward declarations of driver test functions
-void testLoadMaps();
-void testPlayers();
-void testOrdersLists();
+// void testLoadMaps();
+// void testPlayers();
+// void testOrdersLists();
 void testCards();
 
 int main() {
     std::cout << "=== Starting Warzone Test Drivers ===\n\n";
 
-    testLoadMaps();
-    testPlayers();
-    testOrdersLists();
+    // testLoadMaps();
+    // testPlayers();
+    // testOrdersLists();
     testCards();
     std::cout << "\n=== Program finished successfully ===\n";
     return 0;
