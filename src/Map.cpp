@@ -1,3 +1,17 @@
+/**
+ * @file Map.cpp
+ * @brief Implementation of Map, Territory, Continent, and MapLoader classes for the Warzone game
+ * @author Andrew Pulsifer
+ * @date October 2025
+ * @version 1.0
+ * 
+ * This file contains the core map functionality including:
+ * - Map loading and parsing from .map files
+ * - Territory and continent management
+ * - Map validation (connectivity, territory-continent relationships)
+ * - Deep copy semantics for safe object copying
+ */
+
 #include "../include/Map.h"
 #include "../include/Player.h"
 #include <iostream>
@@ -13,34 +27,66 @@ using namespace std;
 namespace fs = std::filesystem;
 
 
-/** Directory containing map files and helper to trim whitespace */
+/** @brief Anonymous namespace containing map parsing utilities and constants */
 namespace {
-    const string MAP_PATH = "assets/maps"; // Directory containing map files
+    /// Directory path containing game map files
+    const string MAP_PATH = "assets/maps";
 
+    /**
+     * @brief Context structure for map file parsing state
+     * 
+     * This structure maintains parsing state during map file processing,
+     * handling forward references and deferred adjacency resolution.
+     */
     struct ParseContext {
-        unordered_map<string, Continent*> continentMap; // Fast lookup of name to Continent*
-        unordered_map<string, Territory*> territoryMap; // Fast lookup of name to Territory*
-        // Territories waiting for adjacency resolution
+        /// Fast O(1) lookup from continent name to continent object
+        unordered_map<string, Continent*> continentMap;
+        
+        /// Fast O(1) lookup from territory name to territory object  
+        unordered_map<string, Territory*> territoryMap;
+        
+        /** 
+         * Territories awaiting adjacency resolution due to forward references
+         * Key: territory name that doesn't exist yet
+         * Value: territories that want to connect to that territory
+         */
         unordered_map<string, vector<Territory*>> waitingTerritories;
-        int nextContinentId = 0; 
-        int nextTerritoryId = 0;
+        
+        int nextContinentId = 0;  ///< Auto-incrementing ID for new continents
+        int nextTerritoryId = 0;  ///< Auto-incrementing ID for new territories
     };
 
-    /* inline helper to trim whitespace */
+    /**
+     * @brief Removes leading and trailing whitespace from a string
+     * @param rawLine The input string to trim
+     * @return A new string with whitespace removed from both ends
+     * @note Returns empty string if input contains only whitespace
+     * @complexity O(n) where n is the length of the string
+     */
     inline string trim(string_view rawLine) {
         constexpr char whitespace[] = " \t\n\r\f\v";
 
-        // Find first non-whitespace character
+        // Find first non-whitespace character from the beginning
         const string::size_type first = rawLine.find_first_not_of(whitespace);
         if (first == string_view::npos) { return string(); }
 
-        // Find last non-whitespace character
+        // Find last non-whitespace character from the end
         const string::size_type last  = rawLine.find_last_not_of(whitespace);
 
-        // return trimmed string
+        // Extract substring containing only non-whitespace content
         return string(rawLine.substr(first, last - first + 1));
     }
 
+    /**
+     * @brief Parses a comma-separated values string into individual tokens
+     * @param str Input string containing comma-separated values
+     * @return Vector of trimmed string tokens
+     * 
+     * @details Splits the input string on comma delimiters and trims whitespace
+     * from each resulting token. Handles empty tokens and trailing commas gracefully.
+     * 
+     * @complexity O(n) where n is the length of the input string
+     */
     inline vector<string> csvParse(string_view str) {
         vector<string> result;
         size_t start = 0;
@@ -52,71 +98,112 @@ namespace {
             start = end + 1;
             end = str.find(',', start);
         }
-        result.push_back(string(trim(str.substr(start)))); // Add the last token (trimmed)
+        // Add the final token after the last comma (or entire string if no commas)
+        result.push_back(string(trim(str.substr(start))));
         return result;
     }
 
-    /* List all .map files in a directory sorted by filename */
+    /**
+     * @brief Lists all .map files in a directory sorted alphabetically by filename
+     * @param dir Path to directory containing map files
+     * @return Vector of file paths sorted by filename
+     * 
+     * @throws std::runtime_error if directory doesn't exist or isn't accessible
+     * 
+     * @details Scans the specified directory for files with .map extension,
+     * sorts them alphabetically by filename for consistent ordering.
+     * Only includes regular files, ignoring subdirectories and special files.
+     * 
+     * @complexity O(n log n) where n is the number of .map files (due to sorting)
+     */
     static vector<fs::path> listMapFiles(const fs::path& dir) {
         vector<fs::path> mapFiles;
 
-        // Check if the directory exists and is a directory
+        // Validate directory existence and accessibility
         if (!fs::exists(dir) || !fs::is_directory(dir)) {
             throw runtime_error("Map directory does not exist or is not a directory: " + dir.string());
         }
 
-        // Iterate through the directory and find all .map files
+        // Scan directory for .map files, filtering out non-regular files
         for (const fs::directory_entry& fileEntry : fs::directory_iterator(dir)) {
             if (fileEntry.is_regular_file() && fileEntry.path().extension() == ".map") {
                 mapFiles.push_back(fileEntry.path());
             }
         }
 
-        // Sort the map files by filename
+        // Sort alphabetically by filename for consistent user experience
         sort(mapFiles.begin(), mapFiles.end(), [](const fs::path& a, const fs::path& b){
             return a.filename().string() < b.filename().string();
         });
 
-        return mapFiles; // Return the sorted list of map files
+        return mapFiles;
     }
 
-    /** Helper function to parse continents from the map file */
+    /**
+     * @brief Parses a continent definition line from a map file
+     * @param line Raw line from map file containing continent definition
+     * @param context Parsing context for state management
+     * @param mapOutput Target map to add the parsed continent to
+     * 
+     * @throws std::runtime_error if line format is invalid (missing '=' separator)
+     * 
+     * @details Expected format: "ContinentName=BonusValue"
+     * - Creates new continent with auto-generated ID
+     * - Ignores bonus value (after '=') in current implementation
+     * - Uses RAII with unique_ptr for exception safety during construction
+     * 
+     * @pre line must be a valid continent definition line
+     * @post New continent added to map and indexed in parsing context
+     */
     static void parseContinents(string_view line, ParseContext& context, Map& mapOutput){
         if(line.find('=') == string_view::npos) {
             throw runtime_error("Invalid continent line: " + string(line));
         }
         string continentName = trim(line.substr(0, line.find('=')));
 
-        // Create the continent and add to map using unique_ptr for exception safety
+        // Create continent using RAII for exception safety during construction
         auto newContinent = make_unique<Continent>(context.nextContinentId++, continentName);
-        Continent* rawPointer = newContinent.get(); // Keep a raw pointer for wiring
+        Continent* rawPointer = newContinent.get(); // Keep raw pointer for map ownership transfer
 
-        mapOutput.addContinent(rawPointer); // Add to map
-        newContinent.release(); // Release ownership since map now owns it
-        context.continentMap[continentName] = rawPointer; // record in context for looking up later
+        mapOutput.addContinent(rawPointer); // Transfer ownership to map
+        newContinent.release(); // Release unique_ptr ownership
+        context.continentMap[continentName] = rawPointer; // Index for fast lookup during parsing
 
-        
-        // ignore the value after '=' for now
+        // TODO: Parse and store bonus value after '=' for continent ownership bonuses
     }
 
-    /* Helper function to parse territories from the map file */
+    /**
+     * @brief Parses a territory definition line from a map file
+     * @param line Raw line from map file containing territory definition
+     * @param context Parsing context for state management and deferred resolution
+     * @param mapOutput Target map to add the parsed territory to
+     * 
+     * @throws std::runtime_error if line format is invalid (< 4 tokens required)
+     * 
+     * @details Expected format: "TerritoryName, X, Y, Continent, Adjacent1, Adjacent2, ..."
+     * - Creates territory with auto-generated ID
+     * - Handles forward references for adjacencies via waiting list
+     * - Coordinates (X, Y) are parsed but currently unused
+     * - Uses RAII for exception safety during construction
+     * 
+     * @pre line must contain at least territory name, coordinates, and continent
+     * @post New territory added to map with continent membership and adjacencies
+     */
     static void parseTerritories(const string& line, ParseContext& context, Map& mapOutput){
-        // Expected format: TerritoryName, X, Y, Continent, Adjacent1, Adjacent2, ...
+        // Parse comma-separated tokens from territory definition line
         vector<string> tokens = csvParse(line);
         
         if (tokens.size() < 4) throw runtime_error("Invalid territory line: " + line);
-        
+
         string territoryName = tokens[0];
     
-        // Create the territory and add to map
+        // Create territory using RAII for exception safety during construction
         auto newTerritory = std::make_unique<Territory>(context.nextTerritoryId++, territoryName);
-        Territory* rawPointer = newTerritory.get(); // Keep a raw pointer for wiring
+        Territory* rawPointer = newTerritory.get(); // Keep raw pointer for map ownership transfer
 
-        mapOutput.addTerritory(rawPointer); // Add to map
-        newTerritory.release(); // Release ownership since map now owns it
-        context.territoryMap[territoryName] = rawPointer; // record in context for looking up later
-
-
+        mapOutput.addTerritory(rawPointer); // Transfer ownership to map
+        newTerritory.release(); // Release unique_ptr ownership
+        context.territoryMap[territoryName] = rawPointer; // Index for fast lookup during parsing
         // Check if any territories were waiting to connect to this one
         if(context.waitingTerritories.find(territoryName) != context.waitingTerritories.end()) {
             for(Territory* waitingTerritory : context.waitingTerritories[territoryName]) {
@@ -146,48 +233,63 @@ namespace {
         }
     }
 
+    /**
+     * @brief Performs depth-first search to verify connectivity of territory subgraph
+     * @param start Starting territory for the traversal
+     * @param includedTerritories Set of territories that must be reachable from start
+     * @return true if all territories in includedTerritories are reachable from start
+     * 
+     * @details This function implements iterative DFS using a stack to avoid recursion
+     * stack overflow for large maps. It verifies that the given territory subgraph
+     * forms a connected component.
+     * 
+     * @complexity Time: O(V + E) where V is territories, E is adjacencies
+     *            Space: O(V) for visited set and DFS stack
+     * 
+     * @pre start must be non-null and in includedTerritories set
+     * @post No side effects - function is read-only
+     */
     static bool isConnectedDFS( const Territory* start,
                                 const unordered_set<const Territory*>& includedTerritories){
         
-        // Check if graph is empty or start is null or start not in included set
+        // Validate input parameters and handle edge cases
         if (!start || includedTerritories.empty() ) return false;
         if (includedTerritories.find(start) == includedTerritories.end()) return false;
     
-
-        // Track visited territories
+        // Track visited territories to avoid cycles and count reachable nodes
         unordered_set<const Territory*> visited;
         visited.reserve(includedTerritories.size());
 
-        // Stack for DFS
+        // Iterative DFS stack to avoid recursion depth limits
         vector<const Territory*> stack;
         stack.reserve(includedTerritories.size());
         stack.push_back(start);
 
-        // Perform DFS
+        // Execute iterative depth-first search traversal
         while (!stack.empty()) {
             const Territory* currentTerritory = stack.back();
             stack.pop_back();
 
-           // Only process nodes inside the allowed included subgraph
+           // Skip territories outside the subgraph of interest
            if (includedTerritories.find(currentTerritory) == includedTerritories.end()) continue;
 
-            // Check for already visited
+            // Skip already processed territories to avoid infinite loops
             if (visited.find(currentTerritory) != visited.end()) continue;
-            visited.insert(currentTerritory); // Mark as visited
+            visited.insert(currentTerritory); // Mark current territory as visited
 
-            // Insert neighbors onto stack
+            // Add all unvisited neighbors within subgraph to exploration stack
             for (const Territory* adjacent : currentTerritory->getAdjacents()) {
-                // Check if adjacent is valid and not visited
+                // Only explore valid, included, and unvisited adjacent territories
                 if (adjacent 
                     && includedTerritories.find(adjacent) != includedTerritories.end() 
                     && visited.find(adjacent) == visited.end()) 
                 {
-                    stack.push_back(adjacent); // Add to stack for further exploration
+                    stack.push_back(adjacent); // Queue for future exploration
                 }
             }
         }
 
-        // All included territories must be visited
+        // Success: all territories in subgraph are reachable from start
         return visited.size() == includedTerritories.size(); 
     }
 
@@ -228,17 +330,31 @@ namespace {
 }
 
 // ======================= Territory =======================
+/** @brief Default constructor creates empty territory with zero values */
 Territory::Territory() : id(0), name(""), continents(), owner(nullptr), armies(0) {}
 
-/* Copy constructor does not deep copy continents or adjacents 
-   This is intentional as Map copy constructor will rebuild these links */
+/**
+ * @brief Copy constructor with intentional shallow copy of relationships
+ * @param other Territory to copy from
+ * 
+ * @details This constructor performs a shallow copy by design:
+ * - Copies: id, name, owner, armies (basic data)
+ * - Clears: continents and adjacentTerritories vectors
+ * 
+ * @rationale The Map class copy constructor rebuilds all territory-continent
+ * and territory-territory relationships to maintain consistency across the
+ * entire map structure. Individual territory copying with deep relationship
+ * copying would create dangling pointers.
+ * 
+ * @see Map::Map(const Map& other) for relationship reconstruction
+ */
 Territory::Territory(const Territory& other)
     : id(other.id),
       name(other.name),
-      continents(),              // leave empty Map copy will rebuild continent links
-      owner(other.owner),        // non-owning pointer and can be copied as is without deep copy
+      continents(),              // Intentionally empty - Map copy will rebuild continent links
+      owner(other.owner),        // Non-owning pointer - safe to shallow copy
       armies(other.armies),
-      adjacentTerritories()      // leave empty Map copy will rebuild adjacencies
+      adjacentTerritories()      // Intentionally empty - Map copy will rebuild adjacencies
 {}
 
 Territory::Territory(int id, const string& name, Player* owner, int armies)
@@ -247,10 +363,24 @@ Territory::Territory(int id, const string& name, Player* owner, int armies)
 Territory::Territory(int id, const string& name)
     : id(id), name(name), continents(), owner(nullptr), armies(0) {}
 
+/** @brief Destructor - no cleanup needed as Territory doesn't own its relationships */
 Territory::~Territory() {}
 
-/* Copy assignment operator does not deep copy continents or adjacents
-   This is intentional as Map copy assignment will rebuild these links */
+/**
+ * @brief Copy assignment operator with intentional shallow copy of relationships
+ * @param other Territory to assign from
+ * @return Reference to this territory for chaining
+ * 
+ * @details This assignment operator performs shallow copy by design:
+ * - Assigns: id, name, owner, armies (basic data)
+ * - Clears: continents and adjacentTerritories vectors
+ * 
+ * @rationale Maintains consistency with copy constructor behavior.
+ * Deep copying relationships would create inconsistent state where territories
+ * reference objects from different map instances.
+ * 
+ * @see Territory::Territory(const Territory& other) for similar rationale
+ */
 Territory& Territory::operator=(const Territory& other) {
     if (this != &other) {
         id = other.id;
@@ -258,11 +388,10 @@ Territory& Territory::operator=(const Territory& other) {
         owner = other.owner;
         armies = other.armies;
 
-        // Clear existing continents and adjacents before copying
-        // This is necessary to avoid retaining references to old objects
-        // No deep copy of continents or adjacents to maintain consistency
-        continents.clear(); // Clear existing continents
-        adjacentTerritories.clear(); // Clear existing adjacents
+        // Clear existing relationships to maintain consistency
+        // Map-level operations will rebuild these relationships appropriately
+        continents.clear(); // Remove old continent memberships
+        adjacentTerritories.clear(); // Remove old territory adjacencies
     }
     return *this;
 }
@@ -464,13 +593,30 @@ Map& Map::operator=(const Map& other) {
     return *this;    // old graph is freed when other goes out of scope
 }
 
+/**
+ * @brief Adds a territory to the map's territory collection
+ * @param t Raw pointer to territory (map takes ownership)
+ * 
+ * @warning Caller must not delete the territory pointer after calling this
+ * @see Map::~Map() for cleanup logic
+ */
 void Map::addTerritory(Territory* t) { 
-    territories.push_back(t); // Add the raw pointer to the map
+    territories.push_back(t); // Add territory to collection, taking ownership
 }
 
-/* TO DO: Consider revising to use unique_ptr for continents */
+/**
+ * @brief Adds a continent to the map's continent collection
+ * @param c Raw pointer to continent (map takes ownership)
+ * 
+ * @todo Refactor to use unique_ptr<Continent> for better memory safety
+ *       This would eliminate manual delete calls in destructor and
+ *       provide automatic cleanup on exceptions
+ * 
+ * @warning Caller must not delete the continent pointer after calling this
+ * @see Map::~Map() for cleanup logic
+ */
 void Map::addContinent(Continent* c) { 
-    continents.push_back(c); // Add the raw pointer to the map
+    continents.push_back(c); // Add continent to collection, taking ownership
 }
 const vector<Territory*>& Map::getTerritories() const { return territories; }
 const vector<Continent*>& Map::getContinents() const { return continents; }
@@ -486,20 +632,35 @@ void Map::clear() {
         delete continent;
     }
     continents.clear();
-}  
+}
+
+/**
+ * @brief Validates that the map satisfies all game rules and constraints
+ * @return true if map is valid for gameplay, false otherwise
+ * 
+ * @details Performs comprehensive validation checking:
+ * 1. Map connectivity: All territories must be reachable from any territory
+ * 2. Continent connectivity: Each continent must form a connected subgraph
+ * 3. Territory-continent membership: Each territory belongs to exactly one continent
+ * 
+ * @complexity O(V + E) for connectivity checks where V=territories, E=adjacencies
+ * 
+ * @note This method is const and performs no modifications to the map
+ * @see validateAllTerritories() and validateContinent() for specific checks
+ */
 bool Map::validate() const {
-    // 1) map connected
+    // Rule 1: Entire map must form a connected graph
     if(!validateAllTerritories(*this)) return false;
 
-    // 2) each continent is connected subgraph
+    // Rule 2: Each continent must be a connected subgraph
     for(const Continent* continent : continents) {
         if(!validateContinent(continent)) return false;
     }
 
-    // 3) each territory in exactly one continent
+    // Rule 3: Each territory must belong to exactly one continent
     for(const Territory* territory : territories) {
         if(territory->getContinents().empty()) return false;
-        if(territory->getContinents().size() != 1) return false; // Exactly one continent
+        if(territory->getContinents().size() != 1) return false; // Exactly one continent required
     }
 
     return true; // All validations passed
