@@ -75,13 +75,14 @@ public:
     void addArmies(int additionalArmies);
     void removeArmies(int removedArmies);
     void addAdjacent(Territory* t);
+    void clearAdjacents();
     bool isAdjacentTo(const Territory* t) const;
     const std::vector<Territory*>& getAdjacents() const;
 
 private:
     int id;
     std::string name;
-    std::vector<Continent*> continents; // pointer to the continent(s) the territory belongs to
+    std::vector<Continent*> continents; // pointer to the continent the territory belongs to (exactly one per territory)
     Player* owner; // pointer to the player who owns the territory
     int armies; // number of armies in the territory
     std::vector<Territory*> adjacentTerritories; // list of pointers to adjacent territories
@@ -115,6 +116,7 @@ public:
     int getId() const;
     std::string getName() const;
     void addTerritory(Territory* territory);
+    void clearTerritories();
     const std::vector<Territory*>& getTerritories() const;
 
     friend std::ostream& operator<<(std::ostream& os, const Continent& continent);

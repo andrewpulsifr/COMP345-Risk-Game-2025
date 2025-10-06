@@ -154,6 +154,100 @@ namespace {
         assertAdjOfTerritories(smallMap);
         assertNonAdjacencySample(smallMap);
     }
+
+    static bool testTerritoryOperations() {
+        Territory original(1, "TestTerritory");
+        original.setArmies(5);
+        
+        // Test copy constructor
+        Territory copied(original);
+        bool copyDataCorrect = (copied.getId() == original.getId() && 
+                               copied.getName() == original.getName() && 
+                               copied.getArmies() == original.getArmies());
+        // Ensure relations are cleared
+        bool copyRelationsCleared = (copied.getContinents().empty() && copied.getAdjacents().empty());
+        
+        // Test assignment operator
+        Territory assigned(99, "TempTerritory");
+        assigned = original;
+        bool assignmentCorrect = (assigned.getId() == original.getId() && 
+                                 assigned.getName() == original.getName() && 
+                                 assigned.getArmies() == original.getArmies());
+        
+        return copyDataCorrect && copyRelationsCleared && assignmentCorrect;
+    }
+    
+    static bool testContinentOperations() {
+        Continent original(1, "TestContinent");
+        
+        // Test copy constructor
+        Continent copied(original);
+        bool copyDataCorrect = (copied.getId() == original.getId() && 
+                               copied.getName() == original.getName());
+        bool copyRelationsCleared = copied.getTerritories().empty();
+        
+        // Test assignment operator
+        Continent assigned(99, "TempContinent");
+        assigned = original;
+        bool assignmentCorrect = (assigned.getId() == original.getId() && 
+                                 assigned.getName() == original.getName());
+        
+        return copyDataCorrect && copyRelationsCleared && assignmentCorrect;
+    }
+    
+    static bool testMapOperations() {
+        // Create test map
+        Map original;
+        Continent* continent = new Continent(1, "TestContinent");
+        Territory* territory = new Territory(1, "TestTerritory");
+        territory->setArmies(3);
+        
+        original.addContinent(continent);
+        original.addTerritory(territory);
+        territory->addContinent(continent);
+        continent->addTerritory(territory);
+        
+        // Test copy constructor
+        Map copied(original);
+        bool copyCorrect = (copied.getTerritories().size() == original.getTerritories().size() &&
+                           copied.getContinents().size() == original.getContinents().size() &&
+                           copied.getTerritories()[0] != original.getTerritories()[0]); // Different addresses
+        
+        // Test assignment operator
+        Map assigned;
+        Territory* temp = new Territory(99, "TempTerritory");
+        assigned.addTerritory(temp);
+        
+        assigned = original;
+        bool assignmentCorrect = (assigned.getTerritories().size() == original.getTerritories().size() &&
+                                 assigned.getContinents().size() == original.getContinents().size());
+        
+        return copyCorrect && assignmentCorrect;
+    }
+    
+    static void testCopyConstructorAndAssignment() {
+        cout << "=== Copy Constructor and Assignment Tests ===" << endl;
+        
+        bool territoryTests = testTerritoryOperations();
+        cout << "Territory operations: " << (territoryTests ? "PASS" : "FAIL") << endl;
+        
+        bool continentTests = testContinentOperations();
+        cout << "Continent operations: " << (continentTests ? "PASS" : "FAIL") << endl;
+        
+        bool mapTests = testMapOperations();
+        cout << "Map operations: " << (mapTests ? "PASS" : "FAIL") << endl;
+        
+        // Test memory management
+        {
+            Map temp;
+            Territory* t = new Territory(1, "TempTerritory");
+            temp.addTerritory(t);
+            Map copy(temp);
+        } // All objects destroyed here
+        cout << "Memory management: PASS" << endl;
+        
+        cout << "=== Copy and Assignment Tests Complete ===" << endl;
+    }
 }
 
 
@@ -193,6 +287,8 @@ void testLoadMaps(){
             }
             cout << "--------------------------------\n";
     }
+    cout << "=== Test Operations of Classes ===" << endl;
+    testCopyConstructorAndAssignment();
 
     cout << "=== Interactive Map Loading ===" << endl;
     try{

@@ -80,56 +80,66 @@ namespace {
     }
 
     /** Helper function to parse continents from the map file */
-    static void parseContinents(string& line, ParseContext& context, Map& mapOutput){
-        if(line.find('=') == string::npos) {
-            throw runtime_error("Invalid continent line: " + line);
+    static void parseContinents(string_view line, ParseContext& context, Map& mapOutput){
+        if(line.find('=') == string_view::npos) {
+            throw runtime_error("Invalid continent line: " + string(line));
         }
-        string continent = trim(line.substr(0, line.find('=')));
-        Continent* newContinent = new Continent(context.currentContinentId++, continent);
-        context.continentMap[continent] = newContinent; // Map continent name to Continent*
-        mapOutput.addContinent(newContinent); // Add continent with unique ID
+        string continentName = trim(line.substr(0, line.find('=')));
+
+        // Create the continent and add to map using unique_ptr for exception safety
+        auto newContinent = make_unique<Continent>(context.currentContinentId++, continentName);
+        Continent* rawPointer = newContinent.get(); // Keep a raw pointer for wiring
+
+        mapOutput.addContinent(rawPointer); // Add to map
+        newContinent.release(); // Release ownership since map now owns it
+        context.continentMap[continentName] = rawPointer; // record in context for looking up later
+
+        
         // ignore the value after '=' for now
     }
 
-    static void parseTerritories(string& line, ParseContext& context, Map& mapOutput){
+    static void parseTerritories(const string& line, ParseContext& context, Map& mapOutput){
         // Expected format: TerritoryName, X, Y, Continent, Adjacent1, Adjacent2, ...
         vector<string> tokens = csvParse(line);
         
-        if (tokens.size() < 4) {
-            throw runtime_error("Invalid territory line: " + line);
-        }
-
-        // Create the territory and add to map
+        if (tokens.size() < 4) throw runtime_error("Invalid territory line: " + line);
+        
         string territoryName = tokens[0];
-        Territory* newTerritory = new Territory(context.currentTerritoryId++, territoryName);
-        mapOutput.addTerritory(newTerritory);
-        context.territoryMap[territoryName] = newTerritory;
+    
+        // Create the territory and add to map
+        auto newTerritory = std::make_unique<Territory>(context.currentTerritoryId++, territoryName);
+        Territory* rawPointer = newTerritory.get(); // Keep a raw pointer for wiring
+
+        mapOutput.addTerritory(rawPointer); // Add to map
+        newTerritory.release(); // Release ownership since map now owns it
+        context.territoryMap[territoryName] = rawPointer; // record in context for looking up later
+
 
         // Check if any territories were waiting to connect to this one
         if(context.waitingTerritories.find(territoryName) != context.waitingTerritories.end()) {
             for(Territory* waitingTerritory : context.waitingTerritories[territoryName]) {
-                waitingTerritory->addAdjacent(newTerritory);
+                waitingTerritory->addAdjacent(rawPointer);
             }
             context.waitingTerritories.erase(territoryName); // Clear the waiting list for this territory
         }
-
+    
         // ignore X, Y for now
-
+    
         // Get the continent name
         string continentName = tokens[3];
         if (context.continentMap.find(continentName) != context.continentMap.end()) {
-            newTerritory->addContinent(context.continentMap[continentName]);
-            context.continentMap[continentName]->addTerritory(newTerritory);
+            rawPointer->addContinent(context.continentMap[continentName]);
+            context.continentMap[continentName]->addTerritory(rawPointer);
         }
-
+    
         // Add connections to adjacent territories
         for (size_t i = 4; i < tokens.size(); ++i) {
             string adjacentName = tokens[i];
             if (context.territoryMap.find(adjacentName) != context.territoryMap.end()) {
-                newTerritory->addAdjacent(context.territoryMap[adjacentName]);
+                rawPointer->addAdjacent(context.territoryMap[adjacentName]);
             } else {
                 // Adjacent territory not yet created, add to waiting list
-                context.waitingTerritories[adjacentName].push_back(newTerritory);
+                context.waitingTerritories[adjacentName].push_back(rawPointer);
             }
         }
     }
@@ -218,10 +228,16 @@ namespace {
 // ======================= Territory =======================
 Territory::Territory() : id(0), name(""), continents(), owner(nullptr), armies(0) {}
 
+// Copy constructor does not deep copy continents or adjacents 
+// This is intentional as Map copy constructor will rebuild these links
 Territory::Territory(const Territory& other)
-    : id(other.id), name(other.name), continents(other.continents), 
-      owner(other.owner), armies(other.armies),
-      adjacentTerritories(other.adjacentTerritories) {}
+    : id(other.id),
+      name(other.name),
+      continents(),              // leave empty Map copy will rebuild continent links
+      owner(other.owner),        // non-owning pointer and can be copied as is without deep copy
+      armies(other.armies),
+      adjacentTerritories()      // leave empty Map copy will rebuild adjacencies
+{}
 
 Territory::Territory(int id, const string& name, Player* owner, int armies)
     : id(id), name(name), continents(), owner(owner), armies(armies) {}
@@ -231,15 +247,20 @@ Territory::Territory(int id, const string& name)
 
 Territory::~Territory() {}
 
-
+// Copy assignment operator does not deep copy continents or adjacents
+// This is intentional as Map copy assignment will rebuild these links
 Territory& Territory::operator=(const Territory& other) {
     if (this != &other) {
         id = other.id;
         name = other.name;
-        continents = other.continents;
         owner = other.owner;
         armies = other.armies;
-        adjacentTerritories = other.adjacentTerritories;
+
+        // Clear existing continents and adjacents before copying
+        // This is necessary to avoid retaining references to old objects
+        // No deep copy of continents or adjacents to maintain consistency
+        continents.clear(); // Clear existing continents
+        adjacentTerritories.clear(); // Clear existing adjacents
     }
     return *this;
 }
@@ -287,6 +308,7 @@ void Territory::setArmies(int newArmies) { armies = newArmies; }
 void Territory::addArmies(int additionalArmies) { armies += additionalArmies; }
 void Territory::removeArmies(int removedArmies) { armies -= removedArmies; }
 void Territory::addAdjacent(Territory* t) { adjacentTerritories.push_back(t); }
+void Territory::clearAdjacents() { adjacentTerritories.clear(); }
 bool Territory::isAdjacentTo(const Territory* t) const {
     if (t == nullptr) {
         return false;
@@ -302,19 +324,24 @@ const vector<Territory*>& Territory::getAdjacents() const { return adjacentTerri
 // ======================= Continent =======================
 Continent::Continent() : id(0), name(""), territories() {}
 
+// Copy constructor does not deep copy territories
+// This is intentional as Map copy constructor will rebuild these links
 Continent::Continent(const Continent& other)
-    : id(other.id), name(other.name), territories(other.territories) {}
+    : id(other.id), name(other.name), territories() {
+}
 
 Continent::Continent(int id, const string& name)
     : id(id), name(name), territories() {}
 
 Continent::~Continent() {}
 
+//
 Continent& Continent::operator=(const Continent& other) {
     if (this != &other) {
         id = other.id;
         name = other.name;
-        territories = other.territories;
+        territories.clear(); // Clear existing territories
+        // No deep copy of territories as Map copy will rebuild these links
     }
     return *this;
 }
@@ -322,6 +349,7 @@ Continent& Continent::operator=(const Continent& other) {
 int Continent::getId() const { return id; }
 string Continent::getName() const { return name; }
 void Continent::addTerritory(Territory* territory) { territories.push_back(territory); }
+void Continent::clearTerritories() { territories.clear(); }
 const vector<Territory*>& Continent::getTerritories() const { return territories; }
 
 ostream& operator<<(ostream& os, const Continent& continent) {
@@ -344,23 +372,60 @@ ostream& operator<<(ostream& os, const Continent& continent) {
 
 // ======================= Map =======================
 Map::Map() : territories(), continents() {}
-
 Map::Map(const Map& other) : territories(), continents() {
-    // Deep copy territories
+
+    // Build lookup of continent pointers in map for easy reference
+    unordered_map<const Continent*, Continent*> continentMap; // Maps original continent pointers to new cloned pointers
+    continents.reserve(other.continents.size()); // Reserve space to avoid multiple allocations
+    
+    // Clone continents name and id first
+    for (const Continent* c : other.continents) {
+        if (c) {
+            Continent* newContinent = new Continent(c->getId(), c->getName());
+            continents.push_back(newContinent);
+            continentMap[c] = newContinent; // record in map for looking up later
+        }
+    }
+
+    //build lookup of territory pointers in map
+    unordered_map<const Territory*, Territory*> territoryMap; // Maps original territory pointers to new cloned pointers
+    territoryMap.reserve(other.territories.size()); // Reserve space to avoid multiple allocations
+    territories.reserve(other.territories.size()); // Reserve space to avoid multiple allocations
+
+    // Clone basic territory info next
     for (const Territory* t : other.territories) {
         if (t) {
-            Territory* newTerritory = new Territory(*t);  // Create deep copy
+            Territory* newTerritory = new Territory(t->getId(), t->getName(), t->getOwner(), t->getArmies());
             territories.push_back(newTerritory);
+            territoryMap[t] = newTerritory; // record in map for looking up later
         }
     }
     
-    // Deep copy continents
-    for (const Continent* c : other.continents) {
-        if (c) {
-            Continent* newContinent = new Continent(*c);  // Create deep copy
-            continents.push_back(newContinent);
+    // Rebuild continent membership of territories and continents and adjacency lists
+    for (Territory* oldTerritory : other.territories) {
+        if (!oldTerritory) continue;
+        Territory* newTerritory = territoryMap[oldTerritory]; // Get the corresponding new territory
+        if (!newTerritory) continue;
+        // Rebuild continent membership
+        for (const Continent* oldContinent : oldTerritory->getContinents()) {
+            if (continentMap.find(oldContinent) != continentMap.end()) {
+                Continent* newContinent = continentMap[oldContinent]; // Get the corresponding new continent
+                if (!newContinent) continue;
+                newTerritory->addContinent(newContinent); // Add continent to territory
+                newContinent->addTerritory(newTerritory); // Add territory to continent
+            }
+        }
+        // Rebuild adjacency list
+        for (const Territory* oldAdjacent : oldTerritory->getAdjacents()) {
+            if (territoryMap.find(oldAdjacent) != territoryMap.end()) {
+                Territory* newAdjacent = territoryMap[oldAdjacent];
+                newTerritory->addAdjacent(newAdjacent);
+            }
         }
     }
+
+
+   
 }
 
 Map::~Map() {
@@ -380,16 +445,10 @@ Map::~Map() {
 Map& Map::operator=(const Map& other) {
     if (this != &other) {
         // Clean up existing objects first
-        for (Territory* territory : territories) {
-            delete territory;
-        }
-        for (Continent* continent : continents) {
-            delete continent;
-        }
-        territories.clear();
-        continents.clear();
+        clear();
         
-        // Deep copy from other
+        // Simple deep copy - create new objects but don't rebuild complex relationships
+        // The adjacencies and continent relationships from the copy constructor will be used
         for (const Territory* t : other.territories) {
             if (t) {
                 Territory* newTerritory = new Territory(*t);
@@ -405,8 +464,13 @@ Map& Map::operator=(const Map& other) {
     }
     return *this;
 }
-void Map::addTerritory(Territory* territory) { territories.push_back(territory); }
-void Map::addContinent(Continent* continent) { continents.push_back(continent); }
+void Map::addTerritory(Territory* t) { 
+    territories.push_back(t); // Add the raw pointer to the map
+}
+// TO DO: Consider revising to use unique_ptr for continents 
+void Map::addContinent(Continent* c) { 
+    continents.push_back(c); // Add the raw pointer to the map
+}
 const vector<Territory*>& Map::getTerritories() const { return territories; }
 const vector<Continent*>& Map::getContinents() const { return continents; }
 
@@ -530,6 +594,8 @@ bool MapLoader::loadMap(const string& filename, Map& mapOutput) {
     }
 
     MapLoader::parseMapFileSections(mapInput, mapOutput);
+    mapInput.close();
+
     return true;
 }
 
@@ -577,3 +643,4 @@ void MapLoader::parseMapFileSections(istream& mapInput, Map& mapOutput) {
         }
     }
 }
+
