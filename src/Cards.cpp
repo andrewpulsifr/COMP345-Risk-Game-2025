@@ -1,4 +1,5 @@
 #include "../include/Cards.h"
+#include <algorithm>
 #include "../include/Orders.h"
 
 //Implementation of Card.
@@ -28,7 +29,7 @@ std::string cardToString(Card::typeOfCard cardType) {
 }
 
 //Returns the type of card.
-Card::typeOfCard Card::getCard() { 
+Card::typeOfCard Card::getCard() const { 
     return card;
 };
 
@@ -91,19 +92,19 @@ Hand::Hand(Hand const &hand) {
     }
 }
 
-// Stream overloading for card.
-std::ostream & operator<<(std::ostream &os, Card::typeOfCard cardType) {
-    os << cardToString(cardType);
+// Stream overloading for Card.
+std::ostream & operator<<(std::ostream &os, const Card &card) {
+    os << cardToString(card.getCard());
     return os;
 }
 
 // To get the private vector of cards on Hand.
-std::vector<Card*> Hand::getCardsOnHand() {
+std::vector<Card*> Hand::getCardsOnHand() const {
     return cardsOnHand;
 }
 
 // Stream overloading for Hand.
-std::ostream& operator<<(std::ostream &os, Hand &hand) {
+std::ostream& operator<<(std::ostream &os, const Hand &hand) {
     os << "There are " << hand.getCardsOnHand().size() << " cards on Hand:" << std::endl;
     for(size_t i = 0; i < hand.getCardsOnHand().size(); i++) {
         os << "  Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
@@ -138,7 +139,7 @@ Hand::~Hand() {
     }
 }
 
-// Imeplementation of Deck.
+// Implementation of Deck.
 Deck::Deck() : cardsOnDeck() {}
 
 // Deep copy constructor for Deck.
@@ -164,13 +165,13 @@ void Deck::removeCard(Card* card) {
 }
 
 // Returns the collection of cards in the Deck.
-std::vector<Card*> Deck::getCardsOnDeck() {
+std::vector<Card*> Deck::getCardsOnDeck() const {
     return cardsOnDeck;
 }
 
 
 // Stream overloading for Deck.
-std::ostream & operator << (std::ostream &os, Deck &deck) {
+std::ostream & operator << (std::ostream &os, const Deck &deck) {
     os << "There are " << deck.getCardsOnDeck().size() << " cards on the Deck:" << std::endl;
     
     for(size_t i = 0; i < deck.getCardsOnDeck().size(); i++) {

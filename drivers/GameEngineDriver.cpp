@@ -22,7 +22,6 @@ void testGameStates() {
     cout << "\nEnter command: ";
     
     while (std::getline(cin, input)) {
-        // Trim whitespace and convert to lowercase for consistency
         input.erase(0, input.find_first_not_of(" \t"));
         input.erase(input.find_last_not_of(" \t") + 1);
         
