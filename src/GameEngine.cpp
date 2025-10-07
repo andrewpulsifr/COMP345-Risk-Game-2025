@@ -19,8 +19,6 @@
 
 using namespace std;
 
-Map gameMap;
-
 // ======================= Command Class =======================
 
 /** @brief Default constructor creates empty command */
@@ -387,38 +385,38 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
     }
 }
 
-// State-specific action handlers (stubs for future implementation)
+// State-specific action handlers --> stub implementations for now
 void GameEngine::handleLoadMap(const string& command) {
     cout << "  -> Loading map... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning 
 }
 
 void GameEngine::handleValidateMap(const string& command) {
     cout << "  -> Validating map... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleAddPlayer(const string& command) {
     cout << "  -> Adding player... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleAssignCountries(const string& command) {
     cout << "  -> Assigning countries... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleIssueOrder(const string& command) {
     cout << "  -> Issuing order... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleExecuteOrders(const string& command) {
     cout << "  -> Executing orders... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleEndGame(const string& command) {
     cout << "  -> Handling game end... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
