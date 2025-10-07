@@ -1,87 +1,168 @@
+/**
+ * @file Orders.cpp
+ * @brief Assignment 1 – Part 3 (Warzone): Orders & OrdersList implementation
+ *
+ * @details
+ * Implements the Orders API declared in Orders.h:
+ *  - Concrete orders’ constructors, validate(), execute(), name(), clone()
+ *  - OrdersList Rule of 5 and mutators (add/remove/move/print)
+ *  - Stream output operator to display description and effect text
+ *
+ * Implementation notes:
+ *  - AdvanceOrder::validate() defers adjacency to Map API
+ *  - execute() methods set effect strings
+ */
+
 #pragma once
-#include <iostream>
 #include <string>
 #include <vector>
+#include <iosfwd>
 
-/**
- * @brief Base class representing a Warzone Order.
- * 
- * Each order must implement validate() and execute().
- * For now, these are the skeleton classes for all of the orders (TODO: flesh out logic in later parts).
- */
+class Player;
+class Territory;
+
+// ======================= Base Order =======================
 class Order {
 protected:
-    std::string description; // Short text label for debugging
+    std::string description;
+    std::string effect_;
+
 public:
-    Order(std::string desc);
+    explicit Order(std::string desc);
     virtual ~Order();
+    virtual Order* clone() const = 0; //For copying orderslists mostly
 
-    // ====== Core API ======
-    virtual bool validate() const = 0;   // TODO: add real validation rules
-    virtual void execute() = 0;          // TODO: implement execution behavior
+    virtual bool validate() const = 0;
+    virtual void execute() = 0;
+    virtual std::string name() const = 0;
 
-    // For printing order details
+
+    const std::string& effect() const;
+    const std::string& getDescription() const;
+
     friend std::ostream& operator<<(std::ostream& os, const Order& order);
 };
 
-// ====== Derived Orders ======
-// NOTE: All validate() and execute() are stubs for now.
+// ======================= Concrete Orders =======================
+
 class DeployOrder : public Order {
 public:
-    DeployOrder();
-    bool validate() const override;  // TODO
-    void execute() override;         // TODO
+    DeployOrder(); 
+    DeployOrder(Player* issuer, Territory* target, int amount);
+    DeployOrder(const DeployOrder&);
+    Order* clone() const override;
+
+    bool validate() const override;
+    void execute() override;
+    std::string name() const override;
+
+private:
+    Player* issuer_ = nullptr;
+    Territory* target_ = nullptr;
+    int amount_ = 0;
 };
 
 class AdvanceOrder : public Order {
 public:
     AdvanceOrder();
-    bool validate() const override;  // TODO
-    void execute() override;         // TODO
+    AdvanceOrder(Player* issuer, Territory* source, Territory* target, int amount);
+    AdvanceOrder(const AdvanceOrder&);    
+    Order* clone() const override;
+
+    bool validate() const override;
+    void execute() override;
+    std::string name() const override;
+
+private:
+    Player* issuer_ = nullptr;
+    Territory* source_ = nullptr;
+    Territory* target_ = nullptr;
+    int amount_ = 0;
 };
 
 class BombOrder : public Order {
 public:
     BombOrder();
-    bool validate() const override;  // TODO
-    void execute() override;         // TODO
+    BombOrder(Player* issuer, Territory* target);
+    BombOrder(const BombOrder&);    
+    Order* clone() const override;
+
+    bool validate() const override;
+    void execute() override;
+    std::string name() const override;
+
+private:
+    Player* issuer_ = nullptr;
+    Territory* target_ = nullptr;
 };
 
 class BlockadeOrder : public Order {
 public:
     BlockadeOrder();
-    bool validate() const override;  // TODO
-    void execute() override;         // TODO
+    BlockadeOrder(Player* issuer, Territory* target);
+    BlockadeOrder(const BlockadeOrder&);    
+    Order* clone() const override;
+
+    bool validate() const override;
+    void execute() override;
+    std::string name() const override;
+
+private:
+    Player* issuer_ = nullptr;
+    Territory* target_ = nullptr;
 };
 
 class AirliftOrder : public Order {
 public:
     AirliftOrder();
-    bool validate() const override;  // TODO
-    void execute() override;         // TODO
+    AirliftOrder(Player* issuer, Territory* source, Territory* target, int amount);
+    AirliftOrder(const AirliftOrder&);    
+    Order* clone() const override;
+
+    bool validate() const override;
+    void execute() override;
+    std::string name() const override;
+private:
+    Player* issuer_ = nullptr;
+    Territory* source_ = nullptr;
+    Territory* target_ = nullptr;
+    int amount_ = 0;
 };
 
 class NegotiateOrder : public Order {
 public:
     NegotiateOrder();
-    bool validate() const override;  // TODO
-    void execute() override;         // TODO
+    NegotiateOrder(Player* issuer, Player* other);
+    NegotiateOrder(const NegotiateOrder&);    
+    Order* clone() const override;
+
+    bool validate() const override;
+    void execute() override;
+    std::string name() const override;
+
+private:
+    Player* issuer_ = nullptr;
+    Player* other_ = nullptr;
 };
 
-/**
- * @brief Container for maintaining a list of Orders.
- * 
- * Has logic for adding, removing, and reordering (move).
- */
+// ======================= OrdersList =======================
 class OrdersList {
 private:
-    std::vector<Order*> orders; // Owning raw pointers for now
+    std::vector<Order*> orders; 
+
 public:
+    OrdersList() = default;
     ~OrdersList();
 
-    void add(Order* o);             // Add new order
-    void remove(int index);         // Remove at index
-    void move(int from, int to);    // Reorder within the list
+    OrdersList(const OrdersList& other);             
+    OrdersList& operator=(const OrdersList& other);     
+    OrdersList(OrdersList&& other) noexcept;            
+    OrdersList& operator=(OrdersList&& other) noexcept;  
 
-    void print() const;             // Debug print all orders
+    void add(Order* o);
+    void remove(int index);
+    void move(int from, int to);
+    void print() const;
+
+    friend std::ostream& operator<<(std::ostream& os, const OrdersList& ol);
 };
