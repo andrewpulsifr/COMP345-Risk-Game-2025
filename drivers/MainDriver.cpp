@@ -7,6 +7,7 @@
 
 // Forward declarations of driver test functions
 void testLoadMaps();
+void testLoadMaps();
 void testPlayers();
 void testOrdersLists();
 void testCards();
