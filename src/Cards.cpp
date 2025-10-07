@@ -1,221 +1,90 @@
 #include "../include/Cards.h"
-#include "../include/Orders.h"
 
-//Implementation of Card.
-// Constructor for Card
-Card::Card(typeOfCard cardType) : card(cardType) {} 
+void testCards() {
+    Deck deck;
+    Hand hand;
 
-// Copy constructor for Card.
-Card::Card(Card &card) {
-    this->card = card.getCard();
-}
+    // Create and load each card type into the deck.
+    Card* reinforcement = new Card(Card::Reinforcement);
+    Card* bomb = new Card(Card::Bomb);
+    Card* blockade = new Card(Card::Blockade);
+    Card* airlift = new Card(Card::Airlift);
+    Card* diplomacy = new Card(Card::Diplomacy);
 
-// Cards are converted into a string to be displayed when printed.
-std::string cardToString(Card::typeOfCard cardType) {
-    switch(cardType) {
-        case Card::Bomb:
-            return "Bomb";
-        case Card::Reinforcement:
-            return "Reinforcement";
-        case Card::Blockade:
-            return "Blockade";
-        case Card::Airlift:
-            return "Airlift";
-        case Card::Diplomacy:
-            return "Diplomacy";
-        default: 
-            return "Invalid Card";
-    }
-}
-
-//Returns the type of card.
-Card::typeOfCard Card::getCard() { 
-    return card;
-};
-
-//Each card can be played and will be removed from hand and returned to deck after execution
-void Card::play(Card* cardPlayed, Deck &deck, Hand &hand) {
-    BombOrder* bomb = new BombOrder();
-    AdvanceOrder* advance = new AdvanceOrder();
-    BlockadeOrder* blockade = new BlockadeOrder();
-    AirliftOrder* airlift = new AirliftOrder();
-    NegotiateOrder* negotiate = new NegotiateOrder();
-
-    switch(cardPlayed->getCard()) {
-        case Bomb:
-            bomb->execute();
-            
-            std::cout << "The Bomb card is played.";
-            break;
-        case Reinforcement:
-            advance->execute();
-
-            std::cout << "The Reinforcement card is played.";
-            break;
-        case Blockade:
-            blockade->execute();
-
-            std::cout << "The Blockade card is played.";
-            break;
-        case Airlift:
-            airlift->execute();
-
-            std::cout << "The Airlift card is played.";
-            break;
-        case Diplomacy:
-            negotiate->execute();
-
-            std::cout << "The Diplomacy card is played.";
-            break;
-        default:
-            std::cout << "The card is invalid.";
-    };
-
-    //After orders are executed, remove the card from Hand and place back into the Deck.
-    hand.removeCard(cardPlayed);
-    deck.addCard(cardPlayed);
-    std::cout << " The card is now returned to the deck." << std::endl;
-}
-
-//Implementation of Hand.
-Hand::Hand() : cardsOnHand() {} // Default constructor.
-
-Hand::Hand(Hand &hand) {
-    for(int i = 0; i < hand.cardsOnHand.size(); i++) {
-        this->cardsOnHand.at(i) = hand.getCardsOnHand().at(i);
-    }
-}
-
-// Stream overloading for card.
-std::ostream & operator<<(std::ostream &os, Card::typeOfCard cardType) {
-    os << cardToString(cardType);
-    return os;
-}
-
-// To get the private vector of cards on Hand.
-std::vector<Card*> Hand::getCardsOnHand() {
-    return cardsOnHand;
-}
-
-// Stream overloading for Hand.
-std::ostream& operator<<(std::ostream &os, Hand &hand) {
-    os << "There are " << hand.getCardsOnHand().size() << " cards on Hand:" << std::endl;
-    for(int i = 0; i < hand.getCardsOnHand().size(); i++) {
-        os << "  Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
-    }
-    return os;
-}
-
-// To add a card to Hand.
-void Hand::addCard(Card* card) {
-    cardsOnHand.push_back(card);
-}
-
-// To remove a card from Hand.
-void Hand::removeCard(Card* card) {
-    cardsOnHand.erase(std::remove(cardsOnHand.begin(), cardsOnHand.end(), card), cardsOnHand.end());
-}
-
-// Show what cards are in and.
-void Hand::showHand(Hand& hand) {
-    if(cardsOnHand.size() == 0) {
-        std::cout << "There are no cards on Hand." << std::endl;
-    } else {
-        std::cout << hand; 
-    }
-    std::cout << "----------------------------" << std::endl;
-}
-
-// Destructor for Hand and deletes the Card* of each card in Hand.
-Hand::~Hand() {
-    for(int i = 0; i < cardsOnHand.size(); i++) {
-        delete cardsOnHand.at(i);
-    }
-}
-
-// Imeplementation of Deck.
-Deck::Deck() : cardsOnDeck() {}
-
-// Copy constructor for Deck.
-Deck::Deck(Deck &deck){
-    for(int i = 0; i < deck.cardsOnDeck.size(); i++) {
-        this->cardsOnDeck.at(i) = deck.getCardsOnDeck().at(i);
-    }
-}
-
-// To add a card to the Deck.
-void Deck::addCard(Card* card) {
-    cardsOnDeck.push_back(card);
-
-}
-
-//To remove a card from the Deck.
-void Deck::removeCard(Card* card) {
-    cardsOnDeck.erase(std::remove(cardsOnDeck.begin(), cardsOnDeck.end(), card), cardsOnDeck.end());
-}
-
-// Returns the collection of cards in the Deck.
-std::vector<Card*> Deck::getCardsOnDeck() {
-    return cardsOnDeck;
-}
+    deck.addCard(reinforcement);
+    deck.addCard(bomb);
+    deck.addCard(blockade);
+    deck.addCard(airlift);
+    deck.addCard(diplomacy);
 
 
-// Stream overloading for Deck.
-std::ostream & operator << (std::ostream &os, Deck &deck) {
-    os << "There are " << deck.getCardsOnDeck().size() << " cards on the Deck:" << std::endl;
+   
+
+    //After adding the cards, the deck has 5 cards.
+    std::cout <<"----------------------------" << std::endl;
+    deck.showDeck(deck);
+    // Hand is empty for now.
+    hand.showHand(hand);
+
+    assert(deck.getCardsOnDeck().size() == 5);
+    assert(hand.getCardsOnHand().size() == 0);
+
+
+
+    // Drawing Card #1.
+    int deckBefore = deck.getCardsOnDeck().size();
+    int handBefore = hand.getCardsOnHand().size();
+    std::string drawn = deck.draw(hand);
+
+    assert(deck.getCardsOnDeck().size() == deckBefore - 1);
+    assert(hand.getCardsOnHand().size() == handBefore + 1);
+
+    // After drawing Card #1, the deck has 4 cards and hand, 1 card.
+    deck.showDeck(deck);
+    hand.showHand(hand);
+
+
+
+    // Drawing Card #2.
+    deckBefore = deck.getCardsOnDeck().size();
+    handBefore = hand.getCardsOnHand().size();
+    drawn = deck.draw(hand);
+
+    assert(deck.getCardsOnDeck().size() == deckBefore - 1);
+    assert(hand.getCardsOnHand().size() == handBefore + 1);
+
+    // After drawing Card #2, the deck has 3 cards and the hand, 2 cards.
+    deck.showDeck(deck);
+    hand.showHand(hand);
+
+
+
+    // Playing the Cards on Hand.
+    std::cout << "PLAYING..." << std::endl;
+    deckBefore = deck.getCardsOnDeck().size();
+    handBefore = hand.getCardsOnHand().size();
+
+    // Play the first card.
+    Card *cardPlayed = hand.getCardsOnHand().at(0);
+    cardPlayed->play(cardPlayed, deck, hand);
+
+    assert(deck.getCardsOnDeck().size() == deckBefore + 1);
+    assert(hand.getCardsOnHand().size() == handBefore - 1);
+    std::cout <<"----------------------------" << std::endl;
+
+    // The card is removed from Hand, and returned back to the Deck.
+    deck.showDeck(deck);
+    hand.showHand(hand);
+
     
-    for(int i = 0; i < deck.getCardsOnDeck().size(); i++) {
-        os << "  " << deck.getCardsOnDeck().at(i)->getCard() << std::endl;
-    }
-
-    return os;
-}
-
-
-
-// To Draw a card from the Deck and place it in Hand.
-std::string Deck::draw(Hand &hand) {
-    Card* cardDrawn = nullptr;
-    std::string cardDrawnString = "";
     
-    if(cardsOnDeck.size() > 0) {
-
-         //Generating a random index and drawing the card from that index.
-        srand(time(0));
-        int randomIndex = rand() % cardsOnDeck.size();
-        cardDrawn = cardsOnDeck.at(randomIndex);
-
-        // Erase card after drawing it.
-        cardsOnDeck.erase(cardsOnDeck.begin() + randomIndex);
-        cardDrawnString = cardToString(cardDrawn->getCard());
-        
-        // Add drawn card to hand.
-        hand.addCard(cardDrawn);
-
-        std::cout << "The " << cardDrawnString << " card is drawn from the deck, and added to hand." << std::endl;
-    } else {
-        std::cout << "The deck is empty." << std::endl;
-       
-    }
     
-    return cardDrawnString;
-}
-
-
-// Show and print the cards that are in the Deck.
-void Deck::showDeck(Deck &deck) {
-    if(cardsOnDeck.size() == 0) {
-        std::cout << "The deck is empty." << std::endl;
-    } else {
-        std::cout << deck; // print out Deck cards.
-    }
+    // Play another card, where Hand should have no cards.
     
-    std::cout << "----------------------------" << std::endl;
-}
+    // Play the last card.
+    cardPlayed = hand.getCardsOnHand().back();
+    cardPlayed->play(cardPlayed, deck, hand);
 
-// Destructor for Deck. Deletes the Card* of each card in the Deck.
-Deck::~Deck() {
-    for(int i = 0; i < cardsOnDeck.size(); i++) {
-        delete cardsOnDeck.at(i);
-    }
+    assert(hand.getCardsOnHand().empty());
+
 }
