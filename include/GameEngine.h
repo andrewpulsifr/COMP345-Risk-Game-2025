@@ -120,12 +120,12 @@ private:
     using GameStateCmdPair = std::pair<GameState, std::string>;
     using TransitionMap = std::map<GameStateCmdPair, GameState>;
 
-    GameState* currentState; // Current game state (pointer as required)
-    TransitionMap* stateTransitions; // Valid transitions map (pointer as required)
+    GameState* currentState; // Current game state using pointer as required
+    TransitionMap* stateTransitions; // Valid transitions map using pointer as required
 
-    // Game components (will be used in future assignments)
-    Map* gameMap; // The current game map (pointer as required)
-    std::vector<Player*>* players; // List of players in the game (pointer as required)
+    // Game data members
+    Map* gameMap; // The current game map using pointer as required
+    std::vector<Player*>* players; // List of players in the game using pointer as required
     MapLoader* mapLoader; // Map loader instance (pointer as required)
     
     // Private helper methods
