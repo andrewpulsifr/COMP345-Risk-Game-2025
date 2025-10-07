@@ -1,4 +1,5 @@
 #include "../include/Cards.h"
+#include <cassert>
 
 void testCards() {
     Deck deck;
