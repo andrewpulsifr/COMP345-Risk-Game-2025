@@ -33,6 +33,9 @@ Player::Player(std::string name)
       orders_(new OrdersList()) {}
 
 
+// @brief Assignment operator
+// @param copyPlayer The player to copy from
+// @return Player& Reference to this player after assignment
 Player& Player::operator=(const Player& copyPlayer) {
     if (this != &copyPlayer) {
         playerName = copyPlayer.playerName;
@@ -75,7 +78,7 @@ void Player::addPlayerTerritory(Territory* territory) {
 
 // Remove a Player's territory.
 void Player::removePlayerTerritory(Territory* territory) {
-    auto it = std::find(ownedTerritories.begin(), ownedTerritories.end(), territory);
+    std::vector<Territory*>::iterator it = std::find(ownedTerritories.begin(), ownedTerritories.end(), territory);
     if (it != ownedTerritories.end()) {
         ownedTerritories.erase(it);
         territory->setOwner(nullptr);
@@ -94,7 +97,8 @@ std::vector<Territory*> Player::toDefend() {
     return ownedTerritories;
 }
 
-//Checks adjacent territories to owned ones and returns a vector with the attackable territories
+// @brief Returns list of territories that can be attacked (adjacent enemy territories)
+// @return std::vector<Territory*> List of all adjacent enemy territories that can be attacked
 std::vector<Territory*> Player::toAttack() {
     std::vector<Territory*> attackList;
     for (Territory* mine : ownedTerritories) {
@@ -111,6 +115,8 @@ std::vector<Territory*> Player::toAttack() {
 
 //Orders
 
+// @brief Issues a new order and adds it to the player's order list
+// @param orderIssued Pointer to the order being issued
 void Player::issueOrder(Order* orderIssued) {
     if (!orders_ || !orderIssued) return;
     orders_->add(orderIssued);
@@ -122,8 +128,9 @@ void Player::issueOrder(Order* orderIssued) {
 // Stream overloading for Player.
 std::ostream& operator<<(std::ostream& os, const Player& player) {
     os << "Player: " << player.getPlayerName() << "\nOwned Territories: ";
-    for (auto t : player.getOwnedTerritories())
-        os << t->getName() << " ";
+    for (Territory* territory : player.getOwnedTerritories()) {
+        os << territory->getName() << " ";
+    }
     os << "\n";
     return os;
 }
