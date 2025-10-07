@@ -44,7 +44,7 @@ void Card::play(Card* cardPlayed, Deck &deck, Hand &hand) {
     switch(cardPlayed->getCard()) {
         case Bomb:
             bomb->execute();
-
+            
             std::cout << "The Bomb card is played.";
             break;
         case Reinforcement:
@@ -170,6 +170,8 @@ std::ostream & operator << (std::ostream &os, Deck &deck) {
 
     return os;
 }
+
+
 
 // To Draw a card from the Deck and place it in Hand.
 std::string Deck::draw(Hand &hand) {
