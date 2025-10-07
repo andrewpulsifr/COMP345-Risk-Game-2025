@@ -1,7 +1,7 @@
 /**
  * @file GameEngine.cpp
  * @brief Implementation of Assignment 1 – Part 5 (Warzone): Game Engine with state management
- * @author Andrew Pulsifer
+ * @author Andrew Pulsifer and Matteo Bianchini
  * @date October 2025
  * @version 1.0
  * 

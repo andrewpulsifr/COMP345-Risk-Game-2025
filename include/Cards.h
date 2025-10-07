@@ -4,7 +4,6 @@
 #include <random>
 #include <string>
 #include <cstdlib>
-//using namespace std;
 
 // Three classes are implemented in Cards.
 class Card;

@@ -5,11 +5,10 @@
 #include <cassert>
 #include <unordered_set>
 #include <algorithm>
-
-using namespace std;
-
 #include <unordered_map>
 #include <string>
+
+using namespace std;
 
 namespace {
 
