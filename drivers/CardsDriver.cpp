@@ -33,8 +33,8 @@ void testCards() {
 
 
     // Drawing Card #1.
-    int deckBefore = deck.getCardsOnDeck().size();
-    int handBefore = hand.getCardsOnHand().size();
+    size_t deckBefore = deck.getCardsOnDeck().size();
+    size_t handBefore = hand.getCardsOnHand().size();
     std::string drawn = deck.draw(hand);
 
     assert(deck.getCardsOnDeck().size() == deckBefore - 1);
