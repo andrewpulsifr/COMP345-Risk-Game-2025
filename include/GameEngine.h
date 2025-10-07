@@ -116,9 +116,13 @@ public:
     void displayGameStatus() const;
 
 private:
+    // Type aliases for readability
+    using GameStateCmdPair = std::pair<GameState, std::string>;
+    using TransitionMap = std::map<GameStateCmdPair, GameState>;
+
     GameState* currentState; // Current game state (pointer as required)
-    std::map<std::pair<GameState, std::string>, GameState>* stateTransitions; // Valid transitions map (pointer as required)
-    
+    TransitionMap* stateTransitions; // Valid transitions map (pointer as required)
+
     // Game components (will be used in future assignments)
     Map* gameMap; // The current game map (pointer as required)
     std::vector<Player*>* players; // List of players in the game (pointer as required)
