@@ -5,6 +5,7 @@
 #include <cassert>
 #include <unordered_set>
 #include <algorithm>
+#include <limits>
 #include <unordered_map>
 #include <string>
 

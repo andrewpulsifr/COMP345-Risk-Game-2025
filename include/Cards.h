@@ -17,7 +17,7 @@ class Deck {
         Deck(Deck const &deck); // Copy constructor for Deck.
         void addCard(Card* card);
         void removeCard(Card* card);
-        std::vector<Card*> getCardsOnDeck();
+        std::vector<Card*> getCardsOnDeck() const;
         std::string draw(Hand &hand);
         void showDeck(Deck &deck);
         ~Deck(); // Destructor for Card*.
@@ -39,8 +39,7 @@ class Card {
 
         Card(typeOfCard cardType); // Constructor.
         Card(Card const & card); // Copy constructor for Card.
-        std::string cardToString(typeOfCard cardType); //typeOfCard returns a number value, so we have to convert to string.
-        typeOfCard getCard();
+    typeOfCard getCard() const;
         void play(Card* cardPlayed, Deck &deck, Hand &hand); // Cards can be played, but they will be removed from hand and returned to deck afterwards.
 
     private:
@@ -53,7 +52,7 @@ class Hand {
     public:
         Hand();
         Hand(Hand const &hand); // Copy constructor for Hand.
-        std::vector<Card*> getCardsOnHand();
+    std::vector<Card*> getCardsOnHand() const;
         void addCard(Card* card);
         void removeCard(Card* card);
         void showHand(Hand& hand);
@@ -65,6 +64,9 @@ class Hand {
 
 
 // Stream overloaders for each class: Cards, Hand, and Deck.
+// Free helper to convert enum to string
+std::string cardToString(Card::typeOfCard cardType);
+
 std::ostream & operator << (std::ostream &os, const Card &card); // stream overloading for Cards.
 std::ostream & operator << (std::ostream &os, const Hand &hand); // stream overloading for Hand.
 std::ostream & operator << (std::ostream &os, const Deck &deck); // stream overloading for Deck.
