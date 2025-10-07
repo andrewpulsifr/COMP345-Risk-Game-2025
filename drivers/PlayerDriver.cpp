@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../include/Map.h"     // still include, so Territory is complete
+#include "../include/Map.h"    
 #include "../include/Player.h"
 #include "../include/Orders.h"
 
@@ -9,7 +9,6 @@ void testPlayers() {
     Player alice("Alice");
     Player bob("Bob");
 
-    // Use default ctor (declared in your Map.h) to avoid relying on a param ctor
     Territory* t1 = new Territory();
     Territory* t2 = new Territory();
     Territory* t3 = new Territory();

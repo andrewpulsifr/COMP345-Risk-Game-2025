@@ -9,8 +9,14 @@
 Order::Order(std::string desc) : description(desc) {}
 Order::~Order() {}
 
+const std::string& Order::effect() const { return effect_; }
+const std::string& Order::getDescription() const { return description; }
+
 std::ostream& operator<<(std::ostream& os, const Order& order) {
-    os << order.description;  // TODO: in later assignment will print effect here
+    os << order.getDescription();
+    if (!order.effect().empty()) {
+        os << " | effect: " << order.effect();
+    }
     return os;
 }
 
@@ -18,7 +24,8 @@ std::ostream& operator<<(std::ostream& os, const Order& order) {
 DeployOrder::DeployOrder() : Order("Deploy") {}
 DeployOrder::DeployOrder(Player* issuer, Territory* target, int amount)
     : Order("Deploy"), issuer_(issuer), target_(target), amount_(amount) {}
-    
+DeployOrder::DeployOrder(const DeployOrder&) = default;
+
 bool DeployOrder::validate() const {
     if (!issuer_ || !target_ || amount_ <= 0) return false;
     return target_->getOwner() == issuer_;
@@ -39,17 +46,12 @@ Order* DeployOrder::clone()   const { return new DeployOrder(*this); }
 AdvanceOrder::AdvanceOrder() : Order("Advance") {}
 AdvanceOrder::AdvanceOrder(Player* issuer, Territory* source, Territory* target, int amount)
     : Order("Advance"), issuer_(issuer), source_(source), target_(target), amount_(amount) {}
-
-static bool areAdjacent(const Territory* a, const Territory* b) {
-    if (!a || !b) return false;
-    const auto& adjs = a->getAdjacents();
-    return std::find(adjs.begin(), adjs.end(), b) != adjs.end();
-}
+AdvanceOrder::AdvanceOrder(const AdvanceOrder&) = default;
 
 bool AdvanceOrder::validate() const {
     if (!issuer_ || !source_ || !target_ || amount_ <= 0) return false;
     if (source_->getOwner() != issuer_) return false;
-    return areAdjacent(source_, target_);
+    return source_->isAdjacentTo(target_);   // <- use Map’s API
 }
 
 void AdvanceOrder::execute() {
@@ -67,6 +69,8 @@ Order* AdvanceOrder::clone()  const { return new AdvanceOrder(*this); }
 BombOrder::BombOrder() : Order("Bomb") {}
 BombOrder::BombOrder(Player* issuer, Territory* target)
     : Order("Bomb"), issuer_(issuer), target_(target) {}
+BombOrder::BombOrder(const BombOrder&) = default;
+
 
 bool BombOrder::validate() const {
     if (!issuer_ || !target_) return false;
@@ -88,6 +92,8 @@ Order* BombOrder::clone()     const { return new BombOrder(*this); }
 BlockadeOrder::BlockadeOrder() : Order("Blockade") {}
 BlockadeOrder::BlockadeOrder(Player* issuer, Territory* target)
     : Order("Blockade"), issuer_(issuer), target_(target) {}
+BlockadeOrder::BlockadeOrder(const BlockadeOrder&) = default;
+
 
 bool BlockadeOrder::validate() const {
     if (!issuer_ || !target_) return false;
@@ -108,6 +114,8 @@ Order* BlockadeOrder::clone() const { return new BlockadeOrder(*this); }
 AirliftOrder::AirliftOrder() : Order("Airlift") {}
 AirliftOrder::AirliftOrder(Player* issuer, Territory* source, Territory* target, int amount)
     : Order("Airlift"), issuer_(issuer), source_(source), target_(target), amount_(amount) {}
+AirliftOrder::AirliftOrder(const AirliftOrder&) = default;
+
 
 bool AirliftOrder::validate() const {
     if (!issuer_ || !source_ || !target_ || amount_ <= 0) return false;
@@ -131,6 +139,8 @@ Order* AirliftOrder::clone()  const { return new AirliftOrder(*this); }
 NegotiateOrder::NegotiateOrder() : Order("Negotiate") {}
 NegotiateOrder::NegotiateOrder(Player* issuer, Player* other)
     : Order("Negotiate"), issuer_(issuer), other_(other) {}
+NegotiateOrder::NegotiateOrder(const NegotiateOrder&) = default;
+
 
 bool NegotiateOrder::validate() const {
     if (!issuer_ || !other_) return false;
@@ -173,7 +183,7 @@ OrdersList& OrdersList::operator=(const OrdersList& other) {
     return *this;
 }
 
-// --- move ctor ---
+// --- move constructor ---
 OrdersList::OrdersList(OrdersList&& other) noexcept
     : orders(std::move(other.orders)) {
     other.orders.clear();

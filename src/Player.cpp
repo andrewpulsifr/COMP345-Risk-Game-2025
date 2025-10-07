@@ -108,19 +108,6 @@ void Player::issueOrder(Order* orderIssued) {
     orders_->add(orderIssued);
 }
 
-Order* Player::issueOrder(const std::string& type) {
-    Order* o = nullptr;
-    if (type == "deploy")      o = new DeployOrder();
-    else if (type == "advance")   o = new AdvanceOrder();
-    else if (type == "bomb")      o = new BombOrder();
-    else if (type == "blockade")  o = new BlockadeOrder();
-    else if (type == "airlift")   o = new AirliftOrder();
-    else if (type == "negotiate") o = new NegotiateOrder();
-
-    if (o) orders_->add(o);
-    return o;
-}
-
 
 //Debug / Print
 

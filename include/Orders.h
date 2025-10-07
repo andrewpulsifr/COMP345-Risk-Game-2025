@@ -1,3 +1,18 @@
+/**
+ * @file Orders.cpp
+ * @brief Assignment 1 – Part 3 (Warzone): Orders & OrdersList implementation
+ *
+ * @details
+ * Implements the Orders API declared in Orders.h:
+ *  - Concrete orders’ constructors, validate(), execute(), name(), clone()
+ *  - OrdersList Rule of 5 and mutators (add/remove/move/print)
+ *  - Stream output operator to display description and effect text
+ *
+ * Implementation notes:
+ *  - AdvanceOrder::validate() defers adjacency to Map API
+ *  - execute() methods set effect strings
+ */
+
 #pragma once
 #include <string>
 #include <vector>
@@ -22,8 +37,8 @@ public:
     virtual std::string name() const = 0;
 
 
-    const std::string& effect() const { return effect_; }
-    const std::string& getDescription() const { return description; }
+    const std::string& effect() const;
+    const std::string& getDescription() const;
 
     friend std::ostream& operator<<(std::ostream& os, const Order& order);
 };
@@ -34,6 +49,7 @@ class DeployOrder : public Order {
 public:
     DeployOrder(); 
     DeployOrder(Player* issuer, Territory* target, int amount);
+    DeployOrder(const DeployOrder&);
     Order* clone() const override;
 
     bool validate() const override;
@@ -50,6 +66,7 @@ class AdvanceOrder : public Order {
 public:
     AdvanceOrder();
     AdvanceOrder(Player* issuer, Territory* source, Territory* target, int amount);
+    AdvanceOrder(const AdvanceOrder&);    
     Order* clone() const override;
 
     bool validate() const override;
@@ -67,6 +84,7 @@ class BombOrder : public Order {
 public:
     BombOrder();
     BombOrder(Player* issuer, Territory* target);
+    BombOrder(const BombOrder&);    
     Order* clone() const override;
 
     bool validate() const override;
@@ -82,6 +100,7 @@ class BlockadeOrder : public Order {
 public:
     BlockadeOrder();
     BlockadeOrder(Player* issuer, Territory* target);
+    BlockadeOrder(const BlockadeOrder&);    
     Order* clone() const override;
 
     bool validate() const override;
@@ -97,6 +116,7 @@ class AirliftOrder : public Order {
 public:
     AirliftOrder();
     AirliftOrder(Player* issuer, Territory* source, Territory* target, int amount);
+    AirliftOrder(const AirliftOrder&);    
     Order* clone() const override;
 
     bool validate() const override;
@@ -113,6 +133,7 @@ class NegotiateOrder : public Order {
 public:
     NegotiateOrder();
     NegotiateOrder(Player* issuer, Player* other);
+    NegotiateOrder(const NegotiateOrder&);    
     Order* clone() const override;
 
     bool validate() const override;
