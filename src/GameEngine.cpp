@@ -181,31 +181,22 @@ ostream& operator<<(ostream& os, const GameEngine& engine) {
  * - Ensures only valid transitions are allowed for each state
  */
 void GameEngine::initializeTransitions() {
-    // HARDCODED state transitions as per assignment diagram !!!!!!!
-    stateTransitions = new map<pair<GameState, string>, GameState>();
-    
-    // Initialize all valid transitions based on assignment state diagram
-    (*stateTransitions)[{GameState::Start, "loadmap"}] = GameState::MapLoaded;
-    
-    (*stateTransitions)[{GameState::MapLoaded, "loadmap"}] = GameState::MapLoaded;
-    (*stateTransitions)[{GameState::MapLoaded, "validatemap"}] = GameState::MapValidated;
-    
-    (*stateTransitions)[{GameState::MapValidated, "addplayer"}] = GameState::PlayersAdded;
-    
-    (*stateTransitions)[{GameState::PlayersAdded, "addplayer"}] = GameState::PlayersAdded;
-    (*stateTransitions)[{GameState::PlayersAdded, "assigncountries"}] = GameState::AssignReinforcement;
-    
-    (*stateTransitions)[{GameState::AssignReinforcement, "issueorder"}] = GameState::IssueOrders;
-    
-    (*stateTransitions)[{GameState::IssueOrders, "issueorder"}] = GameState::IssueOrders;
-    (*stateTransitions)[{GameState::IssueOrders, "endissueorders"}] = GameState::ExecuteOrders;
-    
-    (*stateTransitions)[{GameState::ExecuteOrders, "execorder"}] = GameState::ExecuteOrders;
-    (*stateTransitions)[{GameState::ExecuteOrders, "endexecorders"}] = GameState::AssignReinforcement;
-    (*stateTransitions)[{GameState::ExecuteOrders, "win"}] = GameState::Win;
-    
-    (*stateTransitions)[{GameState::Win, "play"}] = GameState::Start;
-    (*stateTransitions)[{GameState::Win, "end"}] = GameState::End;
+    stateTransitions = new std::map<std::pair<GameState, std::string>, GameState>{
+        {{GameState::Start,            "loadmap"},       GameState::MapLoaded},
+        {{GameState::MapLoaded,        "loadmap"},       GameState::MapLoaded},
+        {{GameState::MapLoaded,        "validatemap"},   GameState::MapValidated},
+        {{GameState::MapValidated,     "addplayer"},     GameState::PlayersAdded},
+        {{GameState::PlayersAdded,     "addplayer"},     GameState::PlayersAdded},
+        {{GameState::PlayersAdded,     "assigncountries"}, GameState::AssignReinforcement},
+        {{GameState::AssignReinforcement,"issueorder"},  GameState::IssueOrders},
+        {{GameState::IssueOrders,      "issueorder"},    GameState::IssueOrders},
+        {{GameState::IssueOrders,      "endissueorders"},GameState::ExecuteOrders},
+        {{GameState::ExecuteOrders,    "execorder"},     GameState::ExecuteOrders},
+        {{GameState::ExecuteOrders,    "endexecorders"}, GameState::AssignReinforcement},
+        {{GameState::ExecuteOrders,    "win"},           GameState::Win},
+        {{GameState::Win,              "play"},          GameState::Start},
+        {{GameState::Win,              "end"},           GameState::End},
+    };
 }
 
 /**
