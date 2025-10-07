@@ -53,3 +53,6 @@ CMakeFiles/
 # Temporary files
 warzone_test.dSYM/
 warzone_test
+
+# cmd things
+build/
