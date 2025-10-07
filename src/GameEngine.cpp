@@ -1,7 +1,7 @@
 /**
  * @file GameEngine.cpp
  * @brief Implementation of Assignment 1 – Part 5 (Warzone): Game Engine with state management
- * @author Andrew Pulsifer
+ * @author Andrew Pulsifer and Matteo Bianchini
  * @date October 2025
  * @version 1.0
  * 
@@ -18,8 +18,6 @@
 #include <sstream>
 
 using namespace std;
-
-Map gameMap;
 
 // ======================= Command Class =======================
 
@@ -91,7 +89,7 @@ GameEngine::GameEngine()
  */
 GameEngine::GameEngine(const GameEngine& other) 
     : currentState(new GameState(*other.currentState)),
-      stateTransitions(new map<pair<GameState, string>, GameState>(*other.stateTransitions)),
+      stateTransitions(new TransitionMap(*other.stateTransitions)),
       gameMap(nullptr), // Map copying would require more complex logic
       players(new vector<Player*>()),
       mapLoader(nullptr) {
@@ -136,7 +134,7 @@ GameEngine& GameEngine::operator=(const GameEngine& other) {
         
         // Deep copy from other
         currentState = new GameState(*other.currentState);
-        stateTransitions = new map<pair<GameState, string>, GameState>(*other.stateTransitions);
+        stateTransitions = new TransitionMap(*other.stateTransitions);
         players = new vector<Player*>();
         
         // Deep copy players vector
@@ -181,7 +179,7 @@ ostream& operator<<(ostream& os, const GameEngine& engine) {
  * - Ensures only valid transitions are allowed for each state
  */
 void GameEngine::initializeTransitions() {
-    stateTransitions = new std::map<std::pair<GameState, std::string>, GameState>{
+    stateTransitions = new TransitionMap{
         {{GameState::Start,            "loadmap"},       GameState::MapLoaded},
         {{GameState::MapLoaded,        "loadmap"},       GameState::MapLoaded},
         {{GameState::MapLoaded,        "validatemap"},   GameState::MapValidated},
@@ -222,7 +220,7 @@ bool GameEngine::processCommand(const Command& cmd) {
         return false;
     }
     
-    auto key = make_pair(*currentState, commandStr);
+    GameStateCmdPair key = make_pair(*currentState, commandStr);
     GameState newState = (*stateTransitions)[key];
     
     cout << "Transitioning from " << getStateName(*currentState) 
@@ -269,7 +267,7 @@ string GameEngine::getStateName(GameState state) const {
  * @return true if command is valid for current state, false otherwise
  */
 bool GameEngine::isValidCommand(const string& commandStr) const {
-    auto key = make_pair(*currentState, commandStr);
+    GameStateCmdPair key = make_pair(*currentState, commandStr);
     return stateTransitions->find(key) != stateTransitions->end();
 }
 
@@ -279,7 +277,7 @@ bool GameEngine::isValidCommand(const string& commandStr) const {
  */
 vector<string> GameEngine::getValidCommands() const {
     vector<string> validCmds;
-    for (const auto& transition : *stateTransitions) {
+    for (const TransitionMap::value_type& transition : *stateTransitions) {
         if (transition.first.first == *currentState) {
             validCmds.push_back(transition.first.second);
         }
@@ -307,7 +305,7 @@ void GameEngine::printCurrentState() const {
 
 void GameEngine::printValidCommands() const {
     cout << "Valid commands: ";
-    auto validCmds = getValidCommands();
+    vector<string> validCmds = getValidCommands();
     for (size_t i = 0; i < validCmds.size(); ++i) {
         cout << validCmds[i];
         if (i < validCmds.size() - 1) cout << ", ";
@@ -352,10 +350,9 @@ void GameEngine::setState(GameState newState) {
  * @return true if transition is valid, false otherwise
  */
 bool GameEngine::isValidTransition(GameState from, const string& command, GameState& to) const {
-    auto key = make_pair(from, command);
-    auto it = stateTransitions->find(key);
-    if (it != stateTransitions->end()) {
-        to = it->second;
+    GameStateCmdPair key = make_pair(from, command);
+    if (stateTransitions->find(key) != stateTransitions->end()) {
+        to = (*stateTransitions)[key];
         return true;
     }
     return false;
@@ -387,38 +384,38 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
     }
 }
 
-// State-specific action handlers (stubs for future implementation)
+// State-specific action handlers --> stub implementations for now
 void GameEngine::handleLoadMap(const string& command) {
     cout << "  -> Loading map... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning 
 }
 
 void GameEngine::handleValidateMap(const string& command) {
     cout << "  -> Validating map... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleAddPlayer(const string& command) {
     cout << "  -> Adding player... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleAssignCountries(const string& command) {
     cout << "  -> Assigning countries... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleIssueOrder(const string& command) {
     cout << "  -> Issuing order... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleExecuteOrders(const string& command) {
     cout << "  -> Executing orders... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
 
 void GameEngine::handleEndGame(const string& command) {
     cout << "  -> Handling game end... (stub implementation)" << endl;
-    (void)command; // Suppress unused parameter warning
+    (void)command; // Stub suppress unused parameter warning
 }
