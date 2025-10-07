@@ -88,4 +88,6 @@ void testCards() {
 
     assert(hand.getCardsOnHand().empty());
 
+    // Ending message.
+    std::cout << "=== End Cards Test ===" << std::endl;
 }

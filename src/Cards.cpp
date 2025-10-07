@@ -5,10 +5,9 @@
 // Constructor for Card
 Card::Card(typeOfCard cardType) : card(cardType) {} 
 
-// Copy constructor for Card.
-Card::Card(Card &card) {
-    this->card = card.getCard();
-}
+// Deep copy constructor for Card.
+Card::Card(Card const &card) : card(card.card) {}
+
 
 // Cards are converted into a string to be displayed when printed.
 std::string cardToString(Card::typeOfCard cardType) {
@@ -80,9 +79,15 @@ void Card::play(Card* cardPlayed, Deck &deck, Hand &hand) {
 //Implementation of Hand.
 Hand::Hand() : cardsOnHand() {} // Default constructor.
 
-Hand::Hand(Hand &hand) {
-    for(int i = 0; i < hand.cardsOnHand.size(); i++) {
-        this->cardsOnHand.at(i) = hand.getCardsOnHand().at(i);
+// Deep copy constructor for Hand.
+Hand::Hand(Hand const &hand) {
+    // Deep copy: create new Card objects with same enum value
+    for(size_t i = 0; i < hand.cardsOnHand.size(); ++i) {
+        Card* cardptr = hand.cardsOnHand[i];
+        if (cardptr) {
+            Card* copy = new Card(cardptr->getCard());
+            this->cardsOnHand.push_back(copy);
+        }
     }
 }
 
@@ -136,10 +141,14 @@ Hand::~Hand() {
 // Imeplementation of Deck.
 Deck::Deck() : cardsOnDeck() {}
 
-// Copy constructor for Deck.
-Deck::Deck(Deck &deck){
+// Deep copy constructor for Deck.
+Deck::Deck(Deck const &deck){
     for(int i = 0; i < deck.cardsOnDeck.size(); i++) {
-        this->cardsOnDeck.at(i) = deck.getCardsOnDeck().at(i);
+        Card* cardptr = deck.cardsOnDeck.at(i);
+        if (cardptr) {
+            Card* cardCopied = new Card(cardptr->getCard());
+            this->cardsOnDeck.push_back(cardCopied);
+        }
     }
 }
 
