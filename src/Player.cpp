@@ -1,6 +1,7 @@
 #include "../include/Player.h"
 #include "../include/Map.h"
 #include "../include/Orders.h"
+#include "../include/Cards.h"
 #include <algorithm>
 #include <iostream>
 
@@ -10,21 +11,21 @@
 
 Player::Player()
     : playerName("defaultName"),
-      playerHand(),
+      playerHand(new Hand()),
       ownedTerritories(),
       orders_(new OrdersList()) {}
 
 
 Player::Player(const Player& copyPlayer)
     : playerName(copyPlayer.playerName),
-      playerHand(copyPlayer.playerHand),
+      playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
       orders_(new OrdersList(*copyPlayer.orders_))
 {}
 
 Player::Player(std::string name)
     : playerName(std::move(name)),
-      playerHand(),
+      playerHand(new Hand()),
       ownedTerritories(),
       orders_(new OrdersList()) {}
 
@@ -32,7 +33,7 @@ Player::Player(std::string name)
 Player& Player::operator=(const Player& copyPlayer) {
     if (this != &copyPlayer) {
         playerName = copyPlayer.playerName;
-        playerHand = copyPlayer.playerHand;
+        playerHand = new Hand(*copyPlayer.playerHand);
         ownedTerritories = copyPlayer.ownedTerritories;
         // deep copy into existing list
         *orders_ = *copyPlayer.orders_;
@@ -41,7 +42,7 @@ Player& Player::operator=(const Player& copyPlayer) {
 }
 
 Player::~Player() {
-    playerHand.clear();
+    playerHand->~Hand(); //calls the Hand destructor.
     ownedTerritories.clear();
     delete orders_;
     orders_ = nullptr;
@@ -90,16 +91,6 @@ std::vector<Territory*> Player::toAttack() {
     return attackList;
 }
 
-//Cards
-void Player::addCard(Card* card) {
-    playerHand.push_back(card);
-}
-
-void Player::removeCard(Card* card) {
-    auto it = std::find(playerHand.begin(), playerHand.end(), card);
-    if (it != playerHand.end())
-        playerHand.erase(it);
-}
 
 //Orders
 

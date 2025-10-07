@@ -12,7 +12,6 @@
 #include <vector>
 #include <string>
 #include <ostream>
-#include "Cards.h"
 
 class Territory;
 class Hand;
@@ -36,14 +35,11 @@ public:
 	std::vector<Territory*> toDefend(); //Returns a vector containing every attackable territory of player's
 	std::vector<Territory*> toAttack(); //Returns a vector containing every territory player can attack
 
-	void addCard(Card* card); //Adds a card to player's hand
-	void removeCard(Card* card); //Removes a card from the player's hand
-
 	void issueOrder(Order* orderIssued); //Adds an Order to be issued
 	
 private:
 	std::string playerName; //Player's Name
-	std::vector<Card*> playerHand; //Player's Hand
+	Hand* playerHand; //Player's Hand
 	std::vector<Territory*> ownedTerritories; //List of Territories currently owned by Player
 	OrdersList* orders_; //List of orders issued by Player
 
