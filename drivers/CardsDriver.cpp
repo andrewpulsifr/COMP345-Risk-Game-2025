@@ -37,8 +37,8 @@ void testCards() {
     size_t handBefore = hand.getCardsOnHand().size();
     std::string drawn = deck.draw(hand);
 
-    assert(deck.getCardsOnDeck().size() == deckBefore - 1);
-    assert(hand.getCardsOnHand().size() == handBefore + 1);
+    assert(deck.getCardsOnDeck().size() == static_cast<size_t>(deckBefore - 1));
+    assert(hand.getCardsOnHand().size() == static_cast<size_t>(handBefore + 1));
 
     // After drawing Card #1, the deck has 4 cards and hand, 1 card.
     deck.showDeck(deck);
@@ -51,8 +51,8 @@ void testCards() {
     handBefore = hand.getCardsOnHand().size();
     drawn = deck.draw(hand);
 
-    assert(deck.getCardsOnDeck().size() == deckBefore - 1);
-    assert(hand.getCardsOnHand().size() == handBefore + 1);
+    assert(deck.getCardsOnDeck().size() == static_cast<size_t>(deckBefore - 1));
+    assert(hand.getCardsOnHand().size() == static_cast<size_t>(handBefore + 1));
 
     // After drawing Card #2, the deck has 3 cards and the hand, 2 cards.
     deck.showDeck(deck);
@@ -69,8 +69,8 @@ void testCards() {
     Card *cardPlayed = hand.getCardsOnHand().at(0);
     cardPlayed->play(cardPlayed, deck, hand);
 
-    assert(deck.getCardsOnDeck().size() == deckBefore + 1);
-    assert(hand.getCardsOnHand().size() == handBefore - 1);
+    assert(deck.getCardsOnDeck().size() == static_cast<size_t>(deckBefore + 1));
+    assert(hand.getCardsOnHand().size() == static_cast<size_t>(handBefore - 1));
     std::cout <<"----------------------------" << std::endl;
 
     // The card is removed from Hand, and returned back to the Deck.

@@ -716,14 +716,17 @@ ostream& operator<<(ostream& os, const Map& map) {
 
 MapLoader::MapLoader() {}
 
-MapLoader::MapLoader(const MapLoader& other) { (void)other; }
+MapLoader::MapLoader(const MapLoader& other) {
+    // MapLoader is currently stateless no data members to copy
+    (void)other; // Suppress unused parameter warning for now
+}
 
 MapLoader::~MapLoader() {}
 
 MapLoader& MapLoader::operator=(const MapLoader& other) {
     if (this != &other) {
-        // TODO: Copy any member variables if added later
-        (void)other; // Suppress unused parameter warning
+        // MapLoader is currently stateless no data members to copy
+        (void)other; // Suppress unused parameter warning for now
     }
     return *this;
 }

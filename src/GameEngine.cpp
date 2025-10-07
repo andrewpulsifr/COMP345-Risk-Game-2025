@@ -19,6 +19,8 @@
 
 using namespace std;
 
+Map gameMap;
+
 // ======================= Command Class =======================
 
 /** @brief Default constructor creates empty command */
@@ -93,6 +95,16 @@ GameEngine::GameEngine(const GameEngine& other)
       gameMap(nullptr), // Map copying would require more complex logic
       players(new vector<Player*>()),
       mapLoader(nullptr) {
+    // Deep copy gameMap if it exists
+    if(other.gameMap){
+        gameMap = new Map(*other.gameMap);
+    }
+    
+    // Deep copy mapLoader if it exists
+    if(other.mapLoader){
+        mapLoader = new MapLoader(*other.mapLoader);
+    }
+    
     // Deep copy players vector (shallow copy of Player pointers as they're managed elsewhere)
     for (Player* player : *other.players) {
         players->push_back(player);
@@ -104,8 +116,8 @@ GameEngine::~GameEngine() {
     delete currentState;
     delete stateTransitions;
     delete players;
-    // Note: gameMap and mapLoader are not deleted here as they may be managed elsewhere
-    // In a full implementation, you'd need to decide on ownership semantics
+    delete gameMap;      // GameEngine owns the map
+    delete mapLoader;    // GameEngine owns the map loader
 }
 
 /**
@@ -119,18 +131,32 @@ GameEngine& GameEngine::operator=(const GameEngine& other) {
         delete currentState;
         delete stateTransitions;
         delete players;
+        delete gameMap;
+        delete mapLoader;
         
         // Deep copy from other
         currentState = new GameState(*other.currentState);
         stateTransitions = new map<pair<GameState, string>, GameState>(*other.stateTransitions);
         players = new vector<Player*>();
         
+        // Deep copy players vector
         for (Player* player : *other.players) {
             players->push_back(player);
         }
         
-        gameMap = other.gameMap; // Shallow copy - assumes external ownership
-        mapLoader = other.mapLoader; // Shallow copy - assumes external ownership
+        // Deep copy gameMap if it exists
+        if(other.gameMap){
+            gameMap = new Map(*other.gameMap);
+        } else {
+            gameMap = nullptr;
+        }
+        
+        // Deep copy mapLoader if it exists
+        if(other.mapLoader){
+            mapLoader = new MapLoader(*other.mapLoader);
+        } else {
+            mapLoader = nullptr;
+        }
     }
     return *this;
 }
