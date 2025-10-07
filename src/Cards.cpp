@@ -5,10 +5,9 @@
 // Constructor for Card
 Card::Card(typeOfCard cardType) : card(cardType) {} 
 
-// Copy constructor for Card.
-Card::Card(Card &card) {
-    this->card = card.getCard();
-}
+// Deep copy constructor for Card.
+Card::Card(Card const &card) : card(card.card) {}
+
 
 // Cards are converted into a string to be displayed when printed.
 std::string cardToString(Card::typeOfCard cardType) {
@@ -80,9 +79,15 @@ void Card::play(Card* cardPlayed, Deck &deck, Hand &hand) {
 //Implementation of Hand.
 Hand::Hand() : cardsOnHand() {} // Default constructor.
 
-Hand::Hand(Hand &hand) {
-    for(int i = 0; i < hand.cardsOnHand.size(); i++) {
-        this->cardsOnHand.at(i) = hand.getCardsOnHand().at(i);
+// Deep copy constructor for Hand.
+Hand::Hand(Hand const &hand) {
+    // Deep copy: create new Card objects with same enum value
+    for(size_t i = 0; i < hand.cardsOnHand.size(); ++i) {
+        Card* cardptr = hand.cardsOnHand[i];
+        if (cardptr) {
+            Card* copy = new Card(cardptr->getCard());
+            this->cardsOnHand.push_back(copy);
+        }
     }
 }
 
@@ -100,7 +105,7 @@ std::vector<Card*> Hand::getCardsOnHand() {
 // Stream overloading for Hand.
 std::ostream& operator<<(std::ostream &os, Hand &hand) {
     os << "There are " << hand.getCardsOnHand().size() << " cards on Hand:" << std::endl;
-    for(int i = 0; i < hand.getCardsOnHand().size(); i++) {
+    for(size_t i = 0; i < hand.getCardsOnHand().size(); i++) {
         os << "  Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
     }
     return os;
@@ -128,7 +133,7 @@ void Hand::showHand(Hand& hand) {
 
 // Destructor for Hand and deletes the Card* of each card in Hand.
 Hand::~Hand() {
-    for(int i = 0; i < cardsOnHand.size(); i++) {
+    for(size_t i = 0; i < cardsOnHand.size(); i++) {
         delete cardsOnHand.at(i);
     }
 }
@@ -136,10 +141,14 @@ Hand::~Hand() {
 // Imeplementation of Deck.
 Deck::Deck() : cardsOnDeck() {}
 
-// Copy constructor for Deck.
-Deck::Deck(Deck &deck){
-    for(int i = 0; i < deck.cardsOnDeck.size(); i++) {
-        this->cardsOnDeck.at(i) = deck.getCardsOnDeck().at(i);
+// Deep copy constructor for Deck.
+Deck::Deck(Deck const &deck){
+    for(size_t i = 0; i < deck.cardsOnDeck.size(); i++) {
+        Card* cardptr = deck.cardsOnDeck.at(i);
+        if (cardptr) {
+            Card* cardCopied = new Card(cardptr->getCard());
+            this->cardsOnDeck.push_back(cardCopied);
+        }
     }
 }
 
@@ -164,7 +173,7 @@ std::vector<Card*> Deck::getCardsOnDeck() {
 std::ostream & operator << (std::ostream &os, Deck &deck) {
     os << "There are " << deck.getCardsOnDeck().size() << " cards on the Deck:" << std::endl;
     
-    for(int i = 0; i < deck.getCardsOnDeck().size(); i++) {
+    for(size_t i = 0; i < deck.getCardsOnDeck().size(); i++) {
         os << "  " << deck.getCardsOnDeck().at(i)->getCard() << std::endl;
     }
 
@@ -215,7 +224,7 @@ void Deck::showDeck(Deck &deck) {
 
 // Destructor for Deck. Deletes the Card* of each card in the Deck.
 Deck::~Deck() {
-    for(int i = 0; i < cardsOnDeck.size(); i++) {
+    for(size_t i = 0; i < cardsOnDeck.size(); i++) {
         delete cardsOnDeck.at(i);
     }
 }

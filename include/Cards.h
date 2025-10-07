@@ -15,7 +15,7 @@ class Hand;
 class Deck {
     public:
         Deck();
-        Deck(Deck &deck); // Copy constructor for Deck.
+        Deck(Deck const &deck); // Copy constructor for Deck.
         void addCard(Card* card);
         void removeCard(Card* card);
         std::vector<Card*> getCardsOnDeck();
@@ -39,7 +39,7 @@ class Card {
         };
 
         Card(typeOfCard cardType); // Constructor.
-        Card(Card & card); // Copy constructor for Card.
+        Card(Card const & card); // Copy constructor for Card.
         std::string cardToString(typeOfCard cardType); //typeOfCard returns a number value, so we have to convert to string.
         typeOfCard getCard();
         void play(Card* cardPlayed, Deck &deck, Hand &hand); // Cards can be played, but they will be removed from hand and returned to deck afterwards.
@@ -53,7 +53,7 @@ class Card {
 class Hand {
     public:
         Hand();
-        Hand(Hand &hand); // Copy constructor for Hand.
+        Hand(Hand const &hand); // Copy constructor for Hand.
         std::vector<Card*> getCardsOnHand();
         void addCard(Card* card);
         void removeCard(Card* card);
