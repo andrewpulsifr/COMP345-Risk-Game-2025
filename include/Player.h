@@ -26,6 +26,7 @@ public:
 	~Player(); //destructor
 
     std::string getPlayerName() const; //Getter for playerName
+	Hand* getPlayerHand() const;
 
     Player& operator=(const Player& other);
 	void addPlayerTerritory(Territory* territory); //Adds to Player's Owned Territories

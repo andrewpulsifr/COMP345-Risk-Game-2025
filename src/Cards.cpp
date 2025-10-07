@@ -67,13 +67,13 @@ void Card::play(Card* cardPlayed, Deck &deck, Hand &hand) {
             std::cout << "The Diplomacy card is played.";
             break;
         default:
-            std::cout << "The card is invalid.";
+            std::cout << "The Card is invalid.";
     };
 
     //After orders are executed, remove the card from Hand and place back into the Deck.
     hand.removeCard(cardPlayed);
     deck.addCard(cardPlayed);
-    std::cout << " The card is now returned to the deck." << std::endl;
+    std::cout << " The Card is now returned to the Deck." << std::endl;
 }
 
 //Implementation of Hand.
@@ -104,7 +104,7 @@ std::vector<Card*> Hand::getCardsOnHand() {
 
 // Stream overloading for Hand.
 std::ostream& operator<<(std::ostream &os, Hand &hand) {
-    os << "There are " << hand.getCardsOnHand().size() << " cards on Hand:" << std::endl;
+    os << "There are " << hand.getCardsOnHand().size() << " Cards on Hand:" << std::endl;
     for(size_t i = 0; i < hand.getCardsOnHand().size(); i++) {
         os << "  Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
     }
@@ -124,7 +124,7 @@ void Hand::removeCard(Card* card) {
 // Show what cards are in and.
 void Hand::showHand(Hand& hand) {
     if(cardsOnHand.size() == 0) {
-        std::cout << "There are no cards on Hand." << std::endl;
+        std::cout << "There are no Cards on the Player's Hand." << std::endl;
     } else {
         std::cout << hand; 
     }
@@ -171,7 +171,7 @@ std::vector<Card*> Deck::getCardsOnDeck() {
 
 // Stream overloading for Deck.
 std::ostream & operator << (std::ostream &os, Deck &deck) {
-    os << "There are " << deck.getCardsOnDeck().size() << " cards on the Deck:" << std::endl;
+    os << "There are " << deck.getCardsOnDeck().size() << " Cards on the Deck:" << std::endl;
     
     for(size_t i = 0; i < deck.getCardsOnDeck().size(); i++) {
         os << "  " << deck.getCardsOnDeck().at(i)->getCard() << std::endl;
@@ -201,9 +201,9 @@ std::string Deck::draw(Hand &hand) {
         // Add drawn card to hand.
         hand.addCard(cardDrawn);
 
-        std::cout << "The " << cardDrawnString << " card is drawn from the deck, and added to hand." << std::endl;
+        std::cout << "The " << cardDrawnString << " Card is drawn from the Deck, and added to the Player's Hand." << std::endl;
     } else {
-        std::cout << "The deck is empty." << std::endl;
+        std::cout << "The Deck is empty." << std::endl;
        
     }
     
@@ -214,7 +214,7 @@ std::string Deck::draw(Hand &hand) {
 // Show and print the cards that are in the Deck.
 void Deck::showDeck(Deck &deck) {
     if(cardsOnDeck.size() == 0) {
-        std::cout << "The deck is empty." << std::endl;
+        std::cout << "The Deck is empty." << std::endl;
     } else {
         std::cout << deck; // print out Deck cards.
     }
