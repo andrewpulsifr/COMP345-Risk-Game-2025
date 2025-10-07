@@ -20,7 +20,7 @@ class Deck {
         void removeCard(Card* card);
         std::vector<Card*> getCardsOnDeck();
         std::string draw(Hand &hand);
-        void showDeck();
+        void showDeck(Deck &deck);
         ~Deck(); // Destructor for Card*.
     private:
         std::vector<Card*> cardsOnDeck;
@@ -57,7 +57,7 @@ class Hand {
         std::vector<Card*> getCardsOnHand();
         void addCard(Card* card);
         void removeCard(Card* card);
-        void showHand();
+        void showHand(Hand& hand);
         ~Hand(); // Destructor.
 
     private:
@@ -65,7 +65,7 @@ class Hand {
 };
 
 
-// Stream overloaders for each class: Cards, Deck, and Hand.
+// Stream overloaders for each class: Cards, Hand, and Deck.
 std::ostream & operator << (std::ostream &os, const Card &card); // stream overloading for Cards.
-std::ostream & operator << (std::ostream &os, const std::vector<Card*> &cardsOnDeck); // stream overloading for Deck.
-std::ostream & operator << (std::ostream &os, const std::vector<Card*> &cardsOnHand); // stream overloading for Hand.
+std::ostream & operator << (std::ostream &os, const Hand &hand); // stream overloading for Hand.
+std::ostream & operator << (std::ostream &os, const Deck &deck); // stream overloading for Deck.
