@@ -21,7 +21,7 @@ class Deck {
         void removeCard(Card* card);
         std::vector<Card*> getCardsOnDeck() const;
         std::string draw(Hand &hand);
-        void showDeck(Deck &deck);
+        void showDeck();
         ~Deck(); // Destructor for Card*.
     private:
         std::vector<Card*> cardsOnDeck;
@@ -59,7 +59,7 @@ class Hand {
         std::vector<Card*> getCardsOnHand() const;
         void addCard(Card* card);
         void removeCard(Card* card);
-        void showHand(Hand& hand);
+        void showHand();
         ~Hand(); // Destructor.
 
     private:

@@ -149,11 +149,11 @@ void Hand::removeCard(Card* card) {
 }
 
 // Show what cards are in and.
-void Hand::showHand(Hand& hand) {
+void Hand::showHand() {
     if(cardsOnHand.size() == 0) {
         std::cout << "There are no Cards on the Player's Hand." << std::endl;
     } else {
-        std::cout << hand; 
+        std::cout << *this; // print out Hand cards.
     }
     std::cout << "----------------------------" << std::endl;
 }
@@ -260,11 +260,11 @@ std::string Deck::draw(Hand &hand) {
 
 
 // Show and print the cards that are in the Deck.
-void Deck::showDeck(Deck &deck) {
+void Deck::showDeck() {
     if(cardsOnDeck.size() == 0) {
         std::cout << "The Deck is empty." << std::endl;
     } else {
-        std::cout << deck; // print out Deck cards.
+        std::cout << *this; // print out Deck cards.
     }
     
     std::cout << "----------------------------" << std::endl;

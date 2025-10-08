@@ -368,9 +368,21 @@ Territory::Territory(const Territory& other)
       adjacentTerritories()      // Intentionally empty - Map copy will rebuild adjacencies
 {}
 
+/**
+ * @brief Parameterized constructor with full initialization
+ * @param id Unique identifier for the territory
+ * @param name Name of the territory
+ * @param owner Player who owns this territory (can be nullptr)
+ * @param armies Number of armies stationed in this territory
+ */
 Territory::Territory(int id, const string& name, Player* owner, int armies)
     : id(id), name(name), continents(), owner(owner), armies(armies) {}
 
+/**
+ * @brief Parameterized constructor with basic initialization
+ * @param id Unique identifier for the territory
+ * @param name Name of the territory
+ */
 Territory::Territory(int id, const string& name)
     : id(id), name(name), continents(), owner(nullptr), armies(0) {}
 
@@ -407,6 +419,12 @@ Territory& Territory::operator=(const Territory& other) {
     return *this;
 }
 
+/**
+ * @brief Stream insertion operator for Territory
+ * @param os Output stream
+ * @param territory Territory to output
+ * @return Reference to output stream for chaining
+ */
 ostream& operator<<(ostream& os, const Territory& territory) {
     os << "Territory: " << territory.name << " (ID: " << territory.id << ")\n";
     os << "  Continents: ";
@@ -436,23 +454,52 @@ ostream& operator<<(ostream& os, const Territory& territory) {
     return os;
 }
 
+/** @brief Get the unique identifier of this territory */
 int Territory::getId() const { return id; }
+
+/** @brief Get the name of this territory */
 string Territory::getName() const { return name; }
+
+/** @brief Get the player who owns this territory */
 Player* Territory::getOwner() const { return owner; }
+
+/** @brief Get the continents this territory belongs to */
 const vector<Continent*>& Territory::getContinents() const { return continents; }
+
+/** @brief Add this territory to a continent */
 void Territory::addContinent(Continent* c) { 
     if (c) continents.push_back(c); 
 }
+
+/** @brief Remove this territory from all continents */
 void Territory::clearContinents() { continents.clear(); }
+
+/** @brief Get the number of armies stationed in this territory */
 int Territory::getArmies() const { return armies; }
+
+/** @brief Set the owner of this territory */
 void Territory::setOwner(Player* newOwner) { owner = newOwner; }
+
+/** @brief Set the number of armies in this territory */
 void Territory::setArmies(int newArmies) { armies = newArmies; }
+
+/** @brief Add armies to this territory */
 void Territory::addArmies(int additionalArmies) { armies += additionalArmies; }
+
+/** @brief Remove armies from this territory */
 void Territory::removeArmies(int removedArmies) { armies -= removedArmies; }
+
+/** @brief Add an adjacent territory */
 void Territory::addAdjacent(Territory* t) { adjacentTerritories.push_back(t); }
+
+/** @brief Clear all adjacent territories */
 void Territory::clearAdjacents() { adjacentTerritories.clear(); }
 
-/** Check if this territory is adjacent to another territory */
+/**
+ * @brief Check if this territory is adjacent to another territory
+ * @param t Territory to check adjacency with
+ * @return true if territories are adjacent, false otherwise
+ */
 bool Territory::isAdjacentTo(const Territory* t) const {
     if (t == nullptr) {
         return false;
@@ -465,27 +512,54 @@ bool Territory::isAdjacentTo(const Territory* t) const {
                            return adj != nullptr && adj->getId() == idToFind;
                        });
 }
+
+/** @brief Get the list of adjacent territories */
 const vector<Territory*>& Territory::getAdjacents() const { return adjacentTerritories; }
 
 // ======================= Continent =======================
+
+/** @brief Default constructor creates empty continent with zero values */
 Continent::Continent() : id(0), name(""), bonus(0), territories() {}
 
-/** Copy constructor does not deep copy territories
- This is intentional as Map copy constructor will rebuild these links */
+/**
+ * @brief Copy constructor with intentional shallow copy of territory relationships
+ * @param other Continent to copy from
+ * 
+ * @details Copy constructor does not deep copy territories.
+ * This is intentional as Map copy constructor will rebuild these links.
+ */
 Continent::Continent(const Continent& other)
     : id(other.id), name(other.name), bonus(other.bonus), territories() {
 }
 
+/**
+ * @brief Parameterized constructor with id and name
+ * @param id Unique identifier for the continent
+ * @param name Name of the continent
+ */
 Continent::Continent(int id, const string& name)
     : id(id), name(name), bonus(0), territories() {}
 
+/**
+ * @brief Parameterized constructor with id, name, and bonus
+ * @param id Unique identifier for the continent
+ * @param name Name of the continent
+ * @param bonus Army bonus for controlling this continent
+ */
 Continent::Continent(int id, const string& name, int bonus)
     : id(id), name(name), bonus(bonus), territories() {}
 
+/** @brief Destructor - no cleanup needed as Continent doesn't own territories */
 Continent::~Continent() {}
 
-/** Copy assignment operator does not deep copy territories
- This is intentional as Map copy assignment will rebuild these links */
+/**
+ * @brief Copy assignment operator with intentional shallow copy of territory relationships
+ * @param other Continent to assign from
+ * @return Reference to this continent for chaining
+ * 
+ * @details Copy assignment operator does not deep copy territories.
+ * This is intentional as Map copy assignment will rebuild these links.
+ */
 Continent& Continent::operator=(const Continent& other) {
     if (this != &other) {
         id = other.id;
@@ -497,15 +571,33 @@ Continent& Continent::operator=(const Continent& other) {
     return *this;
 }
 
+/** @brief Get the unique identifier of this continent */
 int Continent::getId() const { return id; }
+
+/** @brief Get the name of this continent */
 string Continent::getName() const { return name; }
+
+/** @brief Get the army bonus for controlling this continent */
 int Continent::getBonus() const { return bonus; }
+
+/** @brief Set the army bonus for this continent */
 void Continent::setBonus(int bonus) { this->bonus = bonus; }
+
+/** @brief Add a territory to this continent */
 void Continent::addTerritory(Territory* territory) { territories.push_back(territory); }
-void Continent::clearTerritories() { territories.clear(); } // Clear existing territories
+
+/** @brief Remove all territories from this continent */
+void Continent::clearTerritories() { territories.clear(); }
+
+/** @brief Get the list of territories in this continent */
 const vector<Territory*>& Continent::getTerritories() const { return territories; }
 
-/** ostream overload for easy printing of continent details */
+/**
+ * @brief Stream insertion operator for Continent
+ * @param os Output stream
+ * @param continent Continent to output
+ * @return Reference to output stream for chaining
+ */
 ostream& operator<<(ostream& os, const Continent& continent) {
     os << "Continent: " << continent.name << " (ID: " << continent.id << ", Bonus: " << continent.bonus << ")\n";
     os << "  Territories: ";
@@ -525,9 +617,20 @@ ostream& operator<<(ostream& os, const Continent& continent) {
 }
 
 // ======================= Map =======================
+
+/** @brief Default constructor creates empty map */
 Map::Map() : territories(), continents() {}
 
-/** Copy constructor deep copy of territories and continents */
+/**
+ * @brief Copy constructor performs deep copy of territories and continents
+ * @param other Map to copy from
+ * 
+ * @details Performs complete deep copy including:
+ * - All territories with their properties
+ * - All continents with their properties
+ * - Territory-continent relationships
+ * - Territory adjacency relationships
+ */
 Map::Map(const Map& other) : territories(), continents() {
 
     // Build lookup of continent pointers in map for easy reference
@@ -581,7 +684,9 @@ Map::Map(const Map& other) : territories(), continents() {
     }
 }
 
-/** Destructor to clean up dynamically allocated territories and continents */
+/**
+ * @brief Destructor cleans up dynamically allocated territories and continents
+ */
 Map::~Map() {
     // Clean up all dynamically allocated territories
     for (Territory* territory : territories) {
@@ -596,15 +701,22 @@ Map::~Map() {
     continents.clear();  // Clear the vector
 }
 
-
-/* Implement swap as a non-member function */
+/**
+ * @brief Swap function for Map objects (non-member function)
+ * @param a First map to swap
+ * @param b Second map to swap
+ */
 void swap(Map& a, Map& b) noexcept {
     using std::swap;
     swap(a.territories, b.territories);
     swap(a.continents,  b.continents);
 }
 
-/** Copy assignment operator using copy-and-swap idiom for strong exception safety */
+/**
+ * @brief Copy assignment operator using copy-and-swap idiom for strong exception safety
+ * @param other Map to assign from (passed by value for copy-and-swap)
+ * @return Reference to this map for chaining
+ */
 Map& Map::operator=(Map other) { // note: pass by value
     swap(*this, other);          // now *this has the new graph; 'other' holds the old
     return *this;                // old graph is destroyed when 'other' goes out of scope
@@ -635,9 +747,20 @@ void Map::addTerritory(Territory* t) {
 void Map::addContinent(Continent* c) { 
     continents.push_back(c); // Add continent to collection, taking ownership
 }
+
+/** @brief Get the list of all territories in this map */
 const vector<Territory*>& Map::getTerritories() const { return territories; }
+
+/** @brief Get the list of all continents in this map */
 const vector<Continent*>& Map::getContinents() const { return continents; }
 
+/**
+ * @brief Clear all territories and continents from the map
+ * 
+ * @details Deletes all dynamically allocated Territory and Continent objects
+ * and clears the internal vectors. After calling this method, the map will
+ * be empty and ready for reuse.
+ */
 void Map::clear() {
     // Helper method to clean up all objects
     for (Territory* territory : territories) {
@@ -682,6 +805,13 @@ bool Map::validate() const {
 
     return true; // All validations passed
 }
+
+/**
+ * @brief Stream insertion operator for Map
+ * @param os Output stream
+ * @param map Map to output
+ * @return Reference to output stream for chaining
+ */
 ostream& operator<<(ostream& os, const Map& map) {
     os << "Map Overview:\n";
     if (map.continents.empty() && map.territories.empty()) {
@@ -714,13 +844,25 @@ ostream& operator<<(ostream& os, const Map& map) {
 
 // ======================= MapLoader =======================
 
+/** @brief Default constructor for MapLoader */
 MapLoader::MapLoader() {}
 
-// MapLoader is currently stateless no data members to copy
+/**
+ * @brief Copy constructor for MapLoader
+ * @param other MapLoader to copy from
+ * 
+ * @details MapLoader is currently stateless so no data members to copy
+ */
 MapLoader::MapLoader(const MapLoader& other) = default;
 
+/** @brief Destructor for MapLoader */
 MapLoader::~MapLoader() {}
 
+/**
+ * @brief Assignment operator for MapLoader
+ * @param other MapLoader to assign from
+ * @return Reference to this MapLoader for chaining
+ */
 MapLoader& MapLoader::operator=(const MapLoader& other) {
     if (this != &other) {
         // MapLoader is currently stateless no data members to copy
@@ -729,13 +871,22 @@ MapLoader& MapLoader::operator=(const MapLoader& other) {
     return *this;
 }
 
+/**
+ * @brief Stream insertion operator for MapLoader
+ * @param os Output stream
+ * @param ml MapLoader to output
+ * @return Reference to output stream for chaining
+ */
 ostream& operator<<(ostream& os, const MapLoader& ml) {
     (void)ml; // Suppress unused parameter warning
     os << "MapLoader";
     return os;
 }
 
-/** Get list of map files in the directory */
+/**
+ * @brief Get list of available map files in the maps directory
+ * @return Vector of map file paths as strings
+ */
 vector<string> MapLoader::getMapFiles() {
     vector<string> mapFiles;
 
@@ -747,7 +898,11 @@ vector<string> MapLoader::getMapFiles() {
     return mapFiles;
 }
 
-/** Display map files from the list */
+/**
+ * @brief Display available map files to console
+ * @param mapFiles Vector of map file paths to display
+ * @throws std::runtime_error if no map files are provided
+ */
 void MapLoader::printMapFiles(const vector<string>& mapFiles) {
     if (mapFiles.empty()) {
         throw runtime_error("No map files found.");
@@ -764,7 +919,12 @@ void MapLoader::printMapFiles(const vector<string>& mapFiles) {
     }
 }
 
-/** Load a map from a .map file */
+/**
+ * @brief Load a map from a .map file
+ * @param filename Path to the .map file to load
+ * @param mapOutput Reference to Map object to populate
+ * @return true if map loaded successfully, false otherwise
+ */
 bool MapLoader::loadMap(const string& filename, Map& mapOutput) {
     fs::path p = filename;
 

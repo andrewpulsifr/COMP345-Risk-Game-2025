@@ -65,7 +65,10 @@ ostream& operator<<(ostream& os, const Command& command) {
     return os;
 }
 
+/** @brief Get the name of this command */
 string Command::getName() const { return *name; }
+
+/** @brief Set the name of this command */
 void Command::setName(const string& newName) { *name = newName; }
 
 // ======================= GameEngine Class =======================
@@ -231,6 +234,10 @@ bool GameEngine::processCommand(const Command& cmd) {
     return true;
 }
 
+/**
+ * @brief Get the current state of the game engine
+ * @return GameState enum value representing current state
+ */
 GameState GameEngine::getCurrentState() const { return *currentState; }
 
 /**
@@ -285,24 +292,40 @@ vector<string> GameEngine::getValidCommands() const {
     return validCmds;
 }
 
+/**
+ * @brief Start a new game by setting state to Start
+ */
 void GameEngine::startGame() {
     *currentState = GameState::Start;
     cout << "Game started!" << endl;
 }
 
+/**
+ * @brief End the current game by setting state to End
+ */
 void GameEngine::endGame() {
     *currentState = GameState::End;
     cout << "Game ended!" << endl;
 }
 
+/**
+ * @brief Check if the game has ended
+ * @return true if game is in End state, false otherwise
+ */
 bool GameEngine::isGameOver() const {
     return *currentState == GameState::End;
 }
 
+/**
+ * @brief Print the current state to console
+ */
 void GameEngine::printCurrentState() const {
     cout << "Current State: " << getStateName() << endl;
 }
 
+/**
+ * @brief Print all valid commands for current state to console
+ */
 void GameEngine::printValidCommands() const {
     cout << "Valid commands: ";
     vector<string> validCmds = getValidCommands();
@@ -313,11 +336,18 @@ void GameEngine::printValidCommands() const {
     cout << endl;
 }
 
+/**
+ * @brief Print error message for invalid command
+ * @param invalidCommand The command that was invalid
+ */
 void GameEngine::printErrorMessage(const string& invalidCommand) const {
     cout << "ERROR: Invalid command '" << invalidCommand 
          << "' for current state " << getStateName() << endl;
 }
 
+/**
+ * @brief Display welcome message with instructions for using the game engine
+ */
 void GameEngine::displayWelcomeMessage() const {
     cout << "\n=== Welcome to Warzone Game Engine ===" << endl;
     cout << "Type commands to navigate through game states." << endl;
@@ -326,6 +356,9 @@ void GameEngine::displayWelcomeMessage() const {
     cout << "=======================================" << endl;
 }
 
+/**
+ * @brief Display current game status including state, valid commands, and player count
+ */
 void GameEngine::displayGameStatus() const {
     cout << "\n--- Game Status ---" << endl;
     printCurrentState();
@@ -385,36 +418,65 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
 }
 
 // State-specific action handlers --> stub implementations for now
+
+/**
+ * @brief Handle map loading command
+ * @param command The command that triggered this action
+ */
 void GameEngine::handleLoadMap(const string& command) {
     cout << "  -> Loading map... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning 
 }
 
+/**
+ * @brief Handle map validation command
+ * @param command The command that triggered this action
+ */
 void GameEngine::handleValidateMap(const string& command) {
     cout << "  -> Validating map... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning
 }
 
+/**
+ * @brief Handle add player command
+ * @param command The command that triggered this action
+ */
 void GameEngine::handleAddPlayer(const string& command) {
     cout << "  -> Adding player... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning
 }
 
+/**
+ * @brief Handle assign countries command
+ * @param command The command that triggered this action
+ */
 void GameEngine::handleAssignCountries(const string& command) {
     cout << "  -> Assigning countries... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning
 }
 
+/**
+ * @brief Handle issue order command
+ * @param command The command that triggered this action
+ */
 void GameEngine::handleIssueOrder(const string& command) {
     cout << "  -> Issuing order... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning
 }
 
+/**
+ * @brief Handle execute orders command
+ * @param command The command that triggered this action
+ */
 void GameEngine::handleExecuteOrders(const string& command) {
     cout << "  -> Executing orders... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning
 }
 
+/**
+ * @brief Handle end game command
+ * @param command The command that triggered this action
+ */
 void GameEngine::handleEndGame(const string& command) {
     cout << "  -> Handling game end... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning

@@ -81,7 +81,7 @@ void testPlayers() {
     gameDeck.draw(*aliceHand);
     gameDeck.draw(*aliceHand);
     cout << "Alice's hand after drawing 2 cards:\n";
-    aliceHand->showHand(*aliceHand);
+    aliceHand->showHand();
 
     // ======================= toDefend() and toAttack() Methods =======================
     
