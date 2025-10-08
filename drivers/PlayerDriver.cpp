@@ -1,6 +1,6 @@
 /**
  * @file PlayerDriver.cpp
- * @brief Assignment 1 – Part 2 (Warzone): Player class driver and testing
+ * @brief Assignment 1 : Player class driver and testing
  * @author Matteo
  * @date October 2025
  * @version 1.0
@@ -106,7 +106,7 @@ void testPlayers() {
     }
     cout << "\n";
 
-    // ======================= PART 2 REQUIREMENT: issueOrder() Method =======================
+    // ======================= issueOrder() Method =======================
     
     // Demonstrate issueOrder() method for adding orders to player's list
     cout << "\n=== issueOrder() Method Demonstration ===\n";

@@ -7,8 +7,8 @@
  *          - Hand management and display
  *          - Card playing with Order generation
  *          - Proper memory management and Rule of Three compliance
- * @author Andrew Pulsifer
- * @date January 2025
+ * @author Chhay
+ * @date October 2025
  * @version 1.0
  */
 
