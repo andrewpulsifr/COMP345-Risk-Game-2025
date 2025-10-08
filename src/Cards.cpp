@@ -1,6 +1,7 @@
 #include "../include/Cards.h"
-#include <algorithm>
+#include "../include/Player.h"
 #include "../include/Orders.h"
+#include <algorithm>
 
 //Implementation of Card.
 // Constructor for Card
@@ -34,47 +35,44 @@ Card::typeOfCard Card::getCard() const {
 };
 
 //Each card can be played and will be removed from hand and returned to deck after execution
-void Card::play(Card* cardPlayed, Deck &deck, Hand &hand) {
-    BombOrder* bomb = new BombOrder();
-    AdvanceOrder* advance = new AdvanceOrder();
-    BlockadeOrder* blockade = new BlockadeOrder();
-    AirliftOrder* airlift = new AirliftOrder();
-    NegotiateOrder* negotiate = new NegotiateOrder();
+void Card::play(Player& player, Deck &deck, Hand &hand) {
+    Order* order = nullptr;
 
-    switch(cardPlayed->getCard()) {
+    switch(this->getCard()) {
         case Bomb:
-            bomb->execute();
-            
+            order = new BombOrder(); // player will be set when added to player's list
             std::cout << "The Bomb card is played.";
             break;
         case Reinforcement:
-            advance->execute();
-
+            order = new AdvanceOrder(); // details will be set when added to player's list
             std::cout << "The Reinforcement card is played.";
             break;
         case Blockade:
-            blockade->execute();
-
+            order = new BlockadeOrder(); // target will be set when added to player's list
             std::cout << "The Blockade card is played.";
             break;
         case Airlift:
-            airlift->execute();
-
+            order = new AirliftOrder(); // details will be set when added to player's list
             std::cout << "The Airlift card is played.";
             break;
         case Diplomacy:
-            negotiate->execute();
-
+            order = new NegotiateOrder(); // other player will be set when added to player's list
             std::cout << "The Diplomacy card is played.";
             break;
         default:
             std::cout << "The Card is invalid.";
+            return; // Don't process invalid cards
     };
 
-    //After orders are executed, remove the card from Hand and place back into the Deck.
-    hand.removeCard(cardPlayed);
-    deck.addCard(cardPlayed);
-    std::cout << " The Card is now returned to the Deck." << std::endl;
+    // Add the created order to the player's orders list
+    if (order != nullptr) {
+        player.issueOrder(order);
+    }
+
+    //After order is created and added to player's list, remove the card from Hand and place back into the Deck.
+    hand.removeCard(this);
+    deck.addCard(this);
+    std::cout << " The card is now returned to the deck." << std::endl;
 }
 
 //Implementation of Hand.

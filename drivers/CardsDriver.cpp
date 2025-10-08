@@ -70,7 +70,7 @@ void testCards() {
 
     // Play the first Card.
     Card *cardPlayed = playersHand.getCardsOnHand().at(0);
-    cardPlayed->play(cardPlayed, deck, playersHand);
+    cardPlayed->play(playerOne, deck, playersHand);
 
     assert(deck.getCardsOnDeck().size() == deckBefore + 1);
     assert(playersHand.getCardsOnHand().size() == handBefore - 1);
@@ -86,7 +86,7 @@ void testCards() {
     
     // Play the last Card.
     cardPlayed = playersHand.getCardsOnHand().back();
-    cardPlayed->play(cardPlayed, deck, playersHand);
+    cardPlayed->play(playerOne, deck, playersHand);
 
     assert(playersHand.getCardsOnHand().empty());
 

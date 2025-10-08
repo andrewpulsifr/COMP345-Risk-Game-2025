@@ -5,10 +5,11 @@
 #include <string>
 #include <cstdlib>
 
-// Three classes are implemented in Cards.
+// Forward declarations
 class Card;
 class Deck;
 class Hand;
+class Player;
 
 // Deck class holds a collection of cards.
 class Deck {
@@ -40,7 +41,7 @@ class Card {
         Card(typeOfCard cardType); // Constructor.
         Card(Card const & card); // Copy constructor for Card.
     typeOfCard getCard() const;
-        void play(Card* cardPlayed, Deck &deck, Hand &hand); // Cards can be played, but they will be removed from hand and returned to deck afterwards.
+        void play(Player& player, Deck &deck, Hand &hand); // Cards can be played, creates an order and adds it to the player's list of orders, then returns the card to the deck.
 
     private:
         typeOfCard card;
