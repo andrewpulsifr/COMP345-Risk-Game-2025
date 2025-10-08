@@ -10,6 +10,13 @@ Card::Card(typeOfCard cardType) : card(cardType) {}
 // Deep copy constructor for Card.
 Card::Card(Card const &card) : card(card.card) {}
 
+// Assignment operator for Card.
+Card& Card::operator=(const Card& other) {
+    if (this != &other) {
+        card = other.card;
+    }
+    return *this;
+}
 
 // Cards are converted into a string to be displayed when printed.
 std::string cardToString(Card::typeOfCard cardType) {
@@ -90,6 +97,27 @@ Hand::Hand(Hand const &hand) {
     }
 }
 
+// Assignment operator for Hand.
+Hand& Hand::operator=(const Hand& other) {
+    if (this != &other) {
+        // Delete existing cards to prevent memory leak
+        for (Card* card : cardsOnHand) {
+            delete card;
+        }
+        cardsOnHand.clear();
+        
+        // Deep copy: create new Card objects
+        for (size_t i = 0; i < other.cardsOnHand.size(); ++i) {
+            Card* cardptr = other.cardsOnHand[i];
+            if (cardptr) {
+                Card* copy = new Card(cardptr->getCard());
+                this->cardsOnHand.push_back(copy);
+            }
+        }
+    }
+    return *this;
+}
+
 // Stream overloading for Card.
 std::ostream & operator<<(std::ostream &os, const Card &card) {
     os << cardToString(card.getCard());
@@ -149,6 +177,27 @@ Deck::Deck(Deck const &deck){
             this->cardsOnDeck.push_back(cardCopied);
         }
     }
+}
+
+// Assignment operator for Deck.
+Deck& Deck::operator=(const Deck& other) {
+    if (this != &other) {
+        // Delete existing cards to prevent memory leak
+        for (Card* card : cardsOnDeck) {
+            delete card;
+        }
+        cardsOnDeck.clear();
+        
+        // Deep copy: create new Card objects
+        for (size_t i = 0; i < other.cardsOnDeck.size(); i++) {
+            Card* cardptr = other.cardsOnDeck.at(i);
+            if (cardptr) {
+                Card* cardCopied = new Card(cardptr->getCard());
+                this->cardsOnDeck.push_back(cardCopied);
+            }
+        }
+    }
+    return *this;
 }
 
 // To add a card to the Deck.
