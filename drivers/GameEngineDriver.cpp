@@ -16,7 +16,11 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
+// Importing only the neccessary std functions.
+using std::cout;
+using std::cin;
+using std::endl;
+using std::string;
 
 /**
  * @brief Test function that creates a console-driven interface for game states

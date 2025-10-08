@@ -9,9 +9,21 @@
 #include <unordered_map>
 #include <string>
 
-using namespace std;
+// Importing only the std functions used.
+using std::string;
+using std::cout;
+using std::cin;
+using std::endl;
+using std::cerr;
+using std::vector;
+using std::pair;
+using std::unordered_map;
+using std::streamsize;
+using std::numeric_limits;
+using std::exception;
+using std::runtime_error;
+using std::unordered_set;
 
-namespace {
 
     /* -- Data for testing territory adjacency and continent membership -- */
 
@@ -248,7 +260,6 @@ namespace {
         
         cout << "=== Copy and Assignment Tests Complete ===" << endl;
     }
-}
 
 
 void testLoadMaps(){
@@ -322,5 +333,5 @@ void testLoadMaps(){
         cerr << "Error: " << e.what() << endl;
     }
     cout << "=== Map Loading Test Complete ===" << endl;
-}
 
+}

@@ -15,6 +15,9 @@
 #include "../include/Player.h"
 #include "../include/Map.h"
 
+// Importing only the neccessary std functions.
+using std::cout;
+
 /**
  * @brief Comprehensive test function for Orders and OrdersList functionality
  * @details Tests all requirements:
@@ -27,7 +30,7 @@
  * (Deploy, Advance, Bomb, Blockade, Airlift, Negotiate) and OrdersList management.
  */
 void testOrdersLists() {
-    std::cout << "=== testOrdersLists ===\n";
+    cout << "=== testOrdersLists ===\n";
 
     // ======================= Test Setup =======================
     // Create test players for order ownership and execution
@@ -77,12 +80,12 @@ void testOrdersLists() {
     ol.add(o5);
 
     // Display initial state to show proper order addition
-    std::cout << "Initial list:\n" << ol;
+    cout << "Initial list:\n" << ol;
 
     // ======================= OrdersList Move Operation Testing =======================
     // Test move functionality by moving last order to first position
     ol.move(5, 0);
-    std::cout << "After move(5 -> 0):\n" << ol;
+    cout << "After move(5 -> 0):\n" << ol;
 
     // ======================= Order Execution Testing =======================
     // Execute all orders to test polymorphic execute() method
@@ -94,12 +97,12 @@ void testOrdersLists() {
     o5->execute();
 
     // Display results after execution to show order effects
-    std::cout << "After execute() calls:\n" << ol;
+    cout << "After execute() calls:\n" << ol;
 
     // ======================= OrdersList Remove Operation Testing =======================
     // Test remove functionality by removing order at index 2
     ol.remove(2);
-    std::cout << "After remove(2):\n" << ol;
+    cout << "After remove(2):\n" << ol;
 
-    std::cout << "=== end testOrdersLists ===\n";
+    cout << "=== end testOrdersLists ===\n";
 }

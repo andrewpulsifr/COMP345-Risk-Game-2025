@@ -16,7 +16,8 @@
 #include "../include/Orders.h"
 #include "../include/Cards.h"
 
-using namespace std;
+// Importing only the neccessary std functions.
+using std::cout;
 
 /**
  * @brief Comprehensive test function for Player class functionality

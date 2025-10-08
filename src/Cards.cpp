@@ -133,7 +133,7 @@ std::vector<Card*> Hand::getCardsOnHand() const {
 std::ostream& operator<<(std::ostream &os, const Hand &hand) {
     os << "There are " << hand.getCardsOnHand().size() << " Cards on Hand:" << std::endl;
     for(size_t i = 0; i < hand.getCardsOnHand().size(); i++) {
-        os << "  Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
+        os << "  Index " << i << ": " << cardToString(hand.getCardsOnHand().at(i)->getCard()) << std::endl;
     }
     return os;
 }
@@ -222,7 +222,7 @@ std::ostream & operator << (std::ostream &os, const Deck &deck) {
     os << "There are " << deck.getCardsOnDeck().size() << " Cards on the Deck:" << std::endl;
     
     for(size_t i = 0; i < deck.getCardsOnDeck().size(); i++) {
-        os << "  " << deck.getCardsOnDeck().at(i)->getCard() << std::endl;
+        os << "  " << cardToString(deck.getCardsOnDeck().at(i)->getCard()) << std::endl;
     }
 
     return os;

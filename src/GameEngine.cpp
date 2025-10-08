@@ -17,7 +17,13 @@
 #include <algorithm>
 #include <sstream>
 
-using namespace std;
+// Importing only the neccessary std functions.
+using std::cout;
+using std::string;
+using std::ostream;
+using std::vector;
+using std::endl;
+
 
 // ======================= Command Class =======================
 
