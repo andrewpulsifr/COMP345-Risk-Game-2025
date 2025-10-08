@@ -1,23 +1,50 @@
+/**
+ * @file OrdersDriver.cpp
+ * @brief Assignment 1 – Part 3 (Warzone): Orders and OrdersList class driver and testing
+ * @author Matteo
+ * @date October 2025
+ * @version 1.0
+ * 
+ * This file contains the test driver for the Orders system functionality, demonstrating
+ * order creation, execution, OrdersList manipulation (add, remove, move), and
+ * proper polymorphic behavior of different order types.
+ */
+
 #include <iostream>
 #include "../include/Orders.h"
 #include "../include/Player.h"
 #include "../include/Map.h"
 
+/**
+ * @brief Comprehensive test function for Orders and OrdersList functionality
+ * @details Tests all requirements:
+ *          - Order creation and polymorphic behavior
+ *          - OrdersList add, remove, and move operations
+ *          - Order execution and validate methods
+ *          - Stream insertion operators for Orders and OrdersList
+ * 
+ * Creates a game scenario with players and territories to test all order types
+ * (Deploy, Advance, Bomb, Blockade, Airlift, Negotiate) and OrdersList management.
+ */
 void testOrdersLists() {
     std::cout << "=== testOrdersLists ===\n";
 
+    // ======================= Test Setup =======================
+    // Create test players for order ownership and execution
     Player alice("Alice"), bob("Bob");
     OrdersList ol;
-    // Builds a tiny map with 3 territories and assign owners/adjacencies so they can be adjacent to eachother/to let orders run
+    
+    // Build minimal map with territories for order execution testing
     Map m;
     Territory* t1 = new Territory(1, "Territory-1");
     Territory* t2 = new Territory(2, "Territory-2");
     Territory* t3 = new Territory(3, "Territory-3");
 
-    // Adjacency for Advance
+    // Set up territory adjacencies for Advance order testing
     t1->addAdjacent(t2);
     t2->addAdjacent(t1);
 
+    // Add territories to map for proper management
     m.addTerritory(t1);
     m.addTerritory(t2);
     m.addTerritory(t3);
@@ -32,14 +59,16 @@ void testOrdersLists() {
     t3->setOwner(&alice);
     t3->setArmies(6);
 
-    // Create orders with real targets/sources
-    Order* o0 = new DeployOrder(&alice, t1, 5);               // deploy to own territory
-    Order* o1 = new AdvanceOrder(&alice, t1, t2, 3);          // move from t1 -> adjacent t2
-    Order* o2 = new BombOrder(&alice, t2);                    // bomb enemy territory
-    Order* o3 = new BlockadeOrder(&alice, t3);                // blockade own territory
-    Order* o4 = new AirliftOrder(&alice, t1, t3, 7);          // airlift between own territories
-    Order* o5 = new NegotiateOrder(&alice, &bob);             // negotiate with Bob
+    // ======================= Order Creation and OrdersList Testing =======================
+    // Create different order types to test polymorphic behavior
+    Order* o0 = new DeployOrder(&alice, t1, 5);               // Deploy to own territory
+    Order* o1 = new AdvanceOrder(&alice, t1, t2, 3);          // Advance from own to adjacent territory
+    Order* o2 = new BombOrder(&alice, t2);                    // Bomb enemy territory
+    Order* o3 = new BlockadeOrder(&alice, t3);                // Blockade own territory
+    Order* o4 = new AirliftOrder(&alice, t1, t3, 7);          // Airlift between own territories
+    Order* o5 = new NegotiateOrder(&alice, &bob);             // Negotiate with enemy player
 
+    // Add all orders to OrdersList to test add functionality
     ol.add(o0);
     ol.add(o1);
     ol.add(o2);
@@ -47,13 +76,16 @@ void testOrdersLists() {
     ol.add(o4);
     ol.add(o5);
 
+    // Display initial state to show proper order addition
     std::cout << "Initial list:\n" << ol;
 
-    // Reorder to show move works
+    // ======================= OrdersList Move Operation Testing =======================
+    // Test move functionality by moving last order to first position
     ol.move(5, 0);
     std::cout << "After move(5 -> 0):\n" << ol;
 
-    // Execute each order
+    // ======================= Order Execution Testing =======================
+    // Execute all orders to test polymorphic execute() method
     o0->execute();
     o1->execute();
     o2->execute();
@@ -61,9 +93,11 @@ void testOrdersLists() {
     o4->execute();
     o5->execute();
 
+    // Display results after execution to show order effects
     std::cout << "After execute() calls:\n" << ol;
 
-    // Remove one
+    // ======================= OrdersList Remove Operation Testing =======================
+    // Test remove functionality by removing order at index 2
     ol.remove(2);
     std::cout << "After remove(2):\n" << ol;
 
