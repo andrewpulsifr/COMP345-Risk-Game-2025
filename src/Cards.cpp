@@ -130,7 +130,7 @@ std::vector<Card*> Hand::getCardsOnHand() const {
 }
 
 // Stream overloading for Hand.
-std::ostream& operator<<(std::ostream &os, Hand &hand) {
+std::ostream& operator<<(std::ostream &os, const Hand &hand) {
     os << "There are " << hand.getCardsOnHand().size() << " Cards on Hand:" << std::endl;
     for(size_t i = 0; i < hand.getCardsOnHand().size(); i++) {
         os << "  Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
@@ -218,7 +218,7 @@ std::vector<Card*> Deck::getCardsOnDeck() const {
 
 
 // Stream overloading for Deck.
-std::ostream & operator << (std::ostream &os, Deck &deck) {
+std::ostream & operator << (std::ostream &os, const Deck &deck) {
     os << "There are " << deck.getCardsOnDeck().size() << " Cards on the Deck:" << std::endl;
     
     for(size_t i = 0; i < deck.getCardsOnDeck().size(); i++) {
