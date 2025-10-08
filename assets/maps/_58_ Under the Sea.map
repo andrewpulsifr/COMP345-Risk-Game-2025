@@ -1,0 +1,80 @@
+[Map]
+author=_MIKE CRUSH_
+image=_58_ Under the Sea.bmp
+wrap=yes
+scroll=none
+warn=no
+
+[Continents]
+FISH and DOLPHINS=2
+CRAB and LOBSTERS=2
+SEAHORSE and STARFISH=2
+SHARKS=2
+WHALES=2
+STINGRAY and SWORDFISH=2
+SQUID and OCTOPUS=2
+SAILBOAT and ANCHOR=1
+CLAMS=3
+
+[Territories]
+Territory00,245,169,FISH and DOLPHINS,Territory50,Territory16,Territory24,Territory23
+Territory01,482,316,FISH and DOLPHINS,Territory55,Territory02,Territory18
+Territory02,439,299,FISH and DOLPHINS,Territory01,Territory52
+Territory03,833,127,FISH and DOLPHINS,Territory39,Territory27,Territory21
+Territory04,712,510,FISH and DOLPHINS,Territory09,Territory05,Territory57
+Territory05,674,525,FISH and DOLPHINS,Territory13,Territory33,Territory04
+Territory06,137,553,CRAB and LOBSTERS,Territory54,Territory10,Territory42
+Territory07,40,290,CRAB and LOBSTERS,Territory23,Territory14,Territory11
+Territory08,671,311,CRAB and LOBSTERS,Territory19,Territory34,Territory60
+Territory09,757,422,CRAB and LOBSTERS,Territory59,Territory12,Territory38,Territory04
+Territory10,35,527,SEAHORSE and STARFISH,Territory11,Territory54,Territory06
+Territory11,49,390,SEAHORSE and STARFISH,Territory14,Territory07,Territory10
+Territory12,883,419,SEAHORSE and STARFISH,Territory20,Territory09,Territory37
+Territory13,574,546,SEAHORSE and STARFISH,Territory31,Territory05,Territory32
+Territory14,152,393,SHARKS,Territory11,Territory07,Territory15
+Territory15,184,414,SHARKS,Territory25,Territory14,Territory53,Territory35
+Territory16,328,116,SHARKS,Territory47,Territory00,Territory17
+Territory17,368,147,SHARKS,Territory16,Territory51
+Territory18,542,260,SHARKS,Territory48,Territory19,Territory01
+Territory19,572,267,SHARKS,Territory18,Territory08
+Territory20,883,297,SHARKS,Territory41,Territory21,Territory12
+Territory21,911,278,SHARKS,Territory20,Territory03
+Territory22,67,177,WHALES,Territory50,Territory23
+Territory23,125,243,WHALES,Territory00,Territory22,Territory07,Territory24
+Territory24,217,242,WHALES,Territory00,Territory23,Territory25
+Territory25,254,281,WHALES,Territory24,Territory36,Territory15
+Territory26,601,170,WHALES,Territory48,Territory28,Territory41
+Territory27,677,73,WHALES,Territory28,Territory03
+Territory28,661,132,WHALES,Territory26,Territory27
+Territory29,394,426,WHALES,Territory36,Territory30
+Territory30,410,480,WHALES,Territory42,Territory29,Territory31,Territory56
+Territory31,473,528,WHALES,Territory30,Territory13
+Territory32,554,445,STINGRAY and SWORDFISH,Territory13,Territory56,Territory33
+Territory33,574,414,STINGRAY and SWORDFISH,Territory05,Territory32,Territory34
+Territory34,604,390,STINGRAY and SWORDFISH,Territory33,Territory08
+Territory35,289,385,STINGRAY and SWORDFISH,Territory43,Territory15,Territory36
+Territory36,314,367,STINGRAY and SWORDFISH,Territory25,Territory35,Territory29
+Territory37,857,532,STINGRAY and SWORDFISH,Territory38,Territory12
+Territory38,832,513,STINGRAY and SWORDFISH,Territory09,Territory57,Territory37
+Territory39,743,180,SQUID and OCTOPUS,Territory40,Territory03
+Territory40,758,202,SQUID and OCTOPUS,Territory41,Territory39
+Territory41,770,216,SQUID and OCTOPUS,Territory26,Territory40,Territory20,Territory60
+Territory42,293,525,SQUID and OCTOPUS,Territory06,Territory43,Territory30
+Territory43,295,493,SQUID and OCTOPUS,Territory42,Territory35
+Territory44,280,33,SAILBOAT and ANCHOR,Territory45,Territory47
+Territory45,304,30,SAILBOAT and ANCHOR,Territory46,Territory44,Territory47
+Territory46,328,27,SAILBOAT and ANCHOR,Territory45,Territory47
+Territory47,313,72,SAILBOAT and ANCHOR,Territory44,Territory45,Territory46,Territory49,Territory16,Territory48
+Territory48,491,168,SAILBOAT and ANCHOR,Territory47,Territory26,Territory51,Territory18
+Territory49,166,112,CLAMS,Territory47,Territory50
+Territory50,166,126,CLAMS,Territory49,Territory22,Territory00
+Territory51,418,222,CLAMS,Territory17,Territory52,Territory48
+Territory52,418,234,CLAMS,Territory02,Territory51
+Territory53,95,469,CLAMS,Territory15,Territory54
+Territory54,95,484,CLAMS,Territory53,Territory10,Territory06
+Territory55,479,426,CLAMS,Territory56,Territory01
+Territory56,479,439,CLAMS,Territory30,Territory32,Territory55
+Territory57,773,567,CLAMS,Territory04,Territory58,Territory38
+Territory58,773,582,CLAMS,Territory57
+Territory59,772,346,CLAMS,Territory60,Territory09
+Territory60,772,333,CLAMS,Territory41,Territory59,Territory08

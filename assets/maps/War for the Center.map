@@ -1,0 +1,47 @@
+[Map]
+author=Frederik Vanderstraeten
+image=War for the Center.bmp
+wrap=no
+scroll=none
+warn=yes
+
+[Continents]
+Center=0
+North=5
+North East=3
+South East=5
+Southern Islands=4
+West=5
+
+[Territories]
+Center,313,303,Center,West 7,North 1,North 2,North 3,North 4,North 5,North East 1,South East 1,South East 3,West Southern Island
+North 1,259,190,North,Center,North 2
+North 2,238,126,North,Center,North 1,North 3
+North 3,314,81,North,Center,North 2,North 4
+North 4,406,85,North,Center,North 3,North 5
+North 5,393,173,North,Center,North 4
+North East 1,548,196,North East,Center,North East 5,North East 2
+North East 5,611,197,North East,North East 1,North East 2,North East 4
+North East 2,593,126,North East,North East 1,North East 5,North East 3,North East 4
+North East 3,658,88,North East,North East 2,North East 4
+North East 4,679,168,North East,North East 2,North East 5,North East 3
+South East 1,611,291,South East,Center,South East 3,South East 2
+South East 2,703,320,South East,South East 1,South East 3,South East 5,South East 6
+South East 3,621,349,South East,Center,South East 1,South East 2,South East 4,South East 5
+South East 4,655,431,South East,South East 3,South East 5,South East 7
+South East 5,708,410,South East,South East 3,South East 2,South East 6,South East 4,South East 7
+South East 6,762,406,South East,South East 2,South East 5,South East 7
+South East 7,719,508,South East,South East 5,South East 4,South East 6
+West 1,119,182,West,West 3,West 2
+West 2,81,238,West,West 5,West 4,West 3,West 1
+West 3,150,234,West,West 5,West 2,West 1
+West 4,66,287,West,West 6,West 5,West 2
+West 5,129,303,West,West 7,West 6,West 4,West 2,West 3
+Western Island 1,92,513,Southern Islands,Western Island 2,West Southern Island
+Western Island 2,212,512,Southern Islands,Western Island 1,West Southern Island
+West Southern Island,336,520,Southern Islands,Center,Western Island 2,Western Island 1,Eastern Island,Northern Island,East Southern Island
+East Southern Island,423,535,Southern Islands,West Southern Island,Eastern Island,Northern Island
+Northern Island,487,442,Southern Islands,West Southern Island,Eastern Island,East Southern Island
+Eastern Island,576,532,Southern Islands,West Southern Island,Northern Island,East Southern Island
+West 6,59,348,West,West 7,West 4,West 5
+West 7,103,339,West,Center,West 6,West 5

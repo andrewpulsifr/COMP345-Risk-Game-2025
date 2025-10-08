@@ -39,7 +39,6 @@ void testGameStates() {
     
     // Initialize input processing for interactive state transitions
     string input;
-    cout << "\nEnter command: ";
     
     // Main loop for processing user commands and managing state transitions
     while (std::getline(cin, input)) {
