@@ -1,6 +1,7 @@
 #include "../include/Cards.h"
-#include <algorithm>
+#include "../include/Player.h"
 #include "../include/Orders.h"
+#include <algorithm>
 
 //Implementation of Card.
 // Constructor for Card
@@ -9,6 +10,13 @@ Card::Card(typeOfCard cardType) : card(cardType) {}
 // Deep copy constructor for Card.
 Card::Card(Card const &card) : card(card.card) {}
 
+// Assignment operator for Card.
+Card& Card::operator=(const Card& other) {
+    if (this != &other) {
+        card = other.card;
+    }
+    return *this;
+}
 
 // Cards are converted into a string to be displayed when printed.
 std::string cardToString(Card::typeOfCard cardType) {
@@ -34,46 +42,43 @@ Card::typeOfCard Card::getCard() const {
 };
 
 //Each card can be played and will be removed from hand and returned to deck after execution
-void Card::play(Card* cardPlayed, Deck &deck, Hand &hand) {
-    BombOrder* bomb = new BombOrder();
-    AdvanceOrder* advance = new AdvanceOrder();
-    BlockadeOrder* blockade = new BlockadeOrder();
-    AirliftOrder* airlift = new AirliftOrder();
-    NegotiateOrder* negotiate = new NegotiateOrder();
+void Card::play(Player& player, Deck &deck, Hand &hand) {
+    Order* order = nullptr;
 
-    switch(cardPlayed->getCard()) {
+    switch(this->getCard()) {
         case Bomb:
-            bomb->execute();
-            
+            order = new BombOrder(); // player will be set when added to player's list
             std::cout << "The Bomb card is played.";
             break;
         case Reinforcement:
-            advance->execute();
-
+            order = new AdvanceOrder(); // details will be set when added to player's list
             std::cout << "The Reinforcement card is played.";
             break;
         case Blockade:
-            blockade->execute();
-
+            order = new BlockadeOrder(); // target will be set when added to player's list
             std::cout << "The Blockade card is played.";
             break;
         case Airlift:
-            airlift->execute();
-
+            order = new AirliftOrder(); // details will be set when added to player's list
             std::cout << "The Airlift card is played.";
             break;
         case Diplomacy:
-            negotiate->execute();
-
+            order = new NegotiateOrder(); // other player will be set when added to player's list
             std::cout << "The Diplomacy card is played.";
             break;
         default:
-            std::cout << "The card is invalid.";
+            std::cout << "The Card is invalid.";
+            return; // Don't process invalid cards
     };
 
-    //After orders are executed, remove the card from Hand and place back into the Deck.
-    hand.removeCard(cardPlayed);
-    deck.addCard(cardPlayed);
+    // Add the created order to the player's orders list
+    if (order != nullptr) {
+        player.issueOrder(order);
+    }
+
+    //After order is created and added to player's list, remove the card from Hand and place back into the Deck.
+    hand.removeCard(this);
+    deck.addCard(this);
     std::cout << " The card is now returned to the deck." << std::endl;
 }
 
@@ -92,6 +97,27 @@ Hand::Hand(Hand const &hand) {
     }
 }
 
+// Assignment operator for Hand.
+Hand& Hand::operator=(const Hand& other) {
+    if (this != &other) {
+        // Delete existing cards to prevent memory leak
+        for (Card* card : cardsOnHand) {
+            delete card;
+        }
+        cardsOnHand.clear();
+        
+        // Deep copy: create new Card objects
+        for (size_t i = 0; i < other.cardsOnHand.size(); ++i) {
+            Card* cardptr = other.cardsOnHand[i];
+            if (cardptr) {
+                Card* copy = new Card(cardptr->getCard());
+                this->cardsOnHand.push_back(copy);
+            }
+        }
+    }
+    return *this;
+}
+
 // Stream overloading for Card.
 std::ostream & operator<<(std::ostream &os, const Card &card) {
     os << cardToString(card.getCard());
@@ -105,7 +131,7 @@ std::vector<Card*> Hand::getCardsOnHand() const {
 
 // Stream overloading for Hand.
 std::ostream& operator<<(std::ostream &os, const Hand &hand) {
-    os << "There are " << hand.getCardsOnHand().size() << " cards on Hand:" << std::endl;
+    os << "There are " << hand.getCardsOnHand().size() << " Cards on Hand:" << std::endl;
     for(size_t i = 0; i < hand.getCardsOnHand().size(); i++) {
         os << "  Index " << i << ": " << hand.getCardsOnHand().at(i)->getCard() << std::endl;
     }
@@ -125,7 +151,7 @@ void Hand::removeCard(Card* card) {
 // Show what cards are in and.
 void Hand::showHand(Hand& hand) {
     if(cardsOnHand.size() == 0) {
-        std::cout << "There are no cards on Hand." << std::endl;
+        std::cout << "There are no Cards on the Player's Hand." << std::endl;
     } else {
         std::cout << hand; 
     }
@@ -153,6 +179,27 @@ Deck::Deck(Deck const &deck){
     }
 }
 
+// Assignment operator for Deck.
+Deck& Deck::operator=(const Deck& other) {
+    if (this != &other) {
+        // Delete existing cards to prevent memory leak
+        for (Card* card : cardsOnDeck) {
+            delete card;
+        }
+        cardsOnDeck.clear();
+        
+        // Deep copy: create new Card objects
+        for (size_t i = 0; i < other.cardsOnDeck.size(); i++) {
+            Card* cardptr = other.cardsOnDeck.at(i);
+            if (cardptr) {
+                Card* cardCopied = new Card(cardptr->getCard());
+                this->cardsOnDeck.push_back(cardCopied);
+            }
+        }
+    }
+    return *this;
+}
+
 // To add a card to the Deck.
 void Deck::addCard(Card* card) {
     cardsOnDeck.push_back(card);
@@ -172,7 +219,7 @@ std::vector<Card*> Deck::getCardsOnDeck() const {
 
 // Stream overloading for Deck.
 std::ostream & operator << (std::ostream &os, const Deck &deck) {
-    os << "There are " << deck.getCardsOnDeck().size() << " cards on the Deck:" << std::endl;
+    os << "There are " << deck.getCardsOnDeck().size() << " Cards on the Deck:" << std::endl;
     
     for(size_t i = 0; i < deck.getCardsOnDeck().size(); i++) {
         os << "  " << deck.getCardsOnDeck().at(i)->getCard() << std::endl;
@@ -202,9 +249,9 @@ std::string Deck::draw(Hand &hand) {
         // Add drawn card to hand.
         hand.addCard(cardDrawn);
 
-        std::cout << "The " << cardDrawnString << " card is drawn from the deck, and added to hand." << std::endl;
+        std::cout << "The " << cardDrawnString << " Card is drawn from the Deck, and added to the Player's Hand." << std::endl;
     } else {
-        std::cout << "The deck is empty." << std::endl;
+        std::cout << "The Deck is empty." << std::endl;
        
     }
     
@@ -215,7 +262,7 @@ std::string Deck::draw(Hand &hand) {
 // Show and print the cards that are in the Deck.
 void Deck::showDeck(Deck &deck) {
     if(cardsOnDeck.size() == 0) {
-        std::cout << "The deck is empty." << std::endl;
+        std::cout << "The Deck is empty." << std::endl;
     } else {
         std::cout << deck; // print out Deck cards.
     }

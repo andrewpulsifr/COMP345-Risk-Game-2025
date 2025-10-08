@@ -1,11 +1,33 @@
+/**
+ * @file CardsDriver.cpp
+ * @brief Test driver for the Cards system functionality
+ * @details This driver tests the Card, Hand, and Deck classes to demonstrate:
+ *          - Deck creation and card loading
+ *          - Card drawing from deck to player hand
+ *          - Hand management and display
+ *          - Card playing with Order generation
+ *          - Proper memory management and Rule of Three compliance
+ * @author Chhay
+ * @date October 2025
+ * @version 1.0
+ */
+
 #include "../include/Cards.h"
+#include "../include/Player.h"
 #include <cassert>
 
-void testCards() {
-    Deck deck;
-    Hand hand;
+using namespace std;
 
-    // Create and load each card type into the deck.
+void testCards() {
+    // ======================= Test Setup =======================
+    // Initialize deck and player with empty hand
+    Deck deck;
+    Player playerOne;
+    Hand playersHand = *playerOne.getPlayerHand();
+    
+
+    // ======================= Deck Population =======================
+    // Create one card of each type and add to deck
     Card* reinforcement = new Card(Card::Reinforcement);
     Card* bomb = new Card(Card::Bomb);
     Card* blockade = new Card(Card::Blockade);
@@ -18,76 +40,77 @@ void testCards() {
     deck.addCard(airlift);
     deck.addCard(diplomacy);
 
-
-   
-
-    //After adding the cards, the deck has 5 cards.
-    std::cout <<"----------------------------" << std::endl;
+    // ======================= Initial State Display =======================
+    // Show deck contents and empty hand state
+    cout <<"----------------------------" << endl;
     deck.showDeck(deck);
-    // Hand is empty for now.
-    hand.showHand(hand);
+    // Display player's initial empty hand
+    playersHand.showHand(playersHand);
 
+    // Verify initial state: deck has 5 cards, hand has 0 cards
     assert(deck.getCardsOnDeck().size() == 5);
-    assert(hand.getCardsOnHand().size() == 0);
+    assert(playersHand.getCardsOnHand().size() == 0);
 
-
-
-    // Drawing Card #1.
+    // ======================= Card Drawing Testing =======================
+    // Test individual card drawing with state verification
     size_t deckBefore = deck.getCardsOnDeck().size();
-    size_t handBefore = hand.getCardsOnHand().size();
-    std::string drawn = deck.draw(hand);
+    size_t handBefore = playersHand.getCardsOnHand().size();
+    string drawn = deck.draw(playersHand);
 
-    assert(deck.getCardsOnDeck().size() == static_cast<size_t>(deckBefore - 1));
-    assert(hand.getCardsOnHand().size() == static_cast<size_t>(handBefore + 1));
+    assert(deck.getCardsOnDeck().size() == deckBefore - 1);
+    assert(playersHand.getCardsOnHand().size() == handBefore + 1);
 
-    // After drawing Card #1, the deck has 4 cards and hand, 1 card.
+    // Display state after first card draw
     deck.showDeck(deck);
-    hand.showHand(hand);
+    playersHand.showHand(playersHand);
 
-
-
-    // Drawing Card #2.
+    // Draw second card to further test drawing mechanism
     deckBefore = deck.getCardsOnDeck().size();
-    handBefore = hand.getCardsOnHand().size();
-    drawn = deck.draw(hand);
+    handBefore = playersHand.getCardsOnHand().size();
+    drawn = deck.draw(playersHand);
 
-    assert(deck.getCardsOnDeck().size() == static_cast<size_t>(deckBefore - 1));
-    assert(hand.getCardsOnHand().size() == static_cast<size_t>(handBefore + 1));
+    assert(deck.getCardsOnDeck().size() == deckBefore - 1);
+    assert(playersHand.getCardsOnHand().size() == handBefore + 1);
 
-    // After drawing Card #2, the deck has 3 cards and the hand, 2 cards.
+    // Display state after second card draw
     deck.showDeck(deck);
-    hand.showHand(hand);
+    playersHand.showHand(playersHand);
 
+    // ======================= Hand Population =======================
+    // Fill the hand with remaining cards to test complete card playing
+    cout << "Drawing remaining cards to fill the hand." << endl;
+    while (deck.getCardsOnDeck().size() > 0 && playersHand.getCardsOnHand().size() < 5) {
+        deck.draw(playersHand);
+    }
 
+    // Display full hand state before card playing demonstration
+    cout << "Hand is now full. Showing final state before playing:" << endl;
+    deck.showDeck(deck);
+    playersHand.showHand(playersHand);
 
-    // Playing the Cards on Hand.
-    std::cout << "PLAYING..." << std::endl;
+    // ======================= Card Playing Testing =======================
+    // Test playing all cards in hand with Order generation
+    cout << "----- Playing all cards in hand -----" << endl;
     deckBefore = deck.getCardsOnDeck().size();
-    handBefore = hand.getCardsOnHand().size();
-
-    // Play the first card.
-    Card *cardPlayed = hand.getCardsOnHand().at(0);
-    cardPlayed->play(cardPlayed, deck, hand);
-
-    assert(deck.getCardsOnDeck().size() == static_cast<size_t>(deckBefore + 1));
-    assert(hand.getCardsOnHand().size() == static_cast<size_t>(handBefore - 1));
-    std::cout <<"----------------------------" << std::endl;
-
-    // The card is removed from Hand, and returned back to the Deck.
-    deck.showDeck(deck);
-    hand.showHand(hand);
-
+    size_t initialHandSize = playersHand.getCardsOnHand().size();
     
-    
-    
-    // Play another card, where Hand should have no cards.
-    
-    // Play the last card.
-    cardPlayed = hand.getCardsOnHand().back();
-    cardPlayed->play(cardPlayed, deck, hand);
+    // Play all cards in hand using loop-based approach
+    while (!playersHand.getCardsOnHand().empty()) {
+        Card* cardToPlay = playersHand.getCardsOnHand().back();
+        cout << "Playing card from hand (remaining: " << playersHand.getCardsOnHand().size() << ")..." << endl;
+        cardToPlay->play(playerOne, deck, playersHand);
+        
+        // Display state after each card play to show progression
+        deck.showDeck(deck);
+        playersHand.showHand(playersHand);
+        cout << "----------------------------" << endl;
+    }
 
-    assert(hand.getCardsOnHand().empty());
-
-    // Ending message.
-    std::cout << "=== End Cards Test ===" << std::endl;
+    // ======================= Test Verification =======================
+    // Verify proper card playing: all cards returned to deck, hand emptied
+    assert(playersHand.getCardsOnHand().empty());
+    assert(deck.getCardsOnDeck().size() == deckBefore + initialHandSize);
+    
+    cout << "TEST PASSED: All " << initialHandSize << " cards were played and returned to deck." << endl;    // Ending message.
+    cout << "=== End Cards Test ===" << endl;
 }

@@ -5,16 +5,18 @@
 #include <string>
 #include <cstdlib>
 
-// Three classes are implemented in Cards.
+// Forward declarations
 class Card;
 class Deck;
 class Hand;
+class Player;
 
 // Deck class holds a collection of cards.
 class Deck {
     public:
         Deck();
         Deck(Deck const &deck); // Copy constructor for Deck.
+        Deck& operator=(const Deck& other); // Assignment operator for Deck.
         void addCard(Card* card);
         void removeCard(Card* card);
         std::vector<Card*> getCardsOnDeck() const;
@@ -39,8 +41,9 @@ class Card {
 
         Card(typeOfCard cardType); // Constructor.
         Card(Card const & card); // Copy constructor for Card.
-    typeOfCard getCard() const;
-        void play(Card* cardPlayed, Deck &deck, Hand &hand); // Cards can be played, but they will be removed from hand and returned to deck afterwards.
+        Card& operator=(const Card& other); // Assignment operator for Card.
+        typeOfCard getCard() const;
+        void play(Player& player, Deck &deck, Hand &hand); // Cards can be played, creates an order and adds it to the player's list of orders, then returns the card to the deck.
 
     private:
         typeOfCard card;
@@ -52,7 +55,8 @@ class Hand {
     public:
         Hand();
         Hand(Hand const &hand); // Copy constructor for Hand.
-    std::vector<Card*> getCardsOnHand() const;
+        Hand& operator=(const Hand& other); // Assignment operator for Hand.
+        std::vector<Card*> getCardsOnHand() const;
         void addCard(Card* card);
         void removeCard(Card* card);
         void showHand(Hand& hand);

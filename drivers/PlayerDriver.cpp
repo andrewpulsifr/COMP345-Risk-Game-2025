@@ -1,89 +1,124 @@
+/**
+ * @file PlayerDriver.cpp
+ * @brief Assignment 1 : Player class driver and testing
+ * @author Matteo
+ * @date October 2025
+ * @version 1.0
+ * 
+ * This file contains the test driver for the Player class functionality, demonstrating
+ * all requirements including hand ownership, territory management methods
+ * (toDefend/toAttack), and order issuance capabilities.
+ */
+
 #include <iostream>
 #include "../include/Map.h"    
 #include "../include/Player.h"
 #include "../include/Orders.h"
+#include "../include/Cards.h"
 
+using namespace std;
+
+/**
+ * @brief Comprehensive test function for Player class functionality
+ * @details Tests all requirements:
+ *          - Player owns a Hand of cards (pointer member)
+ *          - toDefend() method returns owned territories
+ *          - toAttack() method returns attackable adjacent enemy territories  
+ *          - issueOrder() method adds orders to player's OrdersList
+ * 
+ * Creates a simple game scenario with two players (Alice and Bob) owning
+ * territories with adjacency relationships, then demonstrates all required
+ * Player class methods and functionality.
+ */
 void testPlayers() {
-    std::cout << "\n=== Testing Player Class Functionality ===\n";
+    cout << "\n=== Testing Player Class Functionality ===\n";
 
-    // Create players with names
+    // ======================= Test Setup =======================
+    // Create test players with meaningful names
     Player alice("Alice");
     Player bob("Bob");
-
-    // Create a map to manage territory ownership
     Map gameMap;
 
-    // Create territories with meaningful names and IDs
+    // Create territories for game scenario
     Territory* canada = new Territory(1, "Canada");
     Territory* usa = new Territory(2, "USA");
     Territory* mexico = new Territory(3, "Mexico");
-    Territory* brazil = new Territory(4, "Brazil");
 
-    // Add territories to map (map takes ownership)
+    // Add territories to map for proper management
     gameMap.addTerritory(canada);
     gameMap.addTerritory(usa);
     gameMap.addTerritory(mexico);
-    gameMap.addTerritory(brazil);
 
-    // Set up territory adjacencies (borders between countries)
-    // Creates a chain: Canada <-> USA <-> Mexico <-> Brazil
+    // Set up territory adjacencies to enable attack/defend logic 
     canada->addAdjacent(usa);      // Canada borders USA
-    usa->addAdjacent(canada);      // USA borders Canada
+    usa->addAdjacent(canada);      // USA borders Canada  
     usa->addAdjacent(mexico);      // USA borders Mexico
     mexico->addAdjacent(usa);      // Mexico borders USA
-    mexico->addAdjacent(brazil);   // Mexico borders Brazil
-    brazil->addAdjacent(mexico);   // Brazil borders Mexico
 
-    // Set territory ownership and initial armies
+    // Assign territory ownership and initial army counts
     canada->setOwner(&alice);      // Alice owns Canada
-    canada->setArmies(5);          // Canada has 5 armies
+    canada->setArmies(5);
     usa->setOwner(&alice);         // Alice owns USA
-    usa->setArmies(3);            // USA has 3 armies
+    usa->setArmies(3);
     mexico->setOwner(&bob);        // Bob owns Mexico
-    mexico->setArmies(4);         // Mexico has 4 armies
-    brazil->setOwner(&bob);        // Bob owns Brazil
-    brazil->setArmies(2);         // Brazil has 2 armies
+    mexico->setArmies(4);
 
     // Register territories with their owning players
     alice.addPlayerTerritory(canada);
     alice.addPlayerTerritory(usa);
     bob.addPlayerTerritory(mexico);
-    bob.addPlayerTerritory(brazil);
 
-    // Get Alice's defend and attack lists
-    std::vector<Territory*> territoriesToDefend = alice.toDefend();
-    std::vector<Territory*> territoriesToAttack = alice.toAttack();
+    // =======================Player Hand Ownership =======================
+    
+    // Demonstrate that Player owns a Hand of cards
+    cout << "\n=== Player Hand Ownership ===\n";
+    Hand* aliceHand = alice.getPlayerHand();
+    Deck gameDeck;
+    gameDeck.addCard(new Card(Card::Bomb));
+    gameDeck.addCard(new Card(Card::Reinforcement));
+    
+    // Draw cards to populate Alice's hand
+    gameDeck.draw(*aliceHand);
+    gameDeck.draw(*aliceHand);
+    cout << "Alice's hand after drawing 2 cards:\n";
+    aliceHand->showHand(*aliceHand);
 
-    // Display Alice's territory information
-    std::cout << "Alice's Territories:\n";
-    std::cout << "Currently owned territories: ";
-    const std::vector<Territory*>& ownedTerritories = alice.getOwnedTerritories();
-    for (Territory* territory : ownedTerritories) {
-        std::cout << territory->getName() << " ";
+    // ======================= toDefend() and toAttack() Methods =======================
+    
+    //Demonstrate toDefend() and toAttack() strategic methods
+    cout << "\n=== toDefend() and toAttack() Methods ===\n";
+    cout << "Alice's Territories:\n";
+    cout << "Currently owned territories: ";
+    for (Territory* territory : alice.getOwnedTerritories()) {
+        cout << territory->getName() << " ";
     }
     
-    std::cout << "\nTerritories to defend: ";
-    for (Territory* territory : territoriesToDefend) {
-        std::cout << territory->getName() << " ";
+    // Test toDefend(): should return Alice's owned territories
+    cout << "\nTerritories to defend: ";
+    for (Territory* territory : alice.toDefend()) {
+        cout << territory->getName() << " ";
     }
     
-    std::cout << "\nTerritories to attack: ";
-    for (Territory* territory : territoriesToAttack) {
-        std::cout << territory->getName() << " ";
+    /** Test toAttack(): should return adjacent enemy territories Alice can attack */
+    cout << "\nTerritories to attack: ";
+    for (Territory* territory : alice.toAttack()) {
+        cout << territory->getName() << " ";
     }
-    std::cout << "\n\n";
+    cout << "\n";
 
-    // Create and issue orders for Alice
-    std::cout << "Creating orders for Alice:\n";
+    // ======================= issueOrder() Method =======================
     
-    // Deploy order - reinforce Canada with 3 armies
+    // Demonstrate issueOrder() method for adding orders to player's list
+    cout << "\n=== issueOrder() Method Demonstration ===\n";
+    cout << "Creating orders for Alice:\n";
+
+    //  Create and issue Deploy order to reinforce territory with armies
     alice.issueOrder(new DeployOrder(&alice, canada, 3));
-    std::cout << "- Deploy 3 armies to " << canada->getName() << "\n";
-    
-    // Advance order - attack Mexico from Canada with 2 armies
-    alice.issueOrder(new AdvanceOrder(&alice, canada, mexico, 2));
-    std::cout << "- Advance 2 armies from " << canada->getName() 
-              << " to " << mexico->getName() << "\n";
+    cout << "Deploy 3 armies to Canada\n";
 
-    std::cout << "\n=== Player Class Testing Complete ===\n";
+    // Create and issue Advance order to move armies between territories
+    alice.issueOrder(new AdvanceOrder(&alice, canada, mexico, 2));
+    cout << "Advance 2 armies from Canada to Mexico\n";
+
+    cout << "\n=== Player Class Testing Complete ===\n";
 }

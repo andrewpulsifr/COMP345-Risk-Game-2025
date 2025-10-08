@@ -1,31 +1,34 @@
 #include "../include/Player.h"
 #include "../include/Map.h"
 #include "../include/Orders.h"
+#include "../include/Cards.h"
 #include <algorithm>
 #include <iostream>
 
 
-// @brief Default constructor, creates a player with name "defaultName"
+//Player
+
+// Default Constructor for Player.
 Player::Player()
     : playerName("defaultName"),
-      playerHand(),
+      playerHand(new Hand()),
       ownedTerritories(),
       orders_(new OrdersList()) {}
 
-// @brief Copy constructor
-// @param copyPlayer The player to copy from
+
+// Deep Copy Constructor for Player.
 Player::Player(const Player& copyPlayer)
     : playerName(copyPlayer.playerName),
-      playerHand(copyPlayer.playerHand),
+      playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
       orders_(new OrdersList(*copyPlayer.orders_))
 {}
 
-// @brief Constructor with player name
-// @param name The name of the player
+
+// Constructor with name parameter for Player.
 Player::Player(std::string name)
     : playerName(std::move(name)),
-      playerHand(),
+      playerHand(new Hand()),
       ownedTerritories(),
       orders_(new OrdersList()) {}
 
@@ -36,7 +39,11 @@ Player::Player(std::string name)
 Player& Player::operator=(const Player& copyPlayer) {
     if (this != &copyPlayer) {
         playerName = copyPlayer.playerName;
-        playerHand = copyPlayer.playerHand;
+        
+        // Delete existing playerHand to prevent memory leak
+        delete playerHand;
+        playerHand = new Hand(*copyPlayer.playerHand);
+        
         ownedTerritories = copyPlayer.ownedTerritories;
         // deep copy into existing list
         *orders_ = *copyPlayer.orders_;
@@ -44,31 +51,34 @@ Player& Player::operator=(const Player& copyPlayer) {
     return *this;
 }
 
-// @brief Destructor that cleans up player's resources
+
+// Destructor for Player.
 Player::~Player() {
-    playerHand.clear();
-    ownedTerritories.clear();
+    delete playerHand;
     delete orders_;
-    orders_ = nullptr;
 }
 
-// @brief Gets the name of the player
-// @return std::string The player's name
+
+// Getter for Player's Name.
 std::string Player::getPlayerName() const {
     return playerName;
 }
 
+// Getter for Player's Hand.
+Hand* Player::getPlayerHand() const {
+    return playerHand;
+}
+
+
 //Territory Management
 
-// @brief Adds a territory to player's ownership and sets the territory's owner
-// @param territory The territory to add to player's ownership
+// Add to a Player's owned territories.
 void Player::addPlayerTerritory(Territory* territory) {
     ownedTerritories.push_back(territory);
     territory->setOwner(this);
 }
 
-// @brief Removes a territory from player's ownership and clears its owner
-// @param territory The territory to remove from player's ownership
+// Remove a Player's territory.
 void Player::removePlayerTerritory(Territory* territory) {
     std::vector<Territory*>::iterator it = std::find(ownedTerritories.begin(), ownedTerritories.end(), territory);
     if (it != ownedTerritories.end()) {
@@ -77,16 +87,14 @@ void Player::removePlayerTerritory(Territory* territory) {
     }
 }
 
-// @brief Gets the list of territories owned by the player
-// @return std::vector<Territory*> List of territories currently owned by this player
+// Getter for Player's Owned Territories.
 std::vector<Territory*> Player::getOwnedTerritories() const {
     return ownedTerritories;
 }
 
 //Attack / Defend Lists
 
-// @brief Returns list of territories to defend (currently owned territories)
-// @return std::vector<Territory*> List of all territories that need to be defended
+// Returns a player's attackable territory.
 std::vector<Territory*> Player::toDefend() {
     return ownedTerritories;
 }
@@ -106,21 +114,6 @@ std::vector<Territory*> Player::toAttack() {
     return attackList;
 }
 
-//Cards
-
-// @brief Adds a card to player's hand
-// @param card Pointer to the card to add
-void Player::addCard(Card* card) {
-    playerHand.push_back(card);
-}
-
-// @brief Removes a card from player's hand
-// @param card Pointer to the card to remove
-void Player::removeCard(Card* card) {
-    std::vector<Card*>::iterator it = std::find(playerHand.begin(), playerHand.end(), card);
-    if (it != playerHand.end())
-        playerHand.erase(it);
-}
 
 //Orders
 
@@ -134,10 +127,7 @@ void Player::issueOrder(Order* orderIssued) {
 
 //Debug / Print
 
-// @brief Stream output operator for Player class
-// @param os The output stream
-// @param player The player to output
-// @return std::ostream& Reference to the output stream
+// Stream overloading for Player.
 std::ostream& operator<<(std::ostream& os, const Player& player) {
     os << "Player: " << player.getPlayerName() << "\nOwned Territories: ";
     for (Territory* territory : player.getOwnedTerritories()) {
