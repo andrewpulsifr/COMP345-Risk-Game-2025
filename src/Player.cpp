@@ -39,7 +39,11 @@ Player::Player(std::string name)
 Player& Player::operator=(const Player& copyPlayer) {
     if (this != &copyPlayer) {
         playerName = copyPlayer.playerName;
+        
+        // Delete existing playerHand to prevent memory leak
+        delete playerHand;
         playerHand = new Hand(*copyPlayer.playerHand);
+        
         ownedTerritories = copyPlayer.ownedTerritories;
         // deep copy into existing list
         *orders_ = *copyPlayer.orders_;
@@ -50,7 +54,8 @@ Player& Player::operator=(const Player& copyPlayer) {
 
 // Destructor for Player.
 Player::~Player() {
-    playerHand->~Hand(); //calls the Hand destructor.
+    delete playerHand; // Properly delete the Hand object
+    playerHand = nullptr;
     ownedTerritories.clear();
     delete orders_;
     orders_ = nullptr;
