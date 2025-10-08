@@ -23,8 +23,22 @@
 #include <filesystem>
 #include <utility> 
 
-using namespace std;
+// Importing only the neccessary std functions.
 namespace fs = std::filesystem;
+using std::string;
+using std::vector;
+using std::unordered_map;
+using std::unordered_set;
+using std::out_of_range;
+using std::invalid_argument;
+using std::string_view;
+using std::endl;
+using std::cout;
+using std::ifstream;
+using std::istream;
+using std::ostream;
+using std::runtime_error;
+using std::make_unique;
 
 
 /** @brief Anonymous namespace containing map parsing utilities and constants */

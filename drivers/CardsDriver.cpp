@@ -16,7 +16,10 @@
 #include "../include/Player.h"
 #include <cassert>
 
-using namespace std;
+// Importing only the neccessary std functions.
+using std::cout;
+using std::endl;
+using std::string;
 
 void testCards() {
     // ======================= Test Setup =======================
