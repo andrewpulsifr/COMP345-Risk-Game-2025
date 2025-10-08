@@ -54,11 +54,8 @@ Player& Player::operator=(const Player& copyPlayer) {
 
 // Destructor for Player.
 Player::~Player() {
-    delete playerHand; // Properly delete the Hand object
-    playerHand = nullptr;
-    ownedTerritories.clear();
+    delete playerHand;
     delete orders_;
-    orders_ = nullptr;
 }
 
 
