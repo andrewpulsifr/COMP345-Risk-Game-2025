@@ -19,14 +19,11 @@
 using namespace std;
 
 void testCards() {
-    // ======================= Test Setup =======================
     // Initialize deck and player with empty hand
     Deck deck;
     Player playerOne;
     Hand playersHand = *playerOne.getPlayerHand();
     
-
-    // ======================= Deck Population =======================
     // Create one card of each type and add to deck
     Card* reinforcement = new Card(Card::Reinforcement);
     Card* bomb = new Card(Card::Bomb);
@@ -40,12 +37,11 @@ void testCards() {
     deck.addCard(airlift);
     deck.addCard(diplomacy);
 
-    // ======================= Initial State Display =======================
     // Show deck contents and empty hand state
     cout <<"----------------------------" << endl;
-    deck.showDeck(deck);
+    deck.showDeck();
     // Display player's initial empty hand
-    playersHand.showHand(playersHand);
+    playersHand.showHand();
 
     // Verify initial state: deck has 5 cards, hand has 0 cards
     assert(deck.getCardsOnDeck().size() == 5);
@@ -61,8 +57,8 @@ void testCards() {
     assert(playersHand.getCardsOnHand().size() == handBefore + 1);
 
     // Display state after first card draw
-    deck.showDeck(deck);
-    playersHand.showHand(playersHand);
+    deck.showDeck();
+    playersHand.showHand();
 
     // Draw second card to further test drawing mechanism
     deckBefore = deck.getCardsOnDeck().size();
@@ -73,10 +69,9 @@ void testCards() {
     assert(playersHand.getCardsOnHand().size() == handBefore + 1);
 
     // Display state after second card draw
-    deck.showDeck(deck);
-    playersHand.showHand(playersHand);
+    deck.showDeck();
+    playersHand.showHand();
 
-    // ======================= Hand Population =======================
     // Fill the hand with remaining cards to test complete card playing
     cout << "Drawing remaining cards to fill the hand." << endl;
     while (deck.getCardsOnDeck().size() > 0 && playersHand.getCardsOnHand().size() < 5) {
@@ -85,8 +80,8 @@ void testCards() {
 
     // Display full hand state before card playing demonstration
     cout << "Hand is now full. Showing final state before playing:" << endl;
-    deck.showDeck(deck);
-    playersHand.showHand(playersHand);
+    deck.showDeck();
+    playersHand.showHand();
 
     // ======================= Card Playing Testing =======================
     // Test playing all cards in hand with Order generation
@@ -101,8 +96,8 @@ void testCards() {
         cardToPlay->play(playerOne, deck, playersHand);
         
         // Display state after each card play to show progression
-        deck.showDeck(deck);
-        playersHand.showHand(playersHand);
+        deck.showDeck();
+        playersHand.showHand();
         cout << "----------------------------" << endl;
     }
 

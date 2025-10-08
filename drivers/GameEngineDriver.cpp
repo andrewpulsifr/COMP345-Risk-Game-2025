@@ -37,7 +37,6 @@ void testGameStates() {
     string input;
     cout << "\nEnter command: ";
     
-    // ======================= Command Processing Loop =======================
     // Main loop for processing user commands and managing state transitions
     while (std::getline(cin, input)) {
         // Clean up input string by removing leading/trailing whitespace
