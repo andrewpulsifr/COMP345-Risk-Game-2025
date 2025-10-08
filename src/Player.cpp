@@ -33,9 +33,11 @@ Player::Player(std::string name)
       orders_(new OrdersList()) {}
 
 
-// @brief Assignment operator
-// @param copyPlayer The player to copy from
-// @return Player& Reference to this player after assignment
+/**
+ * @brief Assignment operator
+ * @param copyPlayer The player to copy from
+ * @return Player& Reference to this player after assignment
+ */
 Player& Player::operator=(const Player& copyPlayer) {
     if (this != &copyPlayer) {
         playerName = copyPlayer.playerName;
@@ -99,8 +101,10 @@ std::vector<Territory*> Player::toDefend() {
     return ownedTerritories;
 }
 
-// @brief Returns list of territories that can be attacked (adjacent enemy territories)
-// @return std::vector<Territory*> List of all adjacent enemy territories that can be attacked
+/**
+ * @brief Returns list of territories that can be attacked (adjacent enemy territories)
+ * @return std::vector<Territory*> List of all adjacent enemy territories that can be attacked
+ */
 std::vector<Territory*> Player::toAttack() {
     std::vector<Territory*> attackList;
     for (Territory* mine : ownedTerritories) {
@@ -117,8 +121,10 @@ std::vector<Territory*> Player::toAttack() {
 
 //Orders
 
-// @brief Issues a new order and adds it to the player's order list
-// @param orderIssued Pointer to the order being issued
+/**
+ * @brief Issues a new order and adds it to the player's order list
+ * @param orderIssued Pointer to the order being issued
+ */
 void Player::issueOrder(Order* orderIssued) {
     if (!orders_ || !orderIssued) return;
     orders_->add(orderIssued);
