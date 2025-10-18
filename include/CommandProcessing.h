@@ -8,28 +8,29 @@ class CommandProcessor {
     public:
         CommandProcessor(); // Default Constructor.
         CommandProcessor(const CommandProcessor &obj); // Deep copy constructor for CommandProcessor.
+        ~CommandProcessor(); // Destructor.
         Command* getCommand();
-        std::vector<Command*> getCommandObjects;
+        std::vector<Command*> getCommandObjects();
         void saveEffect();
-        boolean validate();
+        bool validate();
 
     private:
-        void readCommand(std::string command);
-        void saveCommand();
+        void readCommand();
+        void saveCommand(std::string commandRead);
         std::vector<Command*> commandObjects;
 
-}
+};
 
 class FileCommandProcessorAdapter {
     public:
-        void saveCommand();
         Command* getCommand();
         void saveEffect();
-        boolean validate();
+        bool validate();
 
     private:
-        void readCommand(std::string command);
+        void readCommand();
+        void saveCommand(std::string commandRead);
         std::vector<Command*> commandObjects;
 
 
-}
+};
