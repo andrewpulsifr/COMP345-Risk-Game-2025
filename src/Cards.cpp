@@ -88,7 +88,7 @@ Hand::Hand() : cardsOnHand() {} // Default constructor.
 // Deep copy constructor for Hand.
 Hand::Hand(Hand const &hand) {
     // Deep copy: create new Card objects with same enum value
-    for(size_t i = 0; i < hand.cardsOnHand.size(); ++i) {
+    for(size_t i = 0; i < hand.cardsOnHand.size(); i++) {
         Card* cardptr = hand.cardsOnHand[i];
         if (cardptr) {
             Card* copy = new Card(cardptr->getCard());
@@ -107,7 +107,7 @@ Hand& Hand::operator=(const Hand& other) {
         cardsOnHand.clear();
         
         // Deep copy: create new Card objects
-        for (size_t i = 0; i < other.cardsOnHand.size(); ++i) {
+        for (size_t i = 0; i < other.cardsOnHand.size(); i++) {
             Card* cardptr = other.cardsOnHand[i];
             if (cardptr) {
                 Card* copy = new Card(cardptr->getCard());
@@ -163,6 +163,8 @@ Hand::~Hand() {
     for(size_t i = 0; i < cardsOnHand.size(); i++) {
         delete cardsOnHand.at(i);
     }
+
+    cardsOnHand.clear();
 }
 
 // Implementation of Deck.
@@ -272,7 +274,12 @@ void Deck::showDeck() {
 
 // Destructor for Deck. Deletes the Card* of each card in the Deck.
 Deck::~Deck() {
+
+    // Delete the Card objects.
     for(size_t i = 0; i < cardsOnDeck.size(); i++) {
         delete cardsOnDeck.at(i);
     }
+
+    // Remove/Clear the address pointers of all Card objects on Deck.
+    cardsOnDeck.clear();
 }

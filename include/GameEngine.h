@@ -44,8 +44,12 @@ public:
     std::string getName() const;
     void setName(const std::string& name);
 
+    std::string getEffect() const;
+    void setEffect(const std::string& newEffect);
+
 private:
     std::string* name; // Command name as pointer (requirement: all data members must be pointer type)
+    std::string* effect; // Save the effect of the command from the CommandProcessing.
 };
 
 /**

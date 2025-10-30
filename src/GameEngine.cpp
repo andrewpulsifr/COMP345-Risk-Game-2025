@@ -28,13 +28,13 @@ using std::endl;
 // ======================= Command Class =======================
 
 /** @brief Default constructor creates empty command */
-Command::Command() : name(new string("")) {}
+Command::Command() : name(new string("")), effect (new string("")) {}
 
 /** 
  * @brief Copy constructor performs deep copy of command name
  * @param other Command to copy from
  */
-Command::Command(const Command& other) : name(new string(*other.name)) {}
+Command::Command(const Command& other) : name(new string(*other.name)), effect(new string(*other.effect)) {}
 
 /**
  * @brief Parameterized constructor creates command with given name
@@ -42,9 +42,10 @@ Command::Command(const Command& other) : name(new string(*other.name)) {}
  */
 Command::Command(const string& cmdName) : name(new string(cmdName)) {}
 
-/** @brief Destructor cleans up dynamically allocated name */
+/** @brief Destructor cleans up dynamically allocated name and effect */
 Command::~Command() {
     delete name;
+    delete effect;
 }
 
 /**
@@ -56,6 +57,9 @@ Command& Command::operator=(const Command& other) {
     if (this != &other) {
         delete name;
         name = new string(*other.name);
+
+        delete effect;
+        effect = new string(*other.effect);
     }
     return *this;
 }
@@ -76,6 +80,12 @@ string Command::getName() const { return *name; }
 
 /** @brief Set the name of this command */
 void Command::setName(const string& newName) { *name = newName; }
+
+/** @brief Get the effect of the command. */
+string Command::getEffect() const { return *effect; }
+
+/** @brief Set the effect of the command. */
+void Command::setEffect(const string& newEffect) { *effect = newEffect; }
 
 // ======================= GameEngine Class =======================
 
