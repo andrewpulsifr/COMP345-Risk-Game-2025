@@ -39,10 +39,11 @@ Command::Command(const Command& other) : name(new string(*other.name)), effect(n
 /**
  * @brief Parameterized constructor creates command with given name
  * @param cmdName The command name string
+ * @param cmdEffect: The effect string.
  */
-Command::Command(const string& cmdName) : name(new string(cmdName)) {}
+Command::Command(const string& cmdName) : name(new string(cmdName)), effect(new string("")) {}
 
-/** @brief Destructor cleans up dynamically allocated name and effect */
+/** @brief Destructor cleans up dynamically allocated name */
 Command::~Command() {
     delete name;
     delete effect;
@@ -85,7 +86,7 @@ void Command::setName(const string& newName) { *name = newName; }
 string Command::getEffect() const { return *effect; }
 
 /** @brief Set the effect of the command. */
-void Command::setEffect(const string& newEffect) { *effect = newEffect; }
+void Command::setEffect(const string& newEffect) const { *effect = newEffect; }
 
 // ======================= GameEngine Class =======================
 
@@ -235,7 +236,9 @@ bool GameEngine::processCommand(const Command& cmd) {
     string commandStr = cmd.getName();
     
     if (!isValidCommand(commandStr)) {
-        printErrorMessage(commandStr);
+        // NEED TO FIX: Print an error message and store in it in the Command's private string, effect.
+        cmd.setEffect(printErrorMessage(commandStr));
+        
         return false;
     }
     
@@ -356,9 +359,11 @@ void GameEngine::printValidCommands() const {
  * @brief Print error message for invalid command
  * @param invalidCommand The command that was invalid
  */
-void GameEngine::printErrorMessage(const string& invalidCommand) const {
-    cout << "ERROR: Invalid command '" << invalidCommand 
-         << "' for current state " << getStateName() << endl;
+std::string GameEngine::printErrorMessage(const string& invalidCommand) const {
+    std::string errorMessage = std::string("ERROR: Invalid command '") + invalidCommand + "' for current state " + getStateName();
+    cout << errorMessage << endl;
+
+    return errorMessage;
 }
 
 /**

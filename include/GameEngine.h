@@ -45,7 +45,7 @@ public:
     void setName(const std::string& name);
 
     std::string getEffect() const;
-    void setEffect(const std::string& newEffect);
+    void setEffect(const std::string& newEffect) const;
 
 private:
     std::string* name; // Command name as pointer (requirement: all data members must be pointer type)
@@ -115,7 +115,7 @@ public:
     // Utility methods for console interface
     void printCurrentState() const;
     void printValidCommands() const;
-    void printErrorMessage(const std::string& invalidCommand) const;
+    std::string printErrorMessage(const std::string& invalidCommand) const;
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
 

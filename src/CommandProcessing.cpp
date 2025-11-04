@@ -30,50 +30,30 @@ CommandProcessor::~CommandProcessor() {
 }
 
 // validate()
-bool CommandProcessor::validate(std::string& commandEntered) {
-
+bool CommandProcessor::validate(GameEngine& engine, std::string& commandEntered) {
+    return engine.processCommand(commandEntered);
 }
 
 // readCommand().
-void CommandProcessor::readCommand(std::string& lineEntered) {
+std::string CommandProcessor::readCommand() {
+    std::string lineEntered;
+    
+    std::cout << "\nEnter command: ";
+    
+    // Prompt user to input command.
+    std::getline(std::cin, lineEntered);
 
     // Remove whitespace that may be present at the start and end of the string entered.
     lineEntered.erase(0, lineEntered.find_first_not_of(" \t"));
     lineEntered.erase(lineEntered.find_last_not_of(" \t") + 1);
 
-
-    // Extract only the command, if a mapname or playername is entered.
+    //Extract only the command, if a mapname or playername is entered.
     std::string commandEntered = lineEntered.substr(0, lineEntered.find(" "));
-
-    std::cout << "The command entered is: " << commandEntered << std::endl;
-
-    if(commandEntered == "loadmap") {
-        std::cout << "Loadmap." << std::endl;
-        // saveCommand("loadmap");
-    } else if (commandEntered == "validatemap") {
-        std::string mapfileEntered = lineEntered.substr(commandEntered.length()+1, lineEntered.length());
-        std::cout << "The mapfile entered is: " << mapfileEntered << std::endl;
-        
-        // std::cout << "In validatemap." << std::endl;
-    } else if (commandEntered == "addplayer") {
-        std::string playernameEntered = lineEntered.substr(commandEntered.length()+1, lineEntered.length());
-        std::cout << "The playername entered is: " << playernameEntered << std::endl;
-
-        // saveCommand("addplayer");
-    } else if (commandEntered == "gamestart") {
-        std::cout << "Gamestart." << std::endl;
-        // saveCommand("gamestart");
-    } else if (commandEntered == "replay") {
-        std::cout << "Replay." << std::endl;
-        // saveCommand("replay");
-    } else if (commandEntered == "quit") {
-        std::cout << "Exiting Program..." << std::endl;
-        exit(1);
-    } else {
-            std::cout << "The command you entered is not valid." << std::endl;
-    }
-
+    
+    return commandEntered;
 }
+
+
 
 // saveEffect()
 void CommandProcessor::saveEffect(Command* cmdObject, std::string& effect) {
@@ -89,15 +69,54 @@ void CommandProcessor::saveCommand(std::string& commandRead) {
 }
 
 // getCommand() for GameEngine or Player objects to read from command line.
- void CommandProcessor::getCommand() {
-    std::string lineEntered;
+ void CommandProcessor::getCommand(GameEngine& engine) {
+    std::string commandEntered;
 
-    std::cout << "Please enter a command (in lowercase): ";
-    std::getline(std::cin, lineEntered);
+    // Adapted from the GameEngineDriver.cpp.
+    while(true) {
+        // Prompts user to enter commands, returns the command if it is valid.
+        commandEntered = readCommand();
+
+        // Skip empty input and prompt again
+        if (commandEntered.empty()) {
+            std::cout << "Enter command: ";
+            continue;
+        }
+
+        // Handle quit/exit commands to terminate the test
+        if (commandEntered == "quit" || commandEntered == "exit") {
+            std::cout << "Exiting game engine test." << std::endl;
+            break;
+        }
+
+        // Handle informational commands that don't change game state
+        if (commandEntered == "help") {
+            engine.displayGameStatus();
+        } else if (commandEntered == "status") {
+            engine.displayGameStatus();
+        } else {
+            // Process actual game commands that trigger state transitions, store validity of command in 'validated'.
+            bool validated = engine.processCommand(commandEntered);
+
+            // Display current state after command processing
+            std::cout << "  Current state: " << engine.getStateName() << std::endl;
+            
+            // Save the command in a collection of Command objects, if the command is valid.
+            // if(validated) {
+                saveCommand(commandEntered);
+            // }
+            
+            // Check if game has reached terminal state
+            if (engine.isGameOver()) {
+                std::cout << "Game has ended. Type 'quit' to exit or continue testing." << std::endl;
+            }
+        }
     
-    readCommand(lineEntered);
-    
-    if(validate) {
-        saveCommand(lineEntered);
+
+    }
+
+    // print out and see what commandObjects are stored.
+    for(int i = 0; i < commandObjects.size(); i++) {
+        std::cout << "commandObject[" << i << "]: " << commandObjects[i]->getName() << ", get effect: " << commandObjects[i]->getEffect() << std::endl;
     }
 }
