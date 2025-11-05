@@ -24,11 +24,11 @@
 
 // Forward declarations of driver test functions
 void testLoadMaps();
-void testLoadMaps();
 void testPlayers();
 void testOrdersLists();
 void testCards();
 void testGameStates();
+void testLoggingObserver();
 
 /**
  * @brief Main entry point for Warzone component testing
@@ -48,6 +48,7 @@ int main() {
     testOrdersLists(); // Test order creation, execution, and OrdersList operations
     testCards(); // Test deck, hand, drawing, and card playing with Order generation
     testGameStates(); // Test state transitions, command processing, and game flow
+    testLoggingObserver(); // Test Part 5: Observer pattern for logging
 
     std::cout << "\n";
     std::cout << "\n=== Program finished successfully ===\n";

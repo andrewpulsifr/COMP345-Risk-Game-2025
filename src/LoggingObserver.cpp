@@ -37,28 +37,29 @@ void Subject::notify() const {
 }
 
 // ======================= LogObserver Class =======================
-LogObserver::LogObserver() {
-    // Constructor implementation
+LogObserver::LogObserver(): logFilePath("gamelog.txt") {
+    std::ofstream logFile(logFilePath, std::ios::trunc); // Clear File
+    if (logFile.is_open()) {
+        logFile << "=== Game Log Started ===" << std::endl;
+        logFile.close();
+    }
+    else {
+        std::cerr << "ERROR: Could not create log file" << std::endl;
+    }
 }
-
 LogObserver::LogObserver(const LogObserver& other) {
     // Copy constructor implementation
-}
-
-LogObserver::~LogObserver() {
-    // Destructor implementation
-}
-
-LogObserver& LogObserver::operator=(const LogObserver& other) {
-    // Copy assignment operator implementation
-    return *this;
-}
-
-std::ostream& operator<<(std::ostream& os, const LogObserver& observer) {
-    // Friend function implementation
-    return os;
+    logFilePath = other.logFilePath;
 }
 
 void LogObserver::update(const ILoggable& logUpdate) {
-    logUpdate.stringToLog(); // Stub implementation
+    std::ofstream logFile(logFilePath, std::ios::app);
+    if (logFile.is_open()) {
+        logFile << logUpdate.stringToLog() << std::endl;
+        logFile << std::endl;
+        logFile.close();
+    }
+    else {
+        std::cerr << "ERROR: Could not open log file" << std::endl;
+    }
 }
