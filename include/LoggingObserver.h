@@ -1,7 +1,9 @@
 
 #pragma once
 
+#include <iostream>
 #include <ostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -50,10 +52,13 @@ class LogObserver : public Observer {
 public:
     LogObserver();
     LogObserver(const LogObserver& other);
-    ~LogObserver();
+    ~LogObserver() = default;
 
     LogObserver& operator=(const LogObserver& other);
     friend std::ostream& operator<<(std::ostream& os, const LogObserver& observer);
 
     void update(const ILoggable& logUpdate) override;
+
+private:
+    std::string logFilePath;
 };
