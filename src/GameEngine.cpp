@@ -181,6 +181,14 @@ ostream& operator<<(ostream& os, const GameEngine& engine) {
 }
 
 /** 
+ * @brief Generates a log string for the game engine
+ * @return std::string String representation for logging
+ */
+string GameEngine::stringToLog() const {
+    return "GameEngine: Current State = " + getStateName();
+}
+
+/** 
  * @brief Initialize the state transition table with valid transitions
  * 
  * @details Sets up all valid state transitions based on the assignment's state diagram:
@@ -379,6 +387,7 @@ void GameEngine::displayGameStatus() const {
  */
 void GameEngine::setState(GameState newState) {
     *currentState = newState;
+    notify();  // Notify observers of state change
 }
 
 /**
