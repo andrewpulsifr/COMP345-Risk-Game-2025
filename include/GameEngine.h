@@ -17,6 +17,7 @@
 #include <vector>
 #include <iostream>
 #include <utility>
+#include "LoggingObserver.h"
 
 // Forward declarations
 class Map;
@@ -81,7 +82,7 @@ enum class GameState {
  * Validates commands against current state and transitions to new states accordingly.
  * Rejects invalid commands with error messages.
  */
-class GameEngine {
+class GameEngine : public ILoggable, public Subject {
 public:
     GameEngine(); // Default constructor
     GameEngine(const GameEngine& other); // Copy constructor
@@ -114,6 +115,9 @@ public:
     void printErrorMessage(const std::string& invalidCommand) const;
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
+
+    // ILoggable interface implementation
+    std::string stringToLog() const override;
 
 private:
     // Type aliases for readability
