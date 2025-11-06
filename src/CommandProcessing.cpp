@@ -126,13 +126,20 @@ void CommandProcessor::getCommand(GameEngine& engine) {
         }
 
     }
-
-    // TESTING: Print out and see what commandObjects are stored.
-    for(int i = 0; i < commandObjects.size(); i++) {
-        std::cout << "commandObject[" << i << "] - Name: " << commandObjects[i]->getName() << ", Effect: " << commandObjects[i]->getEffect() << std::endl;
-    }
 }
 
+// Get pointer to the first element of the vector of Command Objects.
+Command* CommandProcessor::getCommandObjects() {
+    return commandObjects[0];
+}
+
+void CommandProcessor::printCommandObjects() {
+    std::cout << "List of Command Names and Effects: " << std::endl;
+    for(int i = 0; i < commandObjects.size(); i++) {
+        std::cout << "  Index " << i << " - Name: " << commandObjects[i]->getName() << ", Effect: " << commandObjects[i]->getEffect() << std::endl;
+    }
+    std::cout << "\n";
+}
 
 
 
@@ -211,10 +218,5 @@ void FileCommandProcessorAdapter::getCommand(GameEngine& engine) {
             std::cout << "Game has ended. Type 'quit' to exit or continue testing." << std::endl;
         }
 
-    }
-
-    // TESTING: Print out and see what commandObjects are stored.
-    for(int i = 0; i < commandObjects.size(); i++) {
-        std::cout << "commandObject[" << i << "] - Name: " << commandObjects[i]->getName() << ", Effect: " << commandObjects[i]->getEffect() << std::endl;
     }
 }

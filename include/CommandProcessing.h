@@ -11,6 +11,8 @@ class CommandProcessor {
         CommandProcessor(const CommandProcessor &obj); // Deep copy constructor for CommandProcessor.
         virtual ~CommandProcessor(); // Destructor.
         virtual void getCommand(GameEngine& engine);
+        Command* getCommandObjects();
+        void printCommandObjects();
         bool validate(std::string& lineEntered);
 
     protected:
