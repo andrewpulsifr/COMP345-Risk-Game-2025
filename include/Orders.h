@@ -18,6 +18,7 @@
 #include <vector>
 #include <iosfwd>
 
+
 class Player;
 class Territory;
 
@@ -163,6 +164,13 @@ public:
     void remove(int index);
     void move(int from, int to);
     void print() const;
+
+    bool empty() const;
+    size_t size() const;
+    Order* front() const;
+    Order* popfront();
+    Order* popFirstByName(const std::string& name);
+    const std::vector<Order*>& getOrders() const;
 
     friend std::ostream& operator<<(std::ostream& os, const OrdersList& ol);
 };

@@ -13,6 +13,7 @@
 #include "../include/GameEngine.h"
 #include "../include/Map.h"
 #include "../include/Player.h"
+#include "../include/Orders.h"
 #include <iostream>
 #include <algorithm>
 #include <sstream>
@@ -486,4 +487,268 @@ void GameEngine::handleExecuteOrders(const string& command) {
 void GameEngine::handleEndGame(const string& command) {
     cout << "  -> Handling game end... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning
+}
+
+/**
+ * @brief Main game loop managing the phases of the game
+ */
+void GameEngine::reinforcementPhase() {
+    if(!gameMap || !players || players->empty()) {
+        cout << "Reinforcement phase skipped (no map or players).\n";
+        return;
+    }
+
+    std::cout << "\n--- Reinforcement Phase ---\n";
+
+    const auto& continents = gameMap->getContinents();
+
+    for(Player* p : *players) {
+        if (!p) continue;
+
+        vector<Territory*> ownedTerritories = p->getOwnedTerritories();
+        int territoryCount = static_cast<int>(ownedTerritories.size());
+
+        if(territoryCount == 0) {
+            cout << "Player " << p->getPlayerName() << " controls no territories (no reinforcements).\n";
+            continue;
+        }
+
+        //Base: floor(#territories / 3), minimum 3
+          int base = territoryCount / 3;
+        if (base < 3) base = 3;
+
+        // Continent bonuses
+        int bonus = 0;
+        for (Continent* c : continents) {
+            if (!c) continue;
+            bool ownsAll = true;
+            for (Territory* t : c->getTerritories()) {
+                if (!t || t->getOwner() != p) {
+                    ownsAll = false;
+                    break;
+                }
+            }
+            if (ownsAll) {
+                bonus += c->getBonus();
+            }
+        }
+
+        int total = base + bonus;
+        p->addReinforcements(total);
+
+        std::cout << "Player " << p->getPlayerName()
+                  << " owns " << territoryCount
+                  << " territories: +" << base << " base, +"
+                  << bonus << " continent bonus = "
+                  << total << " armies. Pool: "
+                  << p->getReinforcementPool() << "\n";
+    }
+
+}
+
+
+/**
+ * @brief Issue orders phase where players issue their orders in round-robin fashion
+ */
+void GameEngine::issueOrdersPhase() {
+    if (!players || players->empty()) return;
+
+    std::cout << "\n--- Issue Orders Phase ---\n";
+
+    const size_t n = players->size();
+    std::vector<bool> done(n, false);
+    size_t doneCount = 0;
+
+    while (doneCount < n) {
+        for (size_t i = 0; i < n; ++i) {
+            if (done[i]) continue;
+
+            Player* p = (*players)[i];
+            if (!p || !p->hasTerritories()) {
+                done[i] = true;
+                ++doneCount;
+                continue;
+            }
+
+            bool issued = p->issueOrder();   // our new no-arg AI/logic
+            if (!issued) {
+                done[i] = true;
+                ++doneCount;
+            }
+        }
+    }
+}
+
+/**
+ * @brief Execute orders phase where players' orders are executed in round-robin fashion
+ */
+void GameEngine::executeOrdersPhase() {
+    if (!players || players->empty()) {
+        std::cout << "\n--- Execute Orders Phase skipped (no players) ---\n";
+        return;
+    }
+
+    std::cout << "\n--- Execute Orders Phase ---\n";
+
+    // ========= 1) Execute all DEPLOY orders first =========
+    while (true) {
+        bool executedAnyDeploy = false;
+
+        for (Player* p : *players) {
+            if (!p) continue;
+
+            OrdersList* ol = p->getOrdersList();
+            if (!ol) continue;
+
+            // Try to remove one "Deploy" order from this player's list
+            Order* deploy = ol->popFirstByName("Deploy");
+            if (deploy) {
+                std::cout << "[Deploy] " << *deploy << "\n";
+                deploy->execute();
+                delete deploy;
+                executedAnyDeploy = true;
+            }
+        }
+
+        // When no Deploy was found anywhere in this pass, we're done
+        if (!executedAnyDeploy) {
+            break;
+        }
+    }
+
+    // ========= 2) Execute all remaining (non-deploy) orders round-robin =========
+    bool executedAny = true;
+    while (executedAny) {
+        executedAny = false;
+
+        for (Player* p : *players) {
+            if (!p) continue;
+
+            OrdersList* ol = p->getOrdersList();
+            if (!ol || ol->empty()) continue;
+
+            Order* o = ol->popfront();
+            if (!o) continue;
+
+            std::cout << "[Order] " << *o << "\n";
+            o->execute();
+            delete o;
+            executedAny = true;
+        }
+    }
+
+    // (Your existing removeDefeatedPlayers / checkWinCondition are called in mainGameLoop)
+}
+
+
+
+
+
+
+/**
+ * @brief Remove defeated players who have no territories left
+ */
+void GameEngine::removeDefeatedPlayers() {
+    if (!players) return;
+
+    auto& vec = *players;
+    vec.erase(
+        std::remove_if(vec.begin(), vec.end(),
+            [](Player* p) {
+                if (!p) return true; // remove nulls
+                if (p->getOwnedTerritories().empty()) {
+                    std::cout << "Player " << p->getPlayerName()
+                              << " has been eliminated (no territories).\n";
+                    delete p;
+                    return true;
+                }
+                return false;
+            }),
+        vec.end()
+    );
+}
+
+
+/**
+ * @brief Check for win condition: if a player has won the game
+ * @param winner Reference to store pointer to winning player if found
+ * @return true if there is a winner, false otherwise
+ */
+bool GameEngine::checkWinCondition(Player*& winner) const {
+    winner = nullptr;
+
+    if (!players || players->empty()) return false;
+
+    // Simple rule: if only one player left, they win.
+    if (players->size() == 1) {
+        winner = (*players)[0];
+        return winner != nullptr;
+    }
+
+    if (!gameMap) return false;
+
+    // Alternative: all territories owned by the same player
+    for (Territory* t : gameMap->getTerritories()) {
+        if (!t) continue;
+        Player* owner = t->getOwner();
+        if (!owner) return false;
+
+        if (!winner) {
+            winner = owner;
+        } else if (winner != owner) {
+            return false; // more than one owner
+        }
+    }
+
+    return winner != nullptr;
+}
+
+/**
+ * @brief Main game loop managing the phases of the game
+ */
+void GameEngine::mainGameLoop() {
+    if (!gameMap || !players || players->empty()) {
+        std::cout << "Cannot start main game loop: map or players not initialized.\n";
+        return;
+    }
+
+    std::cout << "\n===== MAIN GAME LOOP START =====\n";
+
+    bool gameOver = false;
+    int turn = 1;
+
+    while (!gameOver) {
+    std::cout << "\n===== TURN " << turn << " =====\n";
+
+    reinforcementPhase();
+    issueOrdersPhase();
+    executeOrdersPhase();
+    removeDefeatedPlayers();
+
+    Player* winner = nullptr;
+    if (checkWinCondition(winner)) {
+        if (winner) {
+            std::cout << "\n*** Player " << winner->getPlayerName()
+                      << " wins the game! ***\n";
+        } else {
+            std::cout << "\n*** Game over (no winner). ***\n";
+        }
+        gameOver = true;
+    }
+
+    ++turn;
+}
+
+
+    std::cout << "===== MAIN GAME LOOP END =====\n";
+}
+
+/**
+ * @brief Test hook to set internal map and players for demo/testing purposes
+ * @param demoMap Pointer to the map to use
+ * @param demoPlayers Pointer to the vector of players to use
+ */
+void GameEngine::setMapAndPlayersForDemo(Map* map, std::vector<Player*>* ps) {
+    gameMap = map;
+    players = ps;
 }

@@ -13,7 +13,9 @@ Player::Player()
     : playerName("defaultName"),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()) {}
+      orders_(new OrdersList()),
+      reinforcementPool(0) {}
+      
 
 
 // Deep Copy Constructor for Player.
@@ -21,7 +23,8 @@ Player::Player(const Player& copyPlayer)
     : playerName(copyPlayer.playerName),
       playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
-      orders_(new OrdersList(*copyPlayer.orders_))
+      orders_(new OrdersList(*copyPlayer.orders_)),
+      reinforcementPool(copyPlayer.reinforcementPool)
 {}
 
 
@@ -30,7 +33,8 @@ Player::Player(std::string name)
     : playerName(std::move(name)),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()) {}
+      orders_(new OrdersList()), 
+      reinforcementPool(0) {}
 
 
 /**
@@ -49,6 +53,7 @@ Player& Player::operator=(const Player& copyPlayer) {
         ownedTerritories = copyPlayer.ownedTerritories;
         // deep copy into existing list
         *orders_ = *copyPlayer.orders_;
+        reinforcementPool = copyPlayer.reinforcementPool;
     }
     return *this;
 }
@@ -129,6 +134,177 @@ void Player::issueOrder(Order* orderIssued) {
     if (!orders_ || !orderIssued) return;
     orders_->add(orderIssued);
 }
+
+bool Player::issueOrder() {
+     if (ownedTerritories.empty()) {
+        return false;
+    }
+
+    if (reinforcementPool == 0 && orders_ && !orders_->empty()) {
+        Order* last = orders_->getOrders().back();
+        if (last && last->name() != "Deploy") {
+            return false;
+        }
+    }
+
+
+    //While there are units in the pool, will only issue deploy orders
+     if (reinforcementPool > 0) {
+        std::vector<Territory*> defendList = toDefend();
+        Territory* target = nullptr;
+
+        if (!defendList.empty()) {
+            target = defendList.front();
+        } else if (!ownedTerritories.empty()) {
+            target = ownedTerritories.front();
+        }
+
+        if (!target) {
+            //if theres nothing valid to deploy on (just in case)
+            return false;
+        }
+
+        int deployAmount = reinforcementPool;
+        reinforcementPool = 0;
+
+        Order* deployOrder = new DeployOrder(this, target, deployAmount);
+        orders_->add(deployOrder);
+
+        std::cout << "Player " << playerName << " issues Deploy("
+                  << deployAmount << " on " << target->getName() << ")\n";
+
+        return true;
+
+     }
+
+     {
+        //Try an offensive Advance first
+        std::vector<Territory*> attackList = toAttack();
+        if (!attackList.empty()) {
+            for(Territory* src : ownedTerritories) {
+                if(!src || src->getArmies() <= 1) continue;
+
+                for(Territory* adj : src->getAdjacents()) {
+                    if(!adj) continue;
+                    if(adj->getOwner() != this) {
+                        int advanceAmount = src->getArmies() / 2;
+                        if (advanceAmount <= 0) continue;
+
+                        Order* advanceOrder = new AdvanceOrder(this, src, adj, advanceAmount);
+                        orders_->add(advanceOrder);
+
+                        std::cout << "Player " << playerName << " issues Advance("
+                                  << advanceAmount << " from " << src->getName()
+                                  << " to " << adj->getName() << ")\n";
+
+                        return true;
+                    }
+                }
+            }
+
+        }
+     }
+
+     {
+        //If no enemy neighbours, try a defensive Advance between own territories
+        for(Territory* src : ownedTerritories) {
+            if(!src || src->getArmies() <= 1) continue;
+
+            for(Territory* adj : src->getAdjacents()) {
+                if(adj && adj->getOwner() == this) {
+                    int advanceAmount = src->getArmies() / 2;
+                    if (advanceAmount <= 0) continue;
+
+                    Order* advanceOrder = new AdvanceOrder(this, src, adj, advanceAmount);
+                    orders_->add(advanceOrder);
+
+                    std::cout << "Player " << playerName << " issues Advance("
+                              << advanceAmount << " from " << src->getName()
+                              << " to " << adj->getName() << ")\n";
+                    return true;
+                }
+            }
+        }
+
+     }
+
+     //Nothing to do this turn
+    return false;
+
+}
+
+/**
+ * @brief Issues the next order in the player's order list
+ * @return bool True if an order was issued, false if no orders are available
+ */
+bool Player::hasOrders() const {
+    return orders_ && !orders_->empty();
+}
+
+/**
+ * @brief Gets the next order to be executed and removes it from the list
+ * @return Order* Pointer to the next order, or nullptr if no orders are available
+ */
+Order* Player::popNextOrder() const {
+    if (!orders_) return nullptr;
+    return orders_->popfront();
+}
+
+/**
+ * @brief Checks the next order to be executed without removing it
+ * @return Order* Pointer to the next order, or nullptr if no orders are available
+ */
+Order* Player::checkNextOrder() const {
+    if (!orders_) return nullptr;
+    return orders_->front();
+}
+
+/**
+ * @brief Getter for the player's OrdersList
+ * @return OrdersList* Pointer to the player's OrdersList
+ */
+OrdersList* Player::getOrdersList() const {
+    return orders_;
+}
+
+//Reinforcements
+
+/**
+* @brief Getter for reinforcementPool
+* @return int The number of reinforcements in the player's pool
+*/
+int Player::getReinforcementPool() const {
+    return reinforcementPool;
+}
+
+/**
+* @brief Setter for reinforcementPool
+* @param newPool The new number of reinforcements to set
+*/
+void Player::setReinforcementPool(int newPool) {
+    reinforcementPool = newPool;
+}
+
+/**
+ * @brief Adds reinforcements to the player's reinforcement pool
+ * @param amount The number of reinforcements to add
+ */
+void Player::addReinforcements(int amount) {
+    if (amount > 0){
+        reinforcementPool += amount;
+    }
+}
+
+/**
+ * @brief Checks if the player has any territories
+ * @return bool True if the player owns at least one territory
+ */
+bool Player::hasTerritories() const {
+    return !ownedTerritories.empty();
+}
+
+
+
 
 
 //Debug / Print

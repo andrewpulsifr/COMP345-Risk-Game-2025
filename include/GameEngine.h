@@ -18,6 +18,7 @@
 #include <iostream>
 #include <utility>
 
+
 // Forward declarations
 class Map;
 class Player;
@@ -107,6 +108,12 @@ public:
     void startGame();
     void endGame();
     bool isGameOver() const;
+
+    //Part 3: Main Game Loop Methods
+    void mainGameLoop();
+    void reinforcementPhase();
+    void issueOrdersPhase();
+    void executeOrdersPhase();
     
     // Utility methods for console interface
     void printCurrentState() const;
@@ -114,6 +121,11 @@ public:
     void printErrorMessage(const std::string& invalidCommand) const;
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
+
+    // === Part 3: Test hook (used only by testMainGameLoop) ===
+    // Sets the internal map and players so mainGameLoop() has something to run on.
+    // This is only for the driver; normal gameplay should use the proper commands/startup.
+    void setMapAndPlayersForDemo(Map* map, std::vector<Player*>* players);
 
 private:
     // Type aliases for readability
@@ -142,6 +154,11 @@ private:
     void handleIssueOrder(const std::string& command);
     void handleExecuteOrders(const std::string& command);
     void handleEndGame(const std::string& command);
+
+    // ------------ Part 3 helpers ------------
+    void removeDefeatedPlayers();
+    bool checkWinCondition(Player*& winner) const;
+
 };
 
 /**
