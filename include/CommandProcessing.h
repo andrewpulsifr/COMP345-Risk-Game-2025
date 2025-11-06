@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <fstream>
 
 class Command;
 class GameEngine;
@@ -10,27 +11,26 @@ class CommandProcessor {
         CommandProcessor(const CommandProcessor &obj); // Deep copy constructor for CommandProcessor.
         virtual ~CommandProcessor(); // Destructor.
         virtual void getCommand(GameEngine& engine);
-        void saveEffect(Command* cmdObject, std::string& effect); // Param references string itself instead of making copy.
-        bool validate(GameEngine& engine, std::string& commandEntered);
+        bool validate(std::string& lineEntered);
 
     protected:
         virtual std::string readCommand();
-        virtual void saveCommand(std::string& commandRead);
+        Command* saveCommand(std::string& commandRead);
 
-    private:
-        // Private variable of commandObjects.
+        // Protected variable of commandObjects.
         std::vector<Command*> commandObjects;
 
 };
 
 class FileCommandProcessorAdapter : public CommandProcessor {
     public:
-        FileCommandProcessorAdapter(); // Default Constructor
+        FileCommandProcessorAdapter(std::string fileName); // Param. Constructor.
         ~FileCommandProcessorAdapter(); // Destructor
-        void getCommand(GameEngine& engine);
+        void getCommand(GameEngine& engine); // Inherited virtual function.
 
     protected:
         std::string readCommand();
-        void saveCommand(std::string& commandRead);
 
+    private:
+        std::ifstream file; // File to be read from.
 };

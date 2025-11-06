@@ -36,6 +36,7 @@ public:
     Command(); // Default constructor
     Command(const Command& other); // Copy constructor
     Command(const std::string& name); // Parameterized constructor
+    Command(const std::string& name, const std::string& effect); // Parameterized constructor with effect as a param.
     ~Command(); // Destructor
     
     Command& operator=(const Command& other); // Assignment operator
@@ -45,7 +46,7 @@ public:
     void setName(const std::string& name);
 
     std::string getEffect() const;
-    void setEffect(const std::string& newEffect) const;
+    void saveEffect(const std::string& effect) const;
 
 private:
     std::string* name; // Command name as pointer (requirement: all data members must be pointer type)
@@ -96,7 +97,7 @@ public:
 
     // Core game engine methods
     bool processCommand(const std::string& commandStr);
-    bool processCommand(const Command& cmd);
+    bool processCommand(Command& cmd);
     
     // State accessors
     GameState getCurrentState() const;

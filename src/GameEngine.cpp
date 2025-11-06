@@ -39,9 +39,16 @@ Command::Command(const Command& other) : name(new string(*other.name)), effect(n
 /**
  * @brief Parameterized constructor creates command with given name
  * @param cmdName The command name string
- * @param cmdEffect: The effect string.
  */
 Command::Command(const string& cmdName) : name(new string(cmdName)), effect(new string("")) {}
+
+/**
+ * @brief Parameterized constructor creates command with given name and an effect
+ * @param cmdName The command name string
+ * @param cmdEffect: The effect string.
+ */
+Command::Command(const std::string& cmdName, const std::string& cmdEffect) : name(new string(cmdName)), effect(new string(cmdEffect)) {}// Parameterized constructor with effect as a param.
+
 
 /** @brief Destructor cleans up dynamically allocated name */
 Command::~Command() {
@@ -85,8 +92,10 @@ void Command::setName(const string& newName) { *name = newName; }
 /** @brief Get the effect of the command. */
 string Command::getEffect() const { return *effect; }
 
-/** @brief Set the effect of the command. */
-void Command::setEffect(const string& newEffect) const { *effect = newEffect; }
+/** @brief Save the effect of the command. */
+void Command::saveEffect(const string& newEffect) const {
+    *effect = newEffect;
+}
 
 // ======================= GameEngine Class =======================
 
@@ -232,13 +241,12 @@ bool GameEngine::processCommand(const string& commandStr) {
  * @param cmd The command object to process
  * @return true if command was valid and state transition occurred, false otherwise
  */
-bool GameEngine::processCommand(const Command& cmd) {
+bool GameEngine::processCommand(Command& cmd) {
     string commandStr = cmd.getName();
     
     if (!isValidCommand(commandStr)) {
-        // NEED TO FIX: Print an error message and store in it in the Command's private string, effect.
-        cmd.setEffect(printErrorMessage(commandStr));
-        
+        string errorMessage = printErrorMessage(commandStr);
+        cmd.saveEffect(errorMessage);
         return false;
     }
     
@@ -249,6 +257,7 @@ bool GameEngine::processCommand(const Command& cmd) {
          << " to " << getStateName(newState) 
          << " via command '" << commandStr << "'" << endl;
     
+    cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
     executeStateTransition(newState, commandStr);
     return true;
 }
@@ -360,7 +369,7 @@ void GameEngine::printValidCommands() const {
  * @param invalidCommand The command that was invalid
  */
 std::string GameEngine::printErrorMessage(const string& invalidCommand) const {
-    std::string errorMessage = std::string("ERROR: Invalid command '") + invalidCommand + "' for current state " + getStateName();
+    std::string errorMessage = std::string("ERROR: Invalid command '") + invalidCommand + "' for current state " + getStateName() + ".";
     cout << errorMessage << endl;
 
     return errorMessage;
