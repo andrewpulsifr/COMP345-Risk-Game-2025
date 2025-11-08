@@ -3,6 +3,43 @@
 // ======================= Subject Class =======================
 
 /**
+ * @brief Default constructor
+ */
+Subject::Subject() = default;
+
+/**
+ * @brief Destructor
+ */
+Subject::~Subject() = default;
+
+/**
+ * @brief Copy constructor - does not copy observers to avoid observer aliasing
+ * @param other Subject to copy from
+ */
+Subject::Subject(const Subject&) : observers{} {}
+
+/**
+ * @brief Assignment operator - clears observers to avoid observer aliasing
+ * @param other Subject to assign from
+ * @return Reference to this subject
+ */
+Subject& Subject::operator=(const Subject&) {
+    observers.clear();
+    return *this;
+}
+
+/**
+ * @brief Stream insertion operator for Subject
+ * @param os Output stream
+ * @param subject Subject to output
+ * @return Reference to output stream
+ */
+std::ostream& operator<<(std::ostream& os, const Subject& subject) {
+    os << "Subject [Observers: " << subject.observers.size() << "]";
+    return os;
+}
+
+/**
  * @brief Attach an observer to this subject
  * @param observer Observer to attach
  */

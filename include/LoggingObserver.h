@@ -22,14 +22,12 @@ class ILoggable {
 class Subject {
 
     public:
-    Subject() = default;
-    virtual ~Subject() = default;
-
-    // Disable copy and move semantics
-    Subject(const Subject&) = delete;
-    Subject& operator=(const Subject&) = delete;
-    Subject(Subject&&) = delete;
-    Subject& operator=(Subject&&) = delete;
+    Subject();
+    Subject(const Subject&);
+    Subject& operator=(const Subject&);
+    virtual ~Subject();
+    
+    friend std::ostream& operator<<(std::ostream& os, const Subject& subject);
 
     // Observer management
     void attach(Observer* observer);
