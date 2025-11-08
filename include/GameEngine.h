@@ -32,7 +32,7 @@ class Territory;
  * @details Commands are strings that correspond to edges in the state transition diagram.
  * They trigger state transitions when valid for the current state.
  */
-class Command {
+class Command : public ILoggable , public Subject {
 public:
     Command(); // Default constructor
     Command(const Command& other); // Copy constructor
@@ -48,6 +48,9 @@ public:
 
     std::string getEffect() const;
     void saveEffect(const std::string& effect);
+    
+    // ILoggable interface
+    std::string stringToLog() const override;
 
 private:
     std::string* name; // Command name as pointer (requirement: all data members must be pointer type)

@@ -96,6 +96,12 @@ string Command::getEffect() const { return *effect; }
 /** @brief Save the effect of the command. */
 void Command::saveEffect(const string& newEffect) {
     *effect = newEffect;
+    notify();  // Notify observers when effect is saved
+}
+
+/** @brief Generate log string for Command */
+string Command::stringToLog() const {
+    return "Command: " + *name + " | Effect: " + *effect;
 }
 
 // ======================= GameEngine Class =======================
