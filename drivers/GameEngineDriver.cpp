@@ -13,6 +13,7 @@
  */
 
 #include "../include/GameEngine.h"
+#include "../include/CommandProcessing.h"
 #include <iostream>
 #include <string>
 
@@ -84,35 +85,37 @@ void testGameStates() {
 
 
 // === A2, PART 2: Game Startup Phase ===
-void testStartupPhase() {
-    // cout << "\n=== Testing Startup Phase ===" << endl;
+void testStartupPhase(int argc, char* argv[]) {
+    cout << "\n=== Testing Startup Phase ===\n" << endl;
+    cout << "Start the Game.." << endl;
     
-    // GameEngine engine;
-    // CommandProcessor *commandPro = nullptr;
+    GameEngine engine;
+    CommandProcessor *commandPro = nullptr;
 
-    // if(argc == 2 && std::string(argv[1]) == "-console") {
-    //     std::cout << "\nMode Selected: Console..." << std::endl;
-    //     commandPro = new CommandProcessor();
-    //     commandPro->getCommand(engine);
+    if(argc == 2 && std::string(argv[1]) == "-console") {
+        std::cout << "\nMode Selected: Console..." << std::endl;
+        commandPro = new CommandProcessor();
+        commandPro->getCommand(engine);
 
-    //     commandPro->printCommandObjects();
-    // } else if (argc == 3 && std::string(argv[1]) == "-file") {
-    //     std::string fileName = argv[2];
-    //     std::cout << "\nMode Selected: File...." << std::endl;
+        std::cout << *commandPro << std::endl;
+    } else if (argc == 3 && std::string(argv[1]) == "-file") {
+        std::string fileName = argv[2];
+        std::cout << "\nMode Selected: File...." << std::endl;
 
-    //     commandPro = new FileCommandProcessorAdapter(fileName);
-    //     commandPro->getCommand(engine);
+        commandPro = new FileCommandProcessorAdapter(fileName);
+        commandPro->getCommand(engine);
 
-    //     commandPro->printCommandObjects();
-    // } else {
-    //     std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
-    //                 "   1. Console Mode:    <./executable-file-name> -console\n"
-    //                 "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
-    //                 "   Example: ./command -file input.txt" << std::endl;
-    // }
+        std::cout << *commandPro << std::endl;
+    } else {
+        std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
+                    "   1. Console Mode:    <./executable-file-name> -console\n"
+                    "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
+                    "   Example: ./command -file input.txt" << std::endl;
+    }
 
-    // // Delete and free up memory.
-    // delete commandPro;
-    // commandPro = nullptr;
-
+    // Delete and free up memory.
+    delete commandPro;
+    commandPro = nullptr;
+    
+    cout << "\n=== Testing Startup Phase Completed ===" << endl;
 }

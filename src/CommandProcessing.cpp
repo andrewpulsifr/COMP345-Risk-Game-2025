@@ -46,11 +46,15 @@ bool CommandProcessor::validate(GameEngine& engine, Command* cmdptr) {
     // If command not valid in current state, save the error. Else, save it as valid.
     if(!engine.isValidCommand(commandOnly)) {
         cmdptr->saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
+        std::cout << "ERROR: Invalid command '" << commandOnly << "' for current state " << engine.getStateName() + "." << std::endl;
         return false;
     } else {
         cmdptr->saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
+        std::cout << "The command '" << commandOnly << "' is valid for the current state " << engine.getStateName() << "." << std::endl;
         return true;
     }
+
+    std::cout << "**** Passed through validate()" << std::endl;
 }
 
 // check to see if there are any typos in the commandEntered. If yes, command will not be saved.

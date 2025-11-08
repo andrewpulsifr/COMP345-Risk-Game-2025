@@ -106,9 +106,9 @@ void Command::saveEffect(const string& newEffect) {
 GameEngine::GameEngine() 
     : currentState(new GameState(GameState::Start)),
       stateTransitions(nullptr),
-      gameMap(nullptr),
+      gameMap(new Map()),
       players(new vector<Player*>()),
-      mapLoader(nullptr) {
+      mapLoader(new MapLoader()) {
     initializeTransitions();
     cout << "GameEngine initialized in Start state." << endl;
 }
@@ -245,13 +245,16 @@ bool GameEngine::processCommand(const string& commandStr) {
 bool GameEngine::processCommand(Command& cmd) {
     string commandStr = cmd.getName();
     
-    if (!isValidCommand(commandStr)) {
+    //Extract only the command, if a mapname or playername is entered.
+    std::string commandEntered = commandStr.substr(0, commandStr.find(" "));
+
+    if (!isValidCommand(commandEntered)) {
         string errorMessage = printErrorMessage(commandStr);
         cmd.saveEffect(errorMessage);
         return false;
     }
     
-    GameStateCmdPair key = make_pair(*currentState, commandStr);
+    GameStateCmdPair key = make_pair(*currentState, commandEntered);
     GameState newState = (*stateTransitions)[key];
     
     cout << "Transitioning from " << getStateName(*currentState) 
@@ -436,20 +439,23 @@ bool GameEngine::isValidTransition(GameState from, const string& command, GameSt
 void GameEngine::executeStateTransition(GameState newState, const string& command) {
     setState(newState);
     
+    //Extract only the command, if a mapname or playername is entered.
+    std::string commandOnly = command.substr(0, command.find(" "));
+
     // Execute state-specific actions based on command
-    if (command == "loadmap") {
+    if (commandOnly == "loadmap") {
         handleLoadMap(command);
-    } else if (command == "validatemap") {
+    } else if (commandOnly == "validatemap") {
         handleValidateMap(command);
-    } else if (command == "addplayer") {
+    } else if (commandOnly == "addplayer") {
         handleAddPlayer(command);
-    } else if (command == "assigncountries") {
+    } else if (commandOnly == "assigncountries") {
         handleAssignCountries(command);
-    } else if (command == "issueorder") {
+    } else if (commandOnly == "issueorder") {
         handleIssueOrder(command);
-    } else if (command == "endissueorders" || command == "execorder" || command == "endexecorders") {
+    } else if (commandOnly == "endissueorders" || commandOnly == "execorder" || commandOnly == "endexecorders") {
         handleExecuteOrders(command);
-    } else if (command == "win" || command == "play" || command == "end") {
+    } else if (commandOnly == "win" || commandOnly == "play" || commandOnly == "end") {
         handleEndGame(command);
     }
 }
@@ -461,17 +467,35 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
  * @param command The command that triggered this action
  */
 void GameEngine::handleLoadMap(const string& command) {
-    // cout << "  -> Loading map..." << endl;
-    // mapLoader.printMapFiles(mapFiles);
+    cout << "  -> Loading map..." << endl;
+
+    // Extract the mapname from command.
+    std::size_t nameIndex = command.find(' ');
+    std::string mapName = command.substr(nameIndex + 1);
+
+    // Load map
+    mapLoader->loadMap(mapName, *gameMap);
+
+    // TESTING: print out mapName and gameMap.
+    // std::cout << "A: mapName: " << mapName << std::endl;
+    // std::cout << "A: *gameMap: " << *gameMap << std::endl;
+    std::cout << "    The Map '" << mapName << "' is loaded.\n" << std::endl;
 }
 
 /**
  * @brief Handle map validation command
- * @param command The command that triggered this action
  */
-void GameEngine::handleValidateMap(const string& command) {
-    cout << "  -> Validating map... (stub implementation)" << endl;
-    (void)command; // Stub suppress unused parameter warning
+void GameEngine::handleValidateMap() {
+    cout << "  -> Validating map..." << endl;
+    
+    // validate the map.
+    bool validMap = gameMap->validate();
+
+    if(validMap) {
+        std::cout << "    The map is valid." << std::endl;
+    } else {
+        std::cout << "    The map is NOT valid." << std::endl;
+    }
 }
 
 /**
@@ -479,8 +503,20 @@ void GameEngine::handleValidateMap(const string& command) {
  * @param command The command that triggered this action
  */
 void GameEngine::handleAddPlayer(const string& command) {
-    cout << "  -> Adding player... (stub implementation)" << endl;
-    (void)command; // Stub suppress unused parameter warning
+    cout << "  -> Adding player..." << endl;
+
+    // Extract the mapname from command.
+    std::size_t nameIndex = command.find(' ');
+    std::string playerName = command.substr(nameIndex + 1);
+
+    // Add player into GameEngine's vectors of players.
+    players->push_back(new Player(playerName));
+
+    std::cout << "  Player '" << playerName << "' successfully added." << std::endl;
+    
+    // TESTING: print out players.
+    for(Player* player : *players)
+        std::cout << *player << std::endl;
 }
 
 /**
@@ -517,4 +553,8 @@ void GameEngine::handleExecuteOrders(const string& command) {
 void GameEngine::handleEndGame(const string& command) {
     cout << "  -> Handling game end... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning
+}
+
+void GameEngine::handleGamestart(const string& command) {
+    
 }

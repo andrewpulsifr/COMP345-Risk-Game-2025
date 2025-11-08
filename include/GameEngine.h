@@ -142,14 +142,18 @@ private:
     bool isValidTransition(GameState from, const std::string& command, GameState& to) const;
     void executeStateTransition(GameState newState, const std::string& command);
     
-    // State-specific action methods (stubs for future implementation)
+    // State-specific action methods
     void handleLoadMap(const std::string& command);
-    void handleValidateMap(const std::string& command);
+    void handleValidateMap();
     void handleAddPlayer(const std::string& command);
     void handleAssignCountries(const std::string& command);
     void handleIssueOrder(const std::string& command);
     void handleExecuteOrders(const std::string& command);
     void handleEndGame(const std::string& command);
+
+
+    // Handling Gamestart command in Game startup phase (Part 2 of A2).
+    void handleGamestart(const string& command);
 };
 
 /**
