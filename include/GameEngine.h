@@ -58,6 +58,29 @@ private:
 };
 
 /**
+ * @brief Command string constants for game state transitions
+ * 
+ * @details Provides a single source of truth for all valid game commands.
+ * These constants should be used throughout the codebase instead of hardcoded strings.
+ */
+namespace GameCommands {
+    const std::string LOAD_MAP = "loadmap";
+    const std::string VALIDATE_MAP = "validatemap";
+    const std::string ADD_PLAYER = "addplayer";
+    const std::string ASSIGN_COUNTRIES = "assigncountries";
+    const std::string ISSUE_ORDER = "issueorder";
+    const std::string END_ISSUE_ORDERS = "endissueorders";
+    const std::string EXEC_ORDER = "execorder";
+    const std::string END_EXEC_ORDERS = "endexecorders";
+    const std::string WIN = "win";
+    const std::string PLAY = "play";
+    const std::string END = "end";
+    const std::string GAME_START = "gamestart";
+    const std::string REPLAY = "replay";
+    const std::string QUIT = "quit";
+}
+
+/**
  * @brief Enumeration of all possible game states
  * 
  * @details States correspond to nodes in the state transition diagram:
