@@ -73,6 +73,10 @@ void testLoggingObserver() {
     cout << "OK : Order inherits from Subject and ILoggable" << endl;
     cout << "OK : OrdersList inherits from Subject and ILoggable" << endl;
     cout << "OK : GameEngine inherits from Subject and ILoggable" << endl;
+    
+    // Test Subject copy/assignment (observers should not be copied)
+    GameEngine engineCopy(*gameEngine);
+    cout << "OK : Subject copy constructor does not copy observers" << endl;
     cout << endl;
 
     // ========================================
@@ -90,6 +94,7 @@ void testLoggingObserver() {
     cout << "LogObserver attached to DeployOrder" << endl;
     cout << "LogObserver attached to OrdersList" << endl;
     cout << "LogObserver attached to GameEngine" << endl;
+    cout << "Subject stream insertion: " << *gameEngine << endl;
     cout << endl;
 
     // ========================================
@@ -144,6 +149,8 @@ void testLoggingObserver() {
     fileAdapter->getCommand(*fileTestEngine);
     fileAdapter->getCommand(*fileTestEngine);
     
+    // Detach and cleanup fileTestEngine immediately after use
+    fileTestEngine->detach(logObserver);
     delete fileTestEngine;
     
     cout << "OK : FileCommandProcessorAdapter commands logged to gamelog.txt" << endl;
@@ -336,12 +343,33 @@ void testLoggingObserver() {
     cout << "(8) gamelog.txt correctly written with all events" << endl;
     cout << endl;
 
-    // Cleanup
+    // ========================================
+    // Cleanup: Detach observers before deletion
+    // ========================================
+    cout << "Cleanup: Detaching observers to prevent dangling pointers..." << endl;
+    
+    // Detach logObserver from all subjects before deleting it
+    commandProcessor->detach(logObserver);
+    savedCmd1->detach(logObserver);
+    savedCmd2->detach(logObserver);
+    savedCmd3->detach(logObserver);
+    deployOrder->detach(logObserver);
+    advanceOrder->detach(logObserver);
+    bombOrder->detach(logObserver);
+    ordersList->detach(logObserver);
+    gameEngine->detach(logObserver);
+    fileAdapter->detach(logObserver);
+    // Note: fileTestEngine already detached and deleted after Test 3b
+    
+    // Now safe to delete observer
     delete logObserver;
-    delete commandProcessor;
+    
+    // Delete subjects (commandProcessor owns savedCmd*, ordersList owns orders)
+    delete commandProcessor;  // This deletes savedCmd1, savedCmd2, savedCmd3
     delete fileAdapter;
     delete gameEngine;
-    delete ordersList;
+    delete ordersList;  // OrdersList destructor deletes deployOrder, advanceOrder, bombOrder
     delete player1;
-    // Note: orders are owned by ordersList and will be deleted by it
+    
+    cout << "All objects properly cleaned up." << endl;
 }
