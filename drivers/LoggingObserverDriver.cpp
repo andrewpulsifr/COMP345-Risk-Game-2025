@@ -32,6 +32,22 @@
 using namespace std;
 
 /**
+ * @brief Test helper class to expose protected saveCommand() for testing
+ * 
+ * This adapter allows the test to demonstrate that saveCommand() triggers
+ * logging notifications, while respecting the design where saveCommand()
+ * is protected (only accessible internally and to subclasses like 
+ * FileCommandProcessorAdapter).
+ */
+class TestCommandProcessor : public CommandProcessor {
+public:
+    // Expose saveCommand for testing purposes
+    Command* testSaveCommand(string& cmd) {
+        return saveCommand(cmd);
+    }
+};
+
+/**
  * @brief Test driver for Part 5: Game Log Observer
  * 
  * Demonstrates all requirements for the Observer pattern implementation
@@ -66,7 +82,7 @@ void testLoggingObserver() {
     DeployOrder* deployOrder = new DeployOrder(player1, territory1, 5);
     OrdersList* ordersList = new OrdersList();
     GameEngine* gameEngine = new GameEngine();
-    CommandProcessor* commandProcessor = new CommandProcessor();
+    TestCommandProcessor* commandProcessor = new TestCommandProcessor();
 
     cout << "OK : Command inherits from Subject and ILoggable" << endl;
     cout << "OK : CommandProcessor inherits from Subject and ILoggable" << endl;
@@ -108,9 +124,10 @@ void testLoggingObserver() {
     string cmd2 = "validatemap";
     string cmd3 = "addplayer";
     
-    Command* savedCmd1 = commandProcessor->saveCommand(cmd1);
-    Command* savedCmd2 = commandProcessor->saveCommand(cmd2);
-    Command* savedCmd3 = commandProcessor->saveCommand(cmd3);
+    // Use testSaveCommand() to access protected saveCommand()
+    Command* savedCmd1 = commandProcessor->testSaveCommand(cmd1);
+    Command* savedCmd2 = commandProcessor->testSaveCommand(cmd2);
+    Command* savedCmd3 = commandProcessor->testSaveCommand(cmd3);
     
     // Attach observer to commands and set their effects
     savedCmd1->attach(logObserver);
