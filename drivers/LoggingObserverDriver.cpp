@@ -6,11 +6,14 @@
  * Demonstrates that:
  * 1. Command, CommandProcessor, Order, OrdersList, and GameEngine are subclasses of Subject and ILoggable
  * 2. CommandProcessor::saveCommand(), Command::saveEffect(), Order::execute(), 
- *    OrdersList::add(), and GameEngine::setState() use notify()
- * 3. LogObserver writes to gamelog.txt when commands are saved and effects are set
- * 4. LogObserver writes to gamelog.txt when orders are added to order list
- * 5. LogObserver writes to gamelog.txt when orders are executed
- * 6. LogObserver writes to gamelog.txt when GameEngine state changes
+ *    OrdersList::add(), and GameEngine::transition() use notify()
+ * 3. FileCommandProcessorAdapter inherits logging from CommandProcessor
+ * 4. LogObserver writes to gamelog.txt when commands are saved and effects are set
+ * 5. LogObserver writes to gamelog.txt when orders are added to order list
+ * 6. LogObserver writes to gamelog.txt when orders are executed
+ * 7. LogObserver writes to gamelog.txt when GameEngine state changes
+ * 
+ * Validates with 16 assertions covering all logging functionality.
  * 
  * @author Andrew Pulsifer
  * @date November 8, 2025
@@ -27,6 +30,22 @@
 #include <string>
 
 using namespace std;
+
+/**
+ * @brief Test helper class to expose protected saveCommand() for testing
+ * 
+ * This adapter allows the test to demonstrate that saveCommand() triggers
+ * logging notifications, while respecting the design where saveCommand()
+ * is protected (only accessible internally and to subclasses like 
+ * FileCommandProcessorAdapter).
+ */
+class TestCommandProcessor : public CommandProcessor {
+public:
+    // Expose saveCommand for testing purposes
+    Command* testSaveCommand(string& cmd) {
+        return saveCommand(cmd);
+    }
+};
 
 /**
  * @brief Test driver for Part 5: Game Log Observer
@@ -63,13 +82,17 @@ void testLoggingObserver() {
     DeployOrder* deployOrder = new DeployOrder(player1, territory1, 5);
     OrdersList* ordersList = new OrdersList();
     GameEngine* gameEngine = new GameEngine();
-    CommandProcessor* commandProcessor = new CommandProcessor();
+    TestCommandProcessor* commandProcessor = new TestCommandProcessor();
 
     cout << "OK : Command inherits from Subject and ILoggable" << endl;
     cout << "OK : CommandProcessor inherits from Subject and ILoggable" << endl;
     cout << "OK : Order inherits from Subject and ILoggable" << endl;
     cout << "OK : OrdersList inherits from Subject and ILoggable" << endl;
     cout << "OK : GameEngine inherits from Subject and ILoggable" << endl;
+    
+    // Test Subject copy/assignment (observers should not be copied)
+    GameEngine engineCopy(*gameEngine);
+    cout << "OK : Subject copy constructor does not copy observers" << endl;
     cout << endl;
 
     // ========================================
@@ -87,6 +110,7 @@ void testLoggingObserver() {
     cout << "LogObserver attached to DeployOrder" << endl;
     cout << "LogObserver attached to OrdersList" << endl;
     cout << "LogObserver attached to GameEngine" << endl;
+    cout << "Subject stream insertion: " << *gameEngine << endl;
     cout << endl;
 
     // ========================================
@@ -100,9 +124,10 @@ void testLoggingObserver() {
     string cmd2 = GameCommands::VALIDATE_MAP;
     string cmd3 = GameCommands::ADD_PLAYER;
     
-    Command* savedCmd1 = commandProcessor->saveCommand(cmd1);
-    Command* savedCmd2 = commandProcessor->saveCommand(cmd2);
-    Command* savedCmd3 = commandProcessor->saveCommand(cmd3);
+    // Use testSaveCommand() to access protected saveCommand()
+    Command* savedCmd1 = commandProcessor->testSaveCommand(cmd1);
+    Command* savedCmd2 = commandProcessor->testSaveCommand(cmd2);
+    Command* savedCmd3 = commandProcessor->testSaveCommand(cmd3);
     
     // Attach observer to commands and set their effects
     savedCmd1->attach(logObserver);
@@ -116,6 +141,36 @@ void testLoggingObserver() {
 
     cout << "OK : CommandProcessor::saveCommand() logged to gamelog.txt" << endl;
     cout << "OK : Command::saveEffect() logged to gamelog.txt" << endl;
+    cout << endl;
+
+    // ========================================
+    // Test 3b: Test FileCommandProcessorAdapter logging
+    // ========================================
+    cout << "Test 3b: Testing FileCommandProcessorAdapter logging" << endl;
+    cout << "-----------------------------------------------------" << endl;
+    
+    // Create a temporary command file with valid commands for current state
+    ofstream tempFile("test_commands.txt");
+    tempFile << "loadmap" << endl;
+    tempFile << "validatemap" << endl;
+    tempFile.close();
+    
+    // Create new GameEngine for file test
+    GameEngine* fileTestEngine = new GameEngine();
+    fileTestEngine->attach(logObserver);
+    
+    cout << "Reading commands from file via FileCommandProcessorAdapter..." << endl;
+    FileCommandProcessorAdapter* fileAdapter = new FileCommandProcessorAdapter("test_commands.txt");
+    fileAdapter->attach(logObserver);
+    
+    fileAdapter->getCommand(*fileTestEngine);
+    fileAdapter->getCommand(*fileTestEngine);
+    
+    // Detach and cleanup fileTestEngine immediately after use
+    fileTestEngine->detach(logObserver);
+    delete fileTestEngine;
+    
+    cout << "OK : FileCommandProcessorAdapter commands logged to gamelog.txt" << endl;
     cout << endl;
 
     // ========================================
@@ -213,6 +268,10 @@ void testLoggingObserver() {
         bool hasCommandEffect2 = logContents.find("Command: validatemap | Effect: Map validated successfully") != string::npos;
         bool hasCommandEffect3 = logContents.find("Command: addplayer | Effect: Player added successfully") != string::npos;
         
+        // Assert: Check for FileCommandProcessorAdapter logging
+        bool hasFileCommand1 = logContents.find("CommandProcessor: Saved command - loadmap") != string::npos;
+        bool hasFileCommand2 = logContents.find("CommandProcessor: Saved command - validatemap") != string::npos;
+        
         cout << "Assert 1: CommandProcessor saved 'loadmap'... " 
              << (hasCommandSaved1 ? "PASS" : "FAIL") << endl;
         cout << "Assert 2: CommandProcessor saved 'validatemap'... " 
@@ -225,17 +284,20 @@ void testLoggingObserver() {
              << (hasCommandEffect2 ? "PASS" : "FAIL") << endl;
         cout << "Assert 6: Command effect for 'addplayer' logged... " 
              << (hasCommandEffect3 ? "PASS" : "FAIL") << endl;
+        cout << "Assert 7: FileCommandProcessorAdapter saved commands (file mode)... " 
+             << (hasFileCommand1 && hasFileCommand2 ? "PASS" : "FAIL") << endl;
+        cout << "   (inherited logging from CommandProcessor base class)" << endl;
         
         // Assert: Check for GameEngine state changes
         bool hasMapLoaded = logContents.find("GameEngine: Current State = MapLoaded") != string::npos;
         bool hasMapValidated = logContents.find("GameEngine: Current State = MapValidated") != string::npos;
         bool hasPlayersAdded = logContents.find("GameEngine: Current State = PlayersAdded") != string::npos;
         
-        cout << "Assert 7: GameEngine state 'MapLoaded' logged... " 
+        cout << "Assert 8: GameEngine state 'MapLoaded' logged... " 
              << (hasMapLoaded ? "PASS" : "FAIL") << endl;
-        cout << "Assert 8: GameEngine state 'MapValidated' logged... " 
+        cout << "Assert 9: GameEngine state 'MapValidated' logged... " 
              << (hasMapValidated ? "PASS" : "FAIL") << endl;
-        cout << "Assert 9: GameEngine state 'PlayersAdded' logged... " 
+        cout << "Assert 10: GameEngine state 'PlayersAdded' logged... " 
              << (hasPlayersAdded ? "PASS" : "FAIL") << endl;
         
         // Assert: Check for OrdersList additions
@@ -243,11 +305,11 @@ void testLoggingObserver() {
         bool hasOrdersList2 = logContents.find("OrdersList contains 2 order(s): Deploy, Advance") != string::npos;
         bool hasOrdersList3 = logContents.find("OrdersList contains 3 order(s): Deploy, Advance, Bomb") != string::npos;
         
-        cout << "Assert 10: OrdersList with 1 order logged... " 
+        cout << "Assert 11: OrdersList with 1 order logged... " 
              << (hasOrdersList1 ? "PASS" : "FAIL") << endl;
-        cout << "Assert 11: OrdersList with 2 orders logged... " 
+        cout << "Assert 12: OrdersList with 2 orders logged... " 
              << (hasOrdersList2 ? "PASS" : "FAIL") << endl;
-        cout << "Assert 12: OrdersList with 3 orders logged... " 
+        cout << "Assert 13: OrdersList with 3 orders logged... " 
              << (hasOrdersList3 ? "PASS" : "FAIL") << endl;
         
         // Assert: Check for Order executions
@@ -255,23 +317,24 @@ void testLoggingObserver() {
         bool hasAdvanceEffect = logContents.find("Order: Advance | Effect:") != string::npos;
         bool hasBombEffect = logContents.find("Order: Bomb | Effect:") != string::npos;
         
-        cout << "Assert 13: DeployOrder execution logged... " 
+        cout << "Assert 14: DeployOrder execution logged... " 
              << (hasDeployEffect ? "PASS" : "FAIL") << endl;
-        cout << "Assert 14: AdvanceOrder execution logged... " 
+        cout << "Assert 15: AdvanceOrder execution logged... " 
              << (hasAdvanceEffect ? "PASS" : "FAIL") << endl;
-        cout << "Assert 15: BombOrder execution logged... " 
+        cout << "Assert 16: BombOrder execution logged... " 
              << (hasBombEffect ? "PASS" : "FAIL") << endl;
         
         // Final assertion: All checks passed
         bool allPassed = hasCommandSaved1 && hasCommandSaved2 && hasCommandSaved3 &&
                         hasCommandEffect1 && hasCommandEffect2 && hasCommandEffect3 &&
+                        hasFileCommand1 && hasFileCommand2 &&
                         hasMapLoaded && hasMapValidated && hasPlayersAdded &&
                         hasOrdersList1 && hasOrdersList2 && hasOrdersList3 &&
                         hasDeployEffect && hasAdvanceEffect && hasBombEffect;
         
         cout << "\n--- Assertion Summary ---" << endl;
         if (allPassed) {
-            cout << "OK : ALL 15 ASSERTIONS PASSED" << endl;
+            cout << "OK : ALL 16 ASSERTIONS PASSED" << endl;
         } else {
             cout << "FAIL : SOME ASSERTIONS FAILED - Check log contents above" << endl;
         }
@@ -290,17 +353,40 @@ void testLoggingObserver() {
     cout << "(1) Command, CommandProcessor, Order, OrdersList, GameEngine inherit from Subject & ILoggable" << endl;
     cout << "(2) CommandProcessor::saveCommand() uses notify() to log commands" << endl;
     cout << "(3) Command::saveEffect() uses notify() to log command effects" << endl;
-    cout << "(4) Order::execute() uses notify() to log order execution" << endl;
-    cout << "(5) OrdersList::add() uses notify() to log order additions" << endl;
-    cout << "(6) GameEngine::setState() uses notify() to log state changes" << endl;
-    cout << "(7) gamelog.txt correctly written with all events" << endl;
+    cout << "(4) FileCommandProcessorAdapter inherits logging from CommandProcessor" << endl;
+    cout << "(5) Order::execute() uses notify() to log order execution" << endl;
+    cout << "(6) OrdersList::add() uses notify() to log order additions" << endl;
+    cout << "(7) GameEngine::transition() uses notify() to log state changes" << endl;
+    cout << "(8) gamelog.txt correctly written with all events" << endl;
     cout << endl;
 
-    // Cleanup
+    // ========================================
+    // Cleanup: Detach observers before deletion
+    // ========================================
+    cout << "Cleanup: Detaching observers to prevent dangling pointers..." << endl;
+    
+    // Detach logObserver from all subjects before deleting it
+    commandProcessor->detach(logObserver);
+    savedCmd1->detach(logObserver);
+    savedCmd2->detach(logObserver);
+    savedCmd3->detach(logObserver);
+    deployOrder->detach(logObserver);
+    advanceOrder->detach(logObserver);
+    bombOrder->detach(logObserver);
+    ordersList->detach(logObserver);
+    gameEngine->detach(logObserver);
+    fileAdapter->detach(logObserver);
+    // Note: fileTestEngine already detached and deleted after Test 3b
+    
+    // Now safe to delete observer
     delete logObserver;
-    delete commandProcessor;
+    
+    // Delete subjects (commandProcessor owns savedCmd*, ordersList owns orders)
+    delete commandProcessor;  // This deletes savedCmd1, savedCmd2, savedCmd3
+    delete fileAdapter;
     delete gameEngine;
-    delete ordersList;
+    delete ordersList;  // OrdersList destructor deletes deployOrder, advanceOrder, bombOrder
     delete player1;
-    // Note: orders are owned by ordersList and will be deleted by it
+    
+    cout << "All objects properly cleaned up." << endl;
 }

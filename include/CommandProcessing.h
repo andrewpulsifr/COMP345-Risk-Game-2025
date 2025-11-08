@@ -13,7 +13,6 @@ class CommandProcessor: public ILoggable , public Subject {
         virtual ~CommandProcessor(); // Destructor.
         virtual void getCommand(GameEngine& engine);
         Command* getCommandObjects();
-        Command* saveCommand(std::string& commandRead);
         bool validate(GameEngine& engine, Command* cmdptr);
         bool validCommandSpelling(std::string& lineEntered);
         // Assignment Operator and Output Operator.
@@ -24,6 +23,7 @@ class CommandProcessor: public ILoggable , public Subject {
         std::string stringToLog() const override;
 
     protected:
+        Command* saveCommand(std::string& commandRead);
         virtual std::string readCommand();
 
         // Protected variable of commandObjects.
