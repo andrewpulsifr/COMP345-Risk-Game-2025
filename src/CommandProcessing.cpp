@@ -128,8 +128,21 @@ Command* CommandProcessor::saveCommand(std::string& commandRead) {
     Command* newCommandObj = new Command(commandRead);
     
     this->commandObjects.push_back(newCommandObj);
+    
+    notify();  // Notify observers when command is saved
 
     return newCommandObj;
+}
+
+/** @brief Generate log string for CommandProcessor */
+std::string CommandProcessor::stringToLog() const {
+    if (commandObjects.empty()) {
+        return "CommandProcessor: No commands saved";
+    }
+    
+    // Log the most recently saved command
+    Command* lastCommand = commandObjects.back();
+    return "CommandProcessor: Saved command - " + lastCommand->getName();
 }
 
 // getCommand() for GameEngine or Player objects to read from command line.
