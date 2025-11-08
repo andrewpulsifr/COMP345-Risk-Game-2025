@@ -223,21 +223,23 @@ string GameEngine::stringToLog() const {
  * - Ensures only valid transitions are allowed for each state
  */
 void GameEngine::initializeTransitions() {
+    using namespace GameCommands;
+    
     stateTransitions = new TransitionMap{
-        {{GameState::Start,            "loadmap"},       GameState::MapLoaded},
-        {{GameState::MapLoaded,        "loadmap"},       GameState::MapLoaded},
-        {{GameState::MapLoaded,        "validatemap"},   GameState::MapValidated},
-        {{GameState::MapValidated,     "addplayer"},     GameState::PlayersAdded},
-        {{GameState::PlayersAdded,     "addplayer"},     GameState::PlayersAdded},
-        {{GameState::PlayersAdded,     "assigncountries"}, GameState::AssignReinforcement},
-        {{GameState::AssignReinforcement,"issueorder"},  GameState::IssueOrders},
-        {{GameState::IssueOrders,      "issueorder"},    GameState::IssueOrders},
-        {{GameState::IssueOrders,      "endissueorders"},GameState::ExecuteOrders},
-        {{GameState::ExecuteOrders,    "execorder"},     GameState::ExecuteOrders},
-        {{GameState::ExecuteOrders,    "endexecorders"}, GameState::AssignReinforcement},
-        {{GameState::ExecuteOrders,    "win"},           GameState::Win},
-        {{GameState::Win,              "play"},          GameState::Start},
-        {{GameState::Win,              "end"},           GameState::End},
+        {{GameState::Start,                LOAD_MAP},           GameState::MapLoaded},
+        {{GameState::MapLoaded,            LOAD_MAP},           GameState::MapLoaded},
+        {{GameState::MapLoaded,            VALIDATE_MAP},       GameState::MapValidated},
+        {{GameState::MapValidated,         ADD_PLAYER},         GameState::PlayersAdded},
+        {{GameState::PlayersAdded,         ADD_PLAYER},         GameState::PlayersAdded},
+        {{GameState::PlayersAdded,         ASSIGN_COUNTRIES},   GameState::AssignReinforcement},
+        {{GameState::AssignReinforcement,  ISSUE_ORDER},        GameState::IssueOrders},
+        {{GameState::IssueOrders,          ISSUE_ORDER},        GameState::IssueOrders},
+        {{GameState::IssueOrders,          END_ISSUE_ORDERS},   GameState::ExecuteOrders},
+        {{GameState::ExecuteOrders,        EXEC_ORDER},         GameState::ExecuteOrders},
+        {{GameState::ExecuteOrders,        END_EXEC_ORDERS},    GameState::AssignReinforcement},
+        {{GameState::ExecuteOrders,        WIN},                GameState::Win},
+        {{GameState::Win,                  PLAY},               GameState::Start},
+        {{GameState::Win,                  END},                GameState::End},
     };
 }
 
@@ -449,22 +451,24 @@ bool GameEngine::isValidTransition(GameState from, const string& command, GameSt
  * @param command Command that triggered the transition
  */
 void GameEngine::executeStateTransition(GameState newState, const string& command) {
+    using namespace GameCommands;
+    
     setState(newState);
     
     // Execute state-specific actions based on command
-    if (command == "loadmap") {
+    if (command == LOAD_MAP) {
         handleLoadMap(command);
-    } else if (command == "validatemap") {
+    } else if (command == VALIDATE_MAP) {
         handleValidateMap(command);
-    } else if (command == "addplayer") {
+    } else if (command == ADD_PLAYER) {
         handleAddPlayer(command);
-    } else if (command == "assigncountries") {
+    } else if (command == ASSIGN_COUNTRIES) {
         handleAssignCountries(command);
-    } else if (command == "issueorder") {
+    } else if (command == ISSUE_ORDER) {
         handleIssueOrder(command);
-    } else if (command == "endissueorders" || command == "execorder" || command == "endexecorders") {
+    } else if (command == END_ISSUE_ORDERS || command == EXEC_ORDER || command == END_EXEC_ORDERS) {
         handleExecuteOrders(command);
-    } else if (command == "win" || command == "play" || command == "end") {
+    } else if (command == WIN || command == PLAY || command == END) {
         handleEndGame(command);
     }
 }

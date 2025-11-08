@@ -96,9 +96,9 @@ void testLoggingObserver() {
     cout << "------------------------------------------------------" << endl;
 
     cout << "Saving commands via CommandProcessor::saveCommand()..." << endl;
-    string cmd1 = "loadmap";
-    string cmd2 = "validatemap";
-    string cmd3 = "addplayer";
+    string cmd1 = GameCommands::LOAD_MAP;
+    string cmd2 = GameCommands::VALIDATE_MAP;
+    string cmd3 = GameCommands::ADD_PLAYER;
     
     Command* savedCmd1 = commandProcessor->saveCommand(cmd1);
     Command* savedCmd2 = commandProcessor->saveCommand(cmd2);
@@ -125,13 +125,13 @@ void testLoggingObserver() {
     cout << "-----------------------------------------" << endl;
 
     cout << "Processing 'loadmap' command..." << endl;
-    gameEngine->processCommand("loadmap");
+    gameEngine->processCommand(GameCommands::LOAD_MAP);
     
     cout << "Processing 'validatemap' command..." << endl;
-    gameEngine->processCommand("validatemap");
+    gameEngine->processCommand(GameCommands::VALIDATE_MAP);
     
     cout << "Processing 'addplayer' command..." << endl;
-    gameEngine->processCommand("addplayer");
+    gameEngine->processCommand(GameCommands::ADD_PLAYER);
 
     cout << "OK : GameEngine state changes logged to gamelog.txt" << endl;
     cout << endl;

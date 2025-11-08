@@ -55,9 +55,10 @@ bool CommandProcessor::validate(GameEngine& engine, Command* cmdptr) {
 
 // check to see if there are any typos in the commandEntered. If yes, command will not be saved.
 bool CommandProcessor::validCommandSpelling(std::string& commandEntered) {
-
-    if(commandEntered == "loadmap" || commandEntered == "validatemap" || commandEntered == "addplayer" ||
-        commandEntered == "gamestart" || commandEntered == "replay" || commandEntered == "quit") {
+    using namespace GameCommands;
+    
+    if(commandEntered == LOAD_MAP || commandEntered == VALIDATE_MAP || commandEntered == ADD_PLAYER ||
+        commandEntered == GAME_START || commandEntered == REPLAY || commandEntered == QUIT) {
         return true;
     } else {
         std::cout << "The command you entered, '" << commandEntered << "' is an invalid command." << std::endl;
@@ -147,6 +148,7 @@ std::string CommandProcessor::stringToLog() const {
 
 // getCommand() for GameEngine or Player objects to read from command line.
 void CommandProcessor::getCommand(GameEngine& engine) {
+    using namespace GameCommands;
     std::string lineEntered;
 
     // Adapted from the GameEngineDriver.cpp.
@@ -164,7 +166,7 @@ void CommandProcessor::getCommand(GameEngine& engine) {
         }
 
         // Handle quit/exit commands to terminate the test
-        if (commandEntered == "quit" || commandEntered == "exit") {
+        if (commandEntered == QUIT || commandEntered == "exit") {
             std::cout << "Exiting game engine test." << std::endl;
             break;
         }
