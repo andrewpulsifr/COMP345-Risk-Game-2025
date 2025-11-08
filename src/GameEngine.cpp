@@ -419,12 +419,12 @@ void startupPhase() {
 
 
 /**
- * @brief Set the current state (private helper)
+ * @brief Transition to a new state
  * @param newState The new state to transition to
  */
-void GameEngine::setState(GameState newState) {
+void GameEngine::transition(GameState newState) {
     *currentState = newState;
-    notify();  // Notify observers of state change
+    notify();
 }
 
 /**
@@ -449,7 +449,7 @@ bool GameEngine::isValidTransition(GameState from, const string& command, GameSt
  * @param command Command that triggered the transition
  */
 void GameEngine::executeStateTransition(GameState newState, const string& command) {
-    setState(newState);
+    transition(newState);
     
     // Execute state-specific actions based on command
     if (command == "loadmap") {

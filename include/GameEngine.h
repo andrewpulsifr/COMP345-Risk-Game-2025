@@ -145,7 +145,7 @@ private:
     
     // Private helper methods
     void initializeTransitions();
-    void setState(GameState newState);
+    void transition(GameState newState);
     bool isValidTransition(GameState from, const std::string& command, GameState& to) const;
     void executeStateTransition(GameState newState, const std::string& command);
     
