@@ -13,7 +13,7 @@ void testCommandProcessor(int argc, char* argv[]) {
         commandPro = new CommandProcessor();
         commandPro->getCommand(engine);
 
-        commandPro->printCommandObjects();
+        std::cout << *commandPro << std::endl;
     } else if (argc == 3 && std::string(argv[1]) == "-file") {
         std::string fileName = argv[2];
         std::cout << "\nMode Selected: File...." << std::endl;
@@ -21,7 +21,7 @@ void testCommandProcessor(int argc, char* argv[]) {
         commandPro = new FileCommandProcessorAdapter(fileName);
         commandPro->getCommand(engine);
 
-        commandPro->printCommandObjects();
+        std::cout << *commandPro << std::endl;
     } else {
         std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
                     "   1. Console Mode:    <./executable-file-name> -console\n"

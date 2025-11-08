@@ -46,7 +46,7 @@ public:
     void setName(const std::string& name);
 
     std::string getEffect() const;
-    void saveEffect(const std::string& effect) const;
+    void saveEffect(const std::string& effect);
 
 private:
     std::string* name; // Command name as pointer (requirement: all data members must be pointer type)
@@ -119,6 +119,9 @@ public:
     std::string printErrorMessage(const std::string& invalidCommand) const;
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
+
+    // === A2, PART 2: Game Startup Phase ===
+    void startupPhase();
 
 private:
     // Type aliases for readability

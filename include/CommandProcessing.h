@@ -12,8 +12,11 @@ class CommandProcessor {
         virtual ~CommandProcessor(); // Destructor.
         virtual void getCommand(GameEngine& engine);
         Command* getCommandObjects();
-        void printCommandObjects();
-        bool validate(std::string& lineEntered);
+        bool validate(GameEngine& engine, Command* cmdptr);
+        bool validCommandSpelling(std::string& lineEntered);
+        // Assignment Operator and Output Operator.
+        CommandProcessor& operator=(const CommandProcessor& other);
+        friend std::ostream& operator<<(std::ostream& os, const CommandProcessor& commandPro);
 
     protected:
         virtual std::string readCommand();
@@ -29,6 +32,11 @@ class FileCommandProcessorAdapter : public CommandProcessor {
         FileCommandProcessorAdapter(std::string fileName); // Param. Constructor.
         ~FileCommandProcessorAdapter(); // Destructor
         void getCommand(GameEngine& engine); // Inherited virtual function.
+
+        // FileCommandProcessorAdapter Assignment operator and Output operator.
+        FileCommandProcessorAdapter(const FileCommandProcessorAdapter&) = delete; 
+        FileCommandProcessorAdapter& operator=(const FileCommandProcessorAdapter&) = delete;  
+
 
     protected:
         std::string readCommand();

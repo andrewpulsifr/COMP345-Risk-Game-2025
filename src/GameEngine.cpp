@@ -13,6 +13,7 @@
 #include "../include/GameEngine.h"
 #include "../include/Map.h"
 #include "../include/Player.h"
+#include "../include/CommandProcessing.h"
 #include <iostream>
 #include <algorithm>
 #include <sstream>
@@ -93,7 +94,7 @@ void Command::setName(const string& newName) { *name = newName; }
 string Command::getEffect() const { return *effect; }
 
 /** @brief Save the effect of the command. */
-void Command::saveEffect(const string& newEffect) const {
+void Command::saveEffect(const string& newEffect) {
     *effect = newEffect;
 }
 
@@ -397,6 +398,12 @@ void GameEngine::displayGameStatus() const {
     cout << "-------------------" << endl;
 }
 
+// === A2, PART 2: Game Startup Phase ===
+void startupPhase() {
+
+}
+
+
 /**
  * @brief Set the current state (private helper)
  * @param newState The new state to transition to
@@ -454,8 +461,8 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
  * @param command The command that triggered this action
  */
 void GameEngine::handleLoadMap(const string& command) {
-    cout << "  -> Loading map... (stub implementation)" << endl;
-    (void)command; // Stub suppress unused parameter warning 
+    // cout << "  -> Loading map..." << endl;
+    // mapLoader.printMapFiles(mapFiles);
 }
 
 /**
