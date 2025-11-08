@@ -13,6 +13,7 @@
 #include "../include/GameEngine.h"
 #include "../include/Map.h"
 #include "../include/Player.h"
+#include "../include/CommandProcessing.h"
 #include <iostream>
 #include <algorithm>
 #include <sstream>
@@ -28,23 +29,32 @@ using std::endl;
 // ======================= Command Class =======================
 
 /** @brief Default constructor creates empty command */
-Command::Command() : name(new string("")) {}
+Command::Command() : name(new string("")), effect (new string("")) {}
 
 /** 
  * @brief Copy constructor performs deep copy of command name
  * @param other Command to copy from
  */
-Command::Command(const Command& other) : name(new string(*other.name)) {}
+Command::Command(const Command& other) : name(new string(*other.name)), effect(new string(*other.effect)) {}
 
 /**
  * @brief Parameterized constructor creates command with given name
  * @param cmdName The command name string
  */
-Command::Command(const string& cmdName) : name(new string(cmdName)) {}
+Command::Command(const string& cmdName) : name(new string(cmdName)), effect(new string("")) {}
+
+/**
+ * @brief Parameterized constructor creates command with given name and an effect
+ * @param cmdName The command name string
+ * @param cmdEffect: The effect string.
+ */
+Command::Command(const std::string& cmdName, const std::string& cmdEffect) : name(new string(cmdName)), effect(new string(cmdEffect)) {}// Parameterized constructor with effect as a param.
+
 
 /** @brief Destructor cleans up dynamically allocated name */
 Command::~Command() {
     delete name;
+    delete effect;
 }
 
 /**
@@ -56,6 +66,9 @@ Command& Command::operator=(const Command& other) {
     if (this != &other) {
         delete name;
         name = new string(*other.name);
+
+        delete effect;
+        effect = new string(*other.effect);
     }
     return *this;
 }
@@ -76,6 +89,14 @@ string Command::getName() const { return *name; }
 
 /** @brief Set the name of this command */
 void Command::setName(const string& newName) { *name = newName; }
+
+/** @brief Get the effect of the command. */
+string Command::getEffect() const { return *effect; }
+
+/** @brief Save the effect of the command. */
+void Command::saveEffect(const string& newEffect) {
+    *effect = newEffect;
+}
 
 // ======================= GameEngine Class =======================
 
@@ -221,11 +242,12 @@ bool GameEngine::processCommand(const string& commandStr) {
  * @param cmd The command object to process
  * @return true if command was valid and state transition occurred, false otherwise
  */
-bool GameEngine::processCommand(const Command& cmd) {
+bool GameEngine::processCommand(Command& cmd) {
     string commandStr = cmd.getName();
     
     if (!isValidCommand(commandStr)) {
-        printErrorMessage(commandStr);
+        string errorMessage = printErrorMessage(commandStr);
+        cmd.saveEffect(errorMessage);
         return false;
     }
     
@@ -236,6 +258,7 @@ bool GameEngine::processCommand(const Command& cmd) {
          << " to " << getStateName(newState) 
          << " via command '" << commandStr << "'" << endl;
     
+    cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
     executeStateTransition(newState, commandStr);
     return true;
 }
@@ -346,9 +369,11 @@ void GameEngine::printValidCommands() const {
  * @brief Print error message for invalid command
  * @param invalidCommand The command that was invalid
  */
-void GameEngine::printErrorMessage(const string& invalidCommand) const {
-    cout << "ERROR: Invalid command '" << invalidCommand 
-         << "' for current state " << getStateName() << endl;
+std::string GameEngine::printErrorMessage(const string& invalidCommand) const {
+    std::string errorMessage = std::string("ERROR: Invalid command '") + invalidCommand + "' for current state " + getStateName() + ".";
+    cout << errorMessage << endl;
+
+    return errorMessage;
 }
 
 /**
@@ -372,6 +397,12 @@ void GameEngine::displayGameStatus() const {
     cout << "Players in game: " << players->size() << endl;
     cout << "-------------------" << endl;
 }
+
+// === A2, PART 2: Game Startup Phase ===
+void startupPhase() {
+
+}
+
 
 /**
  * @brief Set the current state (private helper)
@@ -430,8 +461,8 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
  * @param command The command that triggered this action
  */
 void GameEngine::handleLoadMap(const string& command) {
-    cout << "  -> Loading map... (stub implementation)" << endl;
-    (void)command; // Stub suppress unused parameter warning 
+    // cout << "  -> Loading map..." << endl;
+    // mapLoader.printMapFiles(mapFiles);
 }
 
 /**

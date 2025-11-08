@@ -24,11 +24,13 @@
 
 // Forward declarations of driver test functions
 void testLoadMaps();
-void testLoadMaps();
 void testPlayers();
 void testOrdersLists();
 void testCards();
 void testGameStates();
+
+void testCommandProcessor(int argc, char* argv[]);
+void testStartupPhase();
 
 /**
  * @brief Main entry point for Warzone component testing
@@ -40,7 +42,7 @@ void testGameStates();
  *          5. GameEngine testing (state transitions, command processing)
  * @return 0 on successful test completion
  */
-int main() {
+int main(int argc, char* argv[]) {
     std::cout << "=== Starting Warzone Test Drivers ===\n\n";
     
     testLoadMaps(); // Test map loading, validation, and operations
@@ -48,6 +50,9 @@ int main() {
     testOrdersLists(); // Test order creation, execution, and OrdersList operations
     testCards(); // Test deck, hand, drawing, and card playing with Order generation
     testGameStates(); // Test state transitions, command processing, and game flow
+    
+    testCommandProcessor(argc, argv);
+    testStartupPhase();
 
     std::cout << "\n";
     std::cout << "\n=== Program finished successfully ===\n";

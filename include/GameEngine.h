@@ -36,6 +36,7 @@ public:
     Command(); // Default constructor
     Command(const Command& other); // Copy constructor
     Command(const std::string& name); // Parameterized constructor
+    Command(const std::string& name, const std::string& effect); // Parameterized constructor with effect as a param.
     ~Command(); // Destructor
     
     Command& operator=(const Command& other); // Assignment operator
@@ -44,8 +45,12 @@ public:
     std::string getName() const;
     void setName(const std::string& name);
 
+    std::string getEffect() const;
+    void saveEffect(const std::string& effect);
+
 private:
     std::string* name; // Command name as pointer (requirement: all data members must be pointer type)
+    std::string* effect; // Save the effect of the command from the CommandProcessing.
 };
 
 /**
@@ -92,7 +97,7 @@ public:
 
     // Core game engine methods
     bool processCommand(const std::string& commandStr);
-    bool processCommand(const Command& cmd);
+    bool processCommand(Command& cmd);
     
     // State accessors
     GameState getCurrentState() const;
@@ -111,9 +116,12 @@ public:
     // Utility methods for console interface
     void printCurrentState() const;
     void printValidCommands() const;
-    void printErrorMessage(const std::string& invalidCommand) const;
+    std::string printErrorMessage(const std::string& invalidCommand) const;
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
+
+    // === A2, PART 2: Game Startup Phase ===
+    void startupPhase();
 
 private:
     // Type aliases for readability
