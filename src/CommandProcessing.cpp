@@ -53,19 +53,6 @@ bool CommandProcessor::validate(GameEngine& engine, Command* cmdptr) {
     }
 }
 
-// check to see if there are any typos in the commandEntered. If yes, command will not be saved.
-bool CommandProcessor::validCommandSpelling(std::string& commandEntered) {
-    using namespace GameCommands;
-    
-    if(commandEntered == LOAD_MAP || commandEntered == VALIDATE_MAP || commandEntered == ADD_PLAYER ||
-        commandEntered == GAME_START || commandEntered == REPLAY || commandEntered == QUIT) {
-        return true;
-    } else {
-        std::cout << "The command you entered, '" << commandEntered << "' is an invalid command." << std::endl;
-        return false;
-    }
-}
-
 
 // Assignment Operator for CommandProcessor.
  CommandProcessor& CommandProcessor::operator=(const CommandProcessor& other) {
@@ -177,19 +164,15 @@ void CommandProcessor::getCommand(GameEngine& engine) {
         } else if (commandEntered == "status") {
             engine.displayGameStatus();
         }
-        
-        bool isValidCommandSpelling = validCommandSpelling(commandEntered);
 
-        if(isValidCommandSpelling) {
-            // Save the full lineEntered(command + mapname/playername if present) and get its pointer.
-            Command* cmdptr = saveCommand(lineEntered);
+        // Save the full lineEntered(command + mapname/playername if present) and get its pointer.
+        Command* cmdptr = saveCommand(lineEntered);
 
-            bool validCommand = validate(engine, cmdptr);
+        bool validCommand = validate(engine, cmdptr);
 
-            // If Command is valid, process the command to trigger state transition.
-            if(validCommand) {
-                engine.processCommand(*cmdptr);
-            }
+        // If Command is valid, process the command to trigger state transition.
+        if(validCommand) {
+            engine.processCommand(*cmdptr);
         }
 
         // Display current state after command processing
@@ -270,18 +253,14 @@ void FileCommandProcessorAdapter::getCommand(GameEngine& engine) {
             break;
         }
 
-        bool isValidCommandSpelling = validCommandSpelling(commandEntered);
+        // Save the full lineReadFromFile (command + mapname/playername if present) and get its pointer.
+        Command* cmdptr = saveCommand(lineReadFromFile);
 
-        if(isValidCommandSpelling) {
-            // Save the full lineReadFromFile (command + mapname/playername if present) and get its pointer.
-            Command* cmdptr = saveCommand(lineReadFromFile);
+        bool validCommand = validate(engine, cmdptr);
 
-            bool validCommand = validate(engine, cmdptr);
-
-            // If Command is valid, process the command to trigger state transition.
-            if(validCommand) {
-                engine.processCommand(*cmdptr);
-            }
+        // If Command is valid, process the command to trigger state transition.
+        if(validCommand) {
+            engine.processCommand(*cmdptr);
         }
 
         // Display current state after command processing

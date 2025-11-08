@@ -135,6 +135,9 @@ public:
     bool isValidCommand(const std::string& commandStr) const;
     std::vector<std::string> getValidCommands() const;
     
+    // Command validation
+    bool validCommandSpelling(const std::string& commandEntered) const;
+    
     // Game progression methods
     void startGame();
     void endGame();
@@ -143,7 +146,8 @@ public:
     // Utility methods for console interface
     void printCurrentState() const;
     void printValidCommands() const;
-    std::string printErrorMessage(const std::string& invalidCommand) const;
+    std::string printStateErrorMessage(const std::string& invalidCommand) const;
+    std::string printTypoErrorMessage(const std::string& invalidCommand) const;
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
 

@@ -260,9 +260,15 @@ bool GameEngine::processCommand(const string& commandStr) {
  */
 bool GameEngine::processCommand(Command& cmd) {
     string commandStr = cmd.getName();
+
+    if(!validCommandSpelling(commandStr)) {
+        string errorMessage = printTypoErrorMessage(commandStr);
+        cmd.saveEffect(errorMessage);
+        return false;
+    }
     
     if (!isValidCommand(commandStr)) {
-        string errorMessage = printErrorMessage(commandStr);
+        string errorMessage = printStateErrorMessage(commandStr);
         cmd.saveEffect(errorMessage);
         return false;
     }
@@ -338,6 +344,22 @@ vector<string> GameEngine::getValidCommands() const {
 }
 
 /**
+ * @brief Check if command spelling is valid (not a typo)
+ * @param commandEntered The command string to validate
+ * @return true if command spelling is valid, false otherwise
+ */
+bool GameEngine::validCommandSpelling(const string& commandEntered) const {
+    using namespace GameCommands;
+    
+    if(commandEntered == LOAD_MAP || commandEntered == VALIDATE_MAP || commandEntered == ADD_PLAYER ||
+        commandEntered == GAME_START || commandEntered == REPLAY || commandEntered == QUIT) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
  * @brief Start a new game by setting state to Start
  */
 void GameEngine::startGame() {
@@ -382,15 +404,30 @@ void GameEngine::printValidCommands() const {
 }
 
 /**
- * @brief Print error message for invalid command
+ * @brief Print error message for invalid command for current state
  * @param invalidCommand The command that was invalid
  */
-std::string GameEngine::printErrorMessage(const string& invalidCommand) const {
+std::string GameEngine::printStateErrorMessage(const string& invalidCommand) const {
     std::string errorMessage = std::string("ERROR: Invalid command '") + invalidCommand + "' for current state " + getStateName() + ".";
     cout << errorMessage << endl;
 
     return errorMessage;
 }
+
+/**
+ * @brief Print error message for non-existent command (typo)
+ * @param invalidCommand The command that doesn't exist
+ * @return The error message string
+ */
+std::string GameEngine::printTypoErrorMessage(const string& invalidCommand) const {
+    std::string errorMessage = std::string("ERROR: Unknown command '") + invalidCommand + "'. This command does not exist.";
+    cout << errorMessage << endl;
+    cout << "Valid game commands are: loadmap, validatemap, addplayer, gamestart, replay, quit" << endl;
+    
+    return errorMessage;
+}
+
+
 
 /**
  * @brief Display welcome message with instructions for using the game engine
