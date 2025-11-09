@@ -28,6 +28,9 @@ public:
     std::string getPlayerName() const; //Getter for playerName
 	Hand* getPlayerHand() const;
 
+	void setCardAwardedThisTurn(bool awarded); //setter for cardAwardedThisTurn
+    bool getCardAwardedThisTurn() const; //getter for cardAwardedThisTurn
+
     Player& operator=(const Player& other);
 	void addPlayerTerritory(Territory* territory); //Adds to Player's Owned Territories
 	void removePlayerTerritory(Territory* territory); //Removes from Player's Owned Territories
@@ -41,6 +44,7 @@ public:
 private:
 	std::string playerName; //Player's Name
 	Hand* playerHand; //Player's Hand
+	bool cardAwardedThisTurn; // Flag to track if a card was awarded this turn
 	std::vector<Territory*> ownedTerritories; //List of Territories currently owned by Player
 	OrdersList* orders_; //List of orders issued by Player
 

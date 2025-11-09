@@ -13,7 +13,9 @@ Player::Player()
     : playerName("defaultName"),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()) {}
+      orders_(new OrdersList()), 
+      cardAwardedThisTurn(false)
+      {}
 
 
 // Deep Copy Constructor for Player.
@@ -21,7 +23,8 @@ Player::Player(const Player& copyPlayer)
     : playerName(copyPlayer.playerName),
       playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
-      orders_(new OrdersList(*copyPlayer.orders_))
+      orders_(new OrdersList(*copyPlayer.orders_)),
+      cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn)
 {}
 
 
@@ -30,7 +33,9 @@ Player::Player(std::string name)
     : playerName(std::move(name)),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()) {}
+      orders_(new OrdersList()),
+      cardAwardedThisTurn(false)
+{}
 
 
 /**
@@ -69,6 +74,16 @@ std::string Player::getPlayerName() const {
 // Getter for Player's Hand.
 Hand* Player::getPlayerHand() const {
     return playerHand;
+}
+
+// Card Awarded This Turn Setter 
+void Player::setCardAwardedThisTurn(bool awarded) {
+    cardAwardedThisTurn = awarded;
+}
+
+// Card Awarded This Turn Getter
+bool Player::getCardAwardedThisTurn() const {
+    return cardAwardedThisTurn;
 }
 
 
