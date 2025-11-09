@@ -272,21 +272,34 @@ BombOrder::BombOrder(const BombOrder& other)
  */
 bool BombOrder::validate() const {
     if (!issuer_ || !target_) return false;
-    return target_->getOwner() != issuer_;
+    if (issuer_ == target_ -> getOwner()) return false;
+    bool isAnyOwnedTerritoryAdjacent = false;
+    for (Territory* t : issuer_->getOwnedTerritories()) {
+    if (t->isAdjacentTo(target_)) {
+        isAnyOwnedTerritoryAdjacent = true;
+        break;
+        }
+    }
+    if (!isAnyOwnedTerritoryAdjacent) return false;
+    return true;
 }
 
 /**
  * @brief Executes the bomb order if valid
  */
 void BombOrder::execute() {
+<<<<<<< HEAD
     if (!validate()) { 
         effect_ = "Invalid bomb"; 
         notify();  // Notify observers of execution
         return; 
     }
+=======
+    if (!validate()) { effect_ = "Invalid bomb"; return; }
+    target_ -> removeArmies(target_ -> getArmies()/2);
+>>>>>>> 096df05 (finished airlift order and bomb order)
     std::ostringstream ss;
-    ss << "Bomb " << target_->getName() << " (owner: "
-       << (target_->getOwner() ? target_->getOwner()->getPlayerName() : "none") << ")";
+    ss << "Bombed " + target_->getName() + ", removed " + std::to_string(target_->getArmies()/2) + " armies.";
     effect_ = ss.str();
     notify();  // Notify observers of execution
 }
@@ -395,18 +408,27 @@ AirliftOrder::AirliftOrder(const AirliftOrder& other)
  */
 bool AirliftOrder::validate() const {
     if (!issuer_ || !source_ || !target_ || amount_ <= 0) return false;
-    return source_->getOwner() == issuer_;
+    if (issuer_ != source_ -> getOwner()) return false;
+    if (issuer_ != target_ -> getOwner()) return false;
+    if (amount_ > source_ -> getArmies()) return false;
+    return true;
 }
 
 /**
  * @brief Executes the airlift order if valid
  */
 void AirliftOrder::execute() {
+<<<<<<< HEAD
     if (!validate()) { 
         effect_ = "Invalid airlift"; 
         notify();  // Notify observers of execution
         return; 
     }
+=======
+    if (!validate()) { effect_ = "Invalid airlift"; return; }
+    source_ -> removeArmies(amount_);
+    target_ -> addArmies(amount_);
+>>>>>>> 096df05 (finished airlift order and bomb order)
     std::ostringstream ss;
     ss << "Airlift " << amount_ << " from " << source_->getName()
        << " to " << target_->getName();
