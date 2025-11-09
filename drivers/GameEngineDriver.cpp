@@ -53,7 +53,7 @@ void testGameStates() {
         }
         
         // Handle quit/exit commands to terminate the test
-        if (input == "quit" || input == "exit") {
+        if (input == GameCommands::QUIT || input == "exit") {
             cout << "Exiting game engine test." << endl;
             break;
         }

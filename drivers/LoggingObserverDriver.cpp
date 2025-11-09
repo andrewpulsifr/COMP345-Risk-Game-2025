@@ -151,8 +151,8 @@ void testLoggingObserver() {
     
     // Create a temporary command file with valid commands for current state
     ofstream tempFile("test_commands.txt");
-    tempFile << "loadmap" << endl;
-    tempFile << "validatemap" << endl;
+    tempFile << GameCommands::LOAD_MAP << endl;
+    tempFile << GameCommands::VALIDATE_MAP << endl;
     tempFile.close();
     
     // Create new GameEngine for file test

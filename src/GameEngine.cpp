@@ -422,9 +422,12 @@ std::string GameEngine::printStateErrorMessage(const string& invalidCommand) con
  * @return The error message string
  */
 std::string GameEngine::printTypoErrorMessage(const string& invalidCommand) const {
+    using namespace GameCommands;
+    
     std::string errorMessage = std::string("ERROR: Unknown command '") + invalidCommand + "'. This command does not exist.";
     cout << errorMessage << endl;
-    cout << "Valid game commands are: loadmap, validatemap, addplayer, gamestart, replay, quit" << endl;
+    cout << "Valid game commands are: " << LOAD_MAP << ", " << VALIDATE_MAP << ", " 
+         << ADD_PLAYER << ", " << GAME_START << ", " << REPLAY << ", " << QUIT << endl;
     
     return errorMessage;
 }
