@@ -186,12 +186,6 @@ void CommandProcessor::getCommand(GameEngine& engine) {
     }
 }
 
-// Get pointer to the first element of the vector of Command Objects.
-Command* CommandProcessor::getCommandObjects() {
-    return commandObjects.at(0);
-}
-
-
 
 // ===== FileCommandProcessorAdapter class =====
 
