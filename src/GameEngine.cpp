@@ -259,20 +259,21 @@ bool GameEngine::processCommand(const string& commandStr) {
  * @return true if command was valid and state transition occurred, false otherwise
  */
 bool GameEngine::processCommand(Command& cmd) {
-    string commandStr = cmd.getName();
+    const string& commandStr = cmd.getName();
 
-    if(!validCommandSpelling(commandStr)) {
-        string errorMessage = printTypoErrorMessage(commandStr);
-        cmd.saveEffect(errorMessage);
+    // Validate command spelling first (check if command exists)
+    if (!validCommandSpelling(commandStr)) {
+        cmd.saveEffect(printTypoErrorMessage(commandStr));
         return false;
     }
     
+    // Validate command is appropriate for current state
     if (!isValidCommand(commandStr)) {
-        string errorMessage = printStateErrorMessage(commandStr);
-        cmd.saveEffect(errorMessage);
+        cmd.saveEffect(printStateErrorMessage(commandStr));
         return false;
     }
     
+    // Command is valid - perform state transition
     GameStateCmdPair key = make_pair(*currentState, commandStr);
     GameState newState = (*stateTransitions)[key];
     
@@ -330,20 +331,6 @@ bool GameEngine::isValidCommand(const string& commandStr) const {
 }
 
 /**
- * @brief Get list of valid commands for current state
- * @return Vector of valid command strings
- */
-vector<string> GameEngine::getValidCommands() const {
-    vector<string> validCmds;
-    for (const TransitionMap::value_type& transition : *stateTransitions) {
-        if (transition.first.first == *currentState) {
-            validCmds.push_back(transition.first.second);
-        }
-    }
-    return validCmds;
-}
-
-/**
  * @brief Check if command spelling is valid (not a typo)
  * @param commandEntered The command string to validate
  * @return true if command spelling is valid, false otherwise
@@ -358,6 +345,21 @@ bool GameEngine::validCommandSpelling(const string& commandEntered) const {
         return false;
     }
 }
+
+/**
+ * @brief Get list of valid commands for current state
+ * @return Vector of valid command strings
+ */
+vector<string> GameEngine::getValidCommands() const {
+    vector<string> validCmds;
+    for (const TransitionMap::value_type& transition : *stateTransitions) {
+        if (transition.first.first == *currentState) {
+            validCmds.push_back(transition.first.second);
+        }
+    }
+    return validCmds;
+}
+
 
 /**
  * @brief Start a new game by setting state to Start
@@ -426,8 +428,6 @@ std::string GameEngine::printTypoErrorMessage(const string& invalidCommand) cons
     
     return errorMessage;
 }
-
-
 
 /**
  * @brief Display welcome message with instructions for using the game engine
