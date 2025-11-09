@@ -37,18 +37,18 @@ CommandProcessor::~CommandProcessor() {
 }
 
 // validate() if command entered is a valid command.
-bool CommandProcessor::validate(GameEngine& engine, Command* cmdptr) {
-    std::string commandName = cmdptr->getName();
+bool CommandProcessor::validate(GameEngine& engine, Command& cmdptr) {
+    std::string commandName = cmdptr.getName();
 
     //Extract only the command, if a mapname or playername is entered.
     std::string commandOnly = commandName.substr(0, commandName.find(" "));
     
     // If command not valid in current state, save the error. Else, save it as valid.
     if(!engine.isValidCommand(commandOnly)) {
-        cmdptr->saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
+        cmdptr.saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
         return false;
     } else {
-        cmdptr->saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
+        cmdptr.saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
         return true;
     }
 }
@@ -168,7 +168,7 @@ void CommandProcessor::getCommand(GameEngine& engine) {
         // Save the full lineEntered(command + mapname/playername if present) and get its pointer.
         Command* cmdptr = saveCommand(lineEntered);
 
-        bool validCommand = validate(engine, cmdptr);
+        bool validCommand = validate(engine, *cmdptr);
 
         // If Command is valid, process the command to trigger state transition.
         if(validCommand) {
@@ -256,7 +256,7 @@ void FileCommandProcessorAdapter::getCommand(GameEngine& engine) {
         // Save the full lineReadFromFile (command + mapname/playername if present) and get its pointer.
         Command* cmdptr = saveCommand(lineReadFromFile);
 
-        bool validCommand = validate(engine, cmdptr);
+        bool validCommand = validate(engine, *cmdptr);
 
         // If Command is valid, process the command to trigger state transition.
         if(validCommand) {
