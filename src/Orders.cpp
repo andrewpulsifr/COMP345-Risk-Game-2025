@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <random>
 #include "../include/Orders.h"
 #include "../include/Map.h"
 #include "../include/Player.h"
+#include "../include/Cards.h"
 
 // ===== Base Order =====
 
@@ -86,8 +88,9 @@ DeployOrder::DeployOrder(const DeployOrder& other)
  * @brief Validates if the deploy order is valid
  * @return bool True if target is owned by issuer and amount > 0
  */
-bool DeployOrder::validate() const {
+bool DeployOrder::validate() const {//done
     if (!issuer_ || !target_ || amount_ <= 0) return false;
+    if(target_->getOwner() != issuer_) return false;
     return target_->getOwner() == issuer_;
 }
 
@@ -95,16 +98,23 @@ bool DeployOrder::validate() const {
  * @brief Executes the deploy order if valid
  */
 void DeployOrder::execute() {
-    if (!validate()) { 
-        effect_ = "Invalid deploy"; 
-        notify();  // Notify observers of execution
-        return; 
+    // Validate first
+    if (!validate()) {
+        effect_ = "Invalid deploy";
+        notify();              // keep observer notification on failure
+        return;
     }
+
+    // Apply side effect
+    target_->addArmies(amount_);
+
+    // Build effect message
     std::ostringstream ss;
-    ss << "Deploy " << amount_ << " to " << target_->getName()
-       << " (owner: " << target_->getOwner()->getPlayerName() << ")";
+    ss << "Deployed " << amount_ << " armies to " << target_->getName()
+       << ". New total: " << target_->getArmies();
     effect_ = ss.str();
-    notify();  // Notify observers of execution
+
+    notify();                  // and notify on success too
 }
 
 /**
@@ -152,13 +162,15 @@ AdvanceOrder::AdvanceOrder(const AdvanceOrder& other)
 bool AdvanceOrder::validate() const {
     if (!issuer_ || !source_ || !target_ || amount_ <= 0) return false;
     if (source_->getOwner() != issuer_) return false;
-    return source_->isAdjacentTo(target_);
+    if (!source_->isAdjacentTo(target_)) return false;
+    return true;
 }
 
 /**
  * @brief Executes the advance order if valid
  */
 void AdvanceOrder::execute() {
+<<<<<<< HEAD
     if (!validate()) { 
         effect_ = "Invalid advance"; 
         notify();  // Notify observers of execution
@@ -169,6 +181,53 @@ void AdvanceOrder::execute() {
        << " to " << target_->getName();
     effect_ = ss.str();
     notify();  // Notify observers of execution
+=======
+    if (!validate()) { effect_ = "Invalid advance"; return; }
+    if (source_ -> getOwner() ==  target_ -> getOwner()) {
+        // Move armies between owned territories
+        source_->removeArmies(amount_);
+        target_->addArmies(amount_);
+        effect_ = "Moved " + std::to_string(amount_) + " armies between owned territories.";
+
+    }
+    else {
+        int attackerAmount = amount_;
+        int defenderAmount = target_->getArmies();
+        while (attackerAmount > 0 && defenderAmount > 0) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_real_distribution<> dis(0, 1);
+
+            if (dis(gen) < 0.6) { // 60% chance attacker kills defender
+                defenderAmount--;
+            } 
+            if (dis(gen) < 0.7) { // 70% chance defender kills attacker
+                attackerAmount--;
+            }
+        }
+        if(defenderAmount == 0) {
+        // Attacker conquers the territory
+        target_->setOwner(issuer_);
+        target_->setArmies(attackerAmount);
+        source_->removeArmies(amount_);
+        std::ostringstream ss;
+        ss << "Conquered " << target_->getName() << " with " << attackerAmount << " armies remaining.";
+        effect_ = ss.str();
+        if(!issuer_ -> getCardAwardedThisTurn()){
+            issuer_ -> setCardAwardedThisTurn(true);
+        }
+    } else {
+        // Defender holds the territory
+        target_->setArmies(defenderAmount);
+        source_->removeArmies(amount_);
+        std::ostringstream ss;
+        ss << "Failed to conquer " << target_->getName() << ". Defender has " << defenderAmount << " armies remaining.";
+        effect_ = ss.str();
+
+    }
+    }
+
+>>>>>>> 3eeb0c4 (feat(orders): implement Deploy/Advance execute logic)
 }
 
 /**

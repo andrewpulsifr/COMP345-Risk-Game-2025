@@ -1,6 +1,6 @@
 /**
  * @file Orders.cpp
- * @brief Assignment 1 – Part 3 (Warzone): Orders & OrdersList implementation
+ * @brief Assignment 2 – Part 4 (Warzone): Order excecution implementation
  *
  * @details
  * Implements the Orders API declared in Orders.h:
