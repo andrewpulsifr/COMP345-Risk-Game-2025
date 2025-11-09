@@ -1,4 +1,17 @@
-#pragma once
+/**
+ * @file CommandProcessing.h
+ * @brief Assignment 1 – Part 1: Assignment 2 - Part 1: Command Processor and Command Adapter.
+ *
+ * @details
+ *  This file contains the declaration of the command processor and command adapter that processes
+ *  the command that is entered either through -console or read through -file. It works with the GameEngine to
+ *  process the states of the game. The command adapter follows the Adapter Pattern, and makes use of polymorphism.
+ *
+ * @note A1, Part 1 classes/functions live in this duo (CommandProcessing.h/CommandProcessing.cpp). 
+ *       The driver `testCommandProcessor()` is implemented in CommandProcessingDriver.cpp.
+ */
+
+ #pragma once
 #include <string>
 #include <fstream>
 

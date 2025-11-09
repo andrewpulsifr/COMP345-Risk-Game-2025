@@ -1,3 +1,8 @@
-loadmap
-addplaer
-addplayer hi
+loadmap assets/maps/World.map
+validatemap
+addplayer Chhay
+addplayer Maria
+addplayer John
+addplayer Juan
+gamestart
+replay

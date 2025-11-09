@@ -1,22 +1,26 @@
 /**
  * @file GameEngine.cpp
- * @brief Implementation of Assignment 1 – Part 5 (Warzone): Game Engine with state management
- * @author Andrew Pulsifer and Matteo Bianchini
- * @date October 2025
- * @version 1.0
+ * @brief Implementation of Assignment 1 – Part 5 (Warzone): Game Engine with state management, and Assignment 2 - Part 2: Game Startup Phase.
+ * @author Andrew Pulsifer and Matteo Bianchini (A1, P5), Chhay (A2, P2)
+ * @date November 2025
+ * @version 2.0
  * 
  * This file contains the implementation of the game engine that controls the flow of the game
  * using states, transitions, and commands. The engine validates commands against current state
  * and transitions to new states accordingly, rejecting invalid commands with error messages.
+ * This file also implements the gamestart phase of the game, using input from the console or file to read the commands
+ * and process them in the CommandProcessing class.
  */
 
 #include "../include/GameEngine.h"
 #include "../include/Map.h"
 #include "../include/Player.h"
+#include "../include/Cards.h"
 #include "../include/CommandProcessing.h"
 #include <iostream>
 #include <algorithm>
 #include <sstream>
+#include <random>
 
 // Importing only the neccessary std functions.
 using std::cout;
@@ -108,7 +112,8 @@ GameEngine::GameEngine()
       stateTransitions(nullptr),
       gameMap(new Map()),
       players(new vector<Player*>()),
-      mapLoader(new MapLoader()) {
+      mapLoader(new MapLoader()),
+      deck(new Deck()) {
     initializeTransitions();
     cout << "GameEngine initialized in Start state." << endl;
 }
@@ -122,7 +127,8 @@ GameEngine::GameEngine(const GameEngine& other)
       stateTransitions(new TransitionMap(*other.stateTransitions)),
       gameMap(nullptr), // Map copying would require more complex logic
       players(new vector<Player*>()),
-      mapLoader(nullptr) {
+      mapLoader(nullptr), 
+      deck(nullptr) {
     // Deep copy gameMap if it exists
     if(other.gameMap){
         gameMap = new Map(*other.gameMap);
@@ -146,6 +152,7 @@ GameEngine::~GameEngine() {
     delete players;
     delete gameMap;      // GameEngine owns the map
     delete mapLoader;    // GameEngine owns the map loader
+    delete deck;
 }
 
 /**
@@ -161,6 +168,7 @@ GameEngine& GameEngine::operator=(const GameEngine& other) {
         delete players;
         delete gameMap;
         delete mapLoader;
+        delete deck;
         
         // Deep copy from other
         currentState = new GameState(*other.currentState);
@@ -184,6 +192,13 @@ GameEngine& GameEngine::operator=(const GameEngine& other) {
             mapLoader = new MapLoader(*other.mapLoader);
         } else {
             mapLoader = nullptr;
+        }
+
+        // Deep copy deck if it exists
+        if(other.deck) {
+            deck = new Deck(*other.deck);
+        } else {
+            deck = nullptr;
         }
     }
     return *this;
@@ -216,6 +231,8 @@ void GameEngine::initializeTransitions() {
         {{GameState::MapValidated,     "addplayer"},     GameState::PlayersAdded},
         {{GameState::PlayersAdded,     "addplayer"},     GameState::PlayersAdded},
         {{GameState::PlayersAdded,     "assigncountries"}, GameState::AssignReinforcement},
+        {{GameState::PlayersAdded,     "gamestart"}, GameState::Gamestart},
+        {{GameState::Gamestart,     "assigncountries"}, GameState::AssignReinforcement},
         {{GameState::AssignReinforcement,"issueorder"},  GameState::IssueOrders},
         {{GameState::IssueOrders,      "issueorder"},    GameState::IssueOrders},
         {{GameState::IssueOrders,      "endissueorders"},GameState::ExecuteOrders},
@@ -224,6 +241,8 @@ void GameEngine::initializeTransitions() {
         {{GameState::ExecuteOrders,    "win"},           GameState::Win},
         {{GameState::Win,              "play"},          GameState::Start},
         {{GameState::Win,              "end"},           GameState::End},
+        {{GameState::Win,     "replay"}, GameState::Replay},
+        {{GameState::Replay,     "start"}, GameState::Start},
     };
 }
 
@@ -259,7 +278,7 @@ bool GameEngine::processCommand(Command& cmd) {
     
     cout << "Transitioning from " << getStateName(*currentState) 
          << " to " << getStateName(newState) 
-         << " via command '" << commandStr << "'" << endl;
+         << " via command '" << commandStr << "'." << endl;
     
     cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
     executeStateTransition(newState, commandStr);
@@ -291,6 +310,7 @@ string GameEngine::getStateName(GameState state) const {
         case GameState::MapLoaded: return "MapLoaded";
         case GameState::MapValidated: return "MapValidated";
         case GameState::PlayersAdded: return "PlayersAdded";
+        case GameState::Gamestart: return "GameStart";
         case GameState::AssignReinforcement: return "AssignReinforcement";
         case GameState::IssueOrders: return "IssueOrders";
         case GameState::ExecuteOrders: return "ExecuteOrders";
@@ -298,6 +318,11 @@ string GameEngine::getStateName(GameState state) const {
         case GameState::End: return "End";
         default: return "Unknown";
     }
+}
+
+// Getter for the deck variable.
+Deck* GameEngine::getDeck() {
+    return deck;
 }
 
 /**
@@ -402,8 +427,27 @@ void GameEngine::displayGameStatus() const {
 }
 
 // === A2, PART 2: Game Startup Phase ===
-void startupPhase() {
+void GameEngine::startupPhase(GameEngine& engine, CommandProcessor* commandPro, int argc, char* argv[]) {
+    if(argc == 2 && std::string(argv[1]) == "-console") {
+        std::cout << "\nMode Selected: Console..." << std::endl;
+        commandPro = new CommandProcessor();
+        commandPro->getCommand(engine);
 
+        std::cout << *commandPro << std::endl;
+    } else if (argc == 3 && std::string(argv[1]) == "-file") {
+        std::string fileName = argv[2];
+        std::cout << "\nMode Selected: File...." << std::endl;
+
+        commandPro = new FileCommandProcessorAdapter(fileName);
+        commandPro->getCommand(engine);
+
+        std::cout << *commandPro << std::endl;
+    } else {
+        std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
+                    "   1. Console Mode:    <./executable-file-name> -console\n"
+                    "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
+                    "   Example: ./gamestart -file input.txt" << std::endl;
+    }
 }
 
 
@@ -446,13 +490,16 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
     if (commandOnly == "loadmap") {
         handleLoadMap(command);
     } else if (commandOnly == "validatemap") {
-        handleValidateMap(command);
+        handleValidateMap();
     } else if (commandOnly == "addplayer") {
         handleAddPlayer(command);
     } else if (commandOnly == "assigncountries") {
         handleAssignCountries(command);
     } else if (commandOnly == "issueorder") {
         handleIssueOrder(command);
+    } else if (commandOnly == "gamestart") {
+        handleGamestart(command);
+        printGamestartLog();
     } else if (commandOnly == "endissueorders" || commandOnly == "execorder" || commandOnly == "endexecorders") {
         handleExecuteOrders(command);
     } else if (commandOnly == "win" || commandOnly == "play" || commandOnly == "end") {
@@ -472,14 +519,10 @@ void GameEngine::handleLoadMap(const string& command) {
     // Extract the mapname from command.
     std::size_t nameIndex = command.find(' ');
     std::string mapName = command.substr(nameIndex + 1);
-
+    
     // Load map
     mapLoader->loadMap(mapName, *gameMap);
-
-    // TESTING: print out mapName and gameMap.
-    // std::cout << "A: mapName: " << mapName << std::endl;
-    // std::cout << "A: *gameMap: " << *gameMap << std::endl;
-    std::cout << "    The Map '" << mapName << "' is loaded.\n" << std::endl;
+    std::cout << "    The Map '" << mapName << "' is loaded." << std::endl;
 }
 
 /**
@@ -512,11 +555,7 @@ void GameEngine::handleAddPlayer(const string& command) {
     // Add player into GameEngine's vectors of players.
     players->push_back(new Player(playerName));
 
-    std::cout << "  Player '" << playerName << "' successfully added." << std::endl;
-    
-    // TESTING: print out players.
-    for(Player* player : *players)
-        std::cout << *player << std::endl;
+    std::cout << "    Player '" << playerName << "' successfully added." << std::endl;
 }
 
 /**
@@ -555,6 +594,114 @@ void GameEngine::handleEndGame(const string& command) {
     (void)command; // Stub suppress unused parameter warning
 }
 
+// Handle the 'gamestart command.'
 void GameEngine::handleGamestart(const string& command) {
     
+    cout << "  -> Handling Gamestart...\n" << endl;
+    // (a) Fairly distribute all the territories to the player.
+        // get vectors of Territories in map.
+        const std::vector<Territory*>& territories = gameMap->getTerritories();
+        
+        // get the number of Territories in map, and the number of players.
+        size_t numOfTerritories = gameMap->getTerritories().size();
+        size_t numOfPlayers = players->size();
+
+        // Fairly Distribute territories by alternating the territory given to player. 
+        for(size_t i = 0; i < numOfTerritories; i++) {
+            Territory* currentTerritory = territories.at(i);
+            size_t currentPlayerIndex = i % numOfPlayers;
+            
+            players->at(currentPlayerIndex)->addPlayerTerritory(currentTerritory);
+        }
+        
+        std::cout << "  ...Territories are distributed to each player.\n\n";
+    
+
+    // (b) Determine randomly the order of play of players (Shuffling the actual vector).
+
+        // Generate random number.
+        std::random_device random;
+        std::mt19937 g(random());
+
+        // Shuffle
+        std::shuffle(players->begin(), players->end(), g);
+
+        std::cout << "  ...Order of players are shuffled.\n\n";
+
+
+    // (c) Give 50 army units to each player.
+        // ** NEED TO MERGE PART 3 BEFORE UNCOMMENTING- BECAUSE IT INCLUDES THE REINFORCEMENT POOL. **
+        // for(Player* p : *players) {
+        //     p->setReinforcementPool(50);
+        // }
+    
+        std::cout << "  ...50 army units are assigned to each player.\n\n";
+
+
+    // (d) Let each player draw 2 initial cards from Deck.
+        std::cout << "  ...Each player draws 2 cards from Deck.\n\n";
+        for(Player* p : *players) {
+            Hand* playerHand = p->getPlayerHand();
+            std::cout << "  ------Player " << p->getPlayerName() << ":\n    ";
+            deck->draw(*playerHand);
+            std::cout << "    ";
+            deck->draw(*playerHand);
+        }
+
+
+    // (e) Switch game to play phase (the assignreinforcement state).
+        setState(GameState::AssignReinforcement);
+        std::cout << "  ...The state is switched to play.\n\n";
+
+    
+}
+
+
+// Prints out the status of each step after executing the 'gamestart' command.
+void GameEngine::printGamestartLog() const {
+    std::cout << "=======================================" << std::endl;
+    std::cout << "=== PRINTING OUT THE GAMESTART LOG: ===" << std::endl;
+    std::cout << "=======================================\n" << std::endl;
+
+    // (a) Fairly distribute all the territories to the player.
+        std::cout << "=== (a) Distributing territories: ===" << std::endl;
+
+        size_t numOfTerritories = gameMap->getTerritories().size();
+        size_t numOfPlayers = players->size();
+
+        // See the territories that each player own.
+        for(size_t i = 0; i < numOfPlayers; i++) {
+            std::cout << "  " << *(players->at(i)) << std::endl;
+        }
+        std::cout << "\n";
+    
+
+    // (b) Determine randomly the order of play of players (Shuffling the actual vector).
+        std::cout << "=== (b) Determine the order of players randomly, by shuffling the vector: ===" << std::endl;
+        std::cout << "  After shuffling  - Players: ";
+        for(Player* p : *players) {
+            std::cout << p->getPlayerName() << " ";
+        }
+        std::cout << "\n\n\n";
+    
+
+    // (c) Give 50 army units to each player.
+        std::cout << "=== (c) Give 50 army units to each player: ===" << std::endl;
+        // for(Player* p : *players) {
+        //     std::cout << "Player " << p->getName() << " - Reinforcement Pool: " << p->getReinforcementPool();
+        // }
+        std::cout << "\n\n";
+
+
+    // (d) Let each player draw 2 initial cards from Deck.
+        std::cout << "=== (d) Let each player draw 2 cards from the Deck: ===" << std::endl;
+        for(Player* p : *players) {
+            std::cout << "  Player " << p->getPlayerName() << " - ";
+            p->getPlayerHand()->showHand();
+        }
+        std::cout << "\n\n";
+
+
+    // (e) Switch game to play phase (the assignreinforcement state).
+        std::cout << "=== (e) Switch game to play phase: ===" << std::endl;
 }

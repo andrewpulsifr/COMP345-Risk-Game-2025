@@ -1,3 +1,15 @@
+/**
+ * @file CommandProcessing.cpp
+ * @brief Implementation of Assignment 2 - Part 1: Command Processor and Command Adapter.
+ * @author Chhay (A2, P1)
+ * @date November 2025
+ * @version 1.0
+ * 
+ * This file contains the implementation of the command processor and command adapter that processes
+ * the command that is entered either through -console or read through -file. It works with the GameEngine to
+ * process the states of the game. The command adapter follows the Adapter Pattern.
+ */
+ 
 #include "../include/GameEngine.h"
 #include "../include/CommandProcessing.h"
 
