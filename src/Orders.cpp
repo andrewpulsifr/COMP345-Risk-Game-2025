@@ -162,6 +162,9 @@ AdvanceOrder::AdvanceOrder(const AdvanceOrder& other)
 bool AdvanceOrder::validate() const {
     if (!issuer_ || !source_ || !target_ || amount_ <= 0) return false;
     if (source_->getOwner() != issuer_) return false;
+    if (issuer_ && target_ && target_->getOwner()) {
+        if (issuer_->isNegotiatedWith(target_->getOwner())) return false;
+    }
     if (!source_->isAdjacentTo(target_)) return false;
     return true;
 }
@@ -170,65 +173,62 @@ bool AdvanceOrder::validate() const {
  * @brief Executes the advance order if valid
  */
 void AdvanceOrder::execute() {
-<<<<<<< HEAD
-    if (!validate()) { 
-        effect_ = "Invalid advance"; 
-        notify();  // Notify observers of execution
-        return; 
+    if (!validate()) {
+        effect_ = "Invalid advance";
+        notify();
+        return;
     }
-    std::ostringstream ss;
-    ss << "Advance " << amount_ << " from " << source_->getName()
-       << " to " << target_->getName();
-    effect_ = ss.str();
-    notify();  // Notify observers of execution
-=======
-    if (!validate()) { effect_ = "Invalid advance"; return; }
-    if (source_ -> getOwner() ==  target_ -> getOwner()) {
-        // Move armies between owned territories
+
+    if (source_->getOwner() == target_->getOwner()) {
+        // Move between owned territories
         source_->removeArmies(amount_);
         target_->addArmies(amount_);
         effect_ = "Moved " + std::to_string(amount_) + " armies between owned territories.";
-
+        notify();
+        return;
     }
-    else {
-        int attackerAmount = amount_;
-        int defenderAmount = target_->getArmies();
-        while (attackerAmount > 0 && defenderAmount > 0) {
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<> dis(0, 1);
 
-            if (dis(gen) < 0.6) { // 60% chance attacker kills defender
-                defenderAmount--;
-            } 
-            if (dis(gen) < 0.7) { // 70% chance defender kills attacker
-                attackerAmount--;
-            }
-        }
-        if(defenderAmount == 0) {
-        // Attacker conquers the territory
+    // Battle simulation
+    int attackerAmount = amount_;
+    int defenderAmount = target_->getArmies();
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.0, 1.0);
+
+    while (attackerAmount > 0 && defenderAmount > 0) {
+        if (dis(gen) < 0.6) defenderAmount--; // attacker kills defender
+        if (dis(gen) < 0.7) attackerAmount--; // defender kills attacker
+    }
+
+    if (defenderAmount == 0) {
+        // Conquer territory
         target_->setOwner(issuer_);
         target_->setArmies(attackerAmount);
         source_->removeArmies(amount_);
+
         std::ostringstream ss;
-        ss << "Conquered " << target_->getName() << " with " << attackerAmount << " armies remaining.";
+        ss << "Conquered " << target_->getName()
+           << " with " << attackerAmount << " armies remaining.";
         effect_ = ss.str();
-        if(!issuer_ -> getCardAwardedThisTurn()){
-            issuer_ -> setCardAwardedThisTurn(true);
+
+        if (!issuer_->getCardAwardedThisTurn()) {
+            issuer_->setCardAwardedThisTurn(true);
         }
     } else {
-        // Defender holds the territory
+        // Defender holds
         target_->setArmies(defenderAmount);
         source_->removeArmies(amount_);
+
         std::ostringstream ss;
-        ss << "Failed to conquer " << target_->getName() << ". Defender has " << defenderAmount << " armies remaining.";
+        ss << "Failed to conquer " << target_->getName()
+           << ". Defender has " << defenderAmount << " armies remaining.";
         effect_ = ss.str();
-
-    }
     }
 
->>>>>>> 3eeb0c4 (feat(orders): implement Deploy/Advance execute logic)
+    notify();
 }
+
 
 /**
  * @brief Gets the name of this order type
@@ -273,6 +273,9 @@ BombOrder::BombOrder(const BombOrder& other)
 bool BombOrder::validate() const {
     if (!issuer_ || !target_) return false;
     if (issuer_ == target_ -> getOwner()) return false;
+    if (issuer_ && target_ && target_->getOwner()) {
+        if (issuer_->isNegotiatedWith(target_->getOwner())) return false;
+    }
     bool isAnyOwnedTerritoryAdjacent = false;
     for (Territory* t : issuer_->getOwnedTerritories()) {
     if (t->isAdjacentTo(target_)) {
@@ -288,21 +291,24 @@ bool BombOrder::validate() const {
  * @brief Executes the bomb order if valid
  */
 void BombOrder::execute() {
-<<<<<<< HEAD
-    if (!validate()) { 
-        effect_ = "Invalid bomb"; 
-        notify();  // Notify observers of execution
-        return; 
+    if (!validate()) {
+        effect_ = "Invalid bomb";
+        notify();
+        return;
     }
-=======
-    if (!validate()) { effect_ = "Invalid bomb"; return; }
-    target_ -> removeArmies(target_ -> getArmies()/2);
->>>>>>> 096df05 (finished airlift order and bomb order)
+
+    int before = target_->getArmies();
+    int removed = before / 2;
+    target_->removeArmies(removed);
+
     std::ostringstream ss;
-    ss << "Bombed " + target_->getName() + ", removed " + std::to_string(target_->getArmies()/2) + " armies.";
+    ss << "Bombed " << target_->getName()
+       << ", removed " << removed << " armies.";
     effect_ = ss.str();
-    notify();  // Notify observers of execution
+
+    notify();
 }
+
 
 /**
  * @brief Gets the name of this order type
@@ -346,23 +352,42 @@ BlockadeOrder::BlockadeOrder(const BlockadeOrder& other)
  */
 bool BlockadeOrder::validate() const {
     if (!issuer_ || !target_) return false;
-    return target_->getOwner() == issuer_;
+    bool isOwnedByIssuer = false;
+    for(Territory* t : issuer_ -> getOwnedTerritories()) {
+        if(t == target_) {
+            isOwnedByIssuer = true;
+            break;
+        }
+    }
+    if (!isOwnedByIssuer) return false;
+    return true;
 }
 
 /**
  * @brief Executes the blockade order if valid
  */
 void BlockadeOrder::execute() {
-    if (!validate()) { 
-        effect_ = "Invalid blockade"; 
-        notify();  // Notify observers of execution
-        return; 
+    if (!validate()) {
+        effect_ = "Invalid blockade";
+        notify();
+        return;
     }
+
+    // Double armies and transfer to Neutral
+    target_->addArmies(target_->getArmies());  // double
+    target_->setOwner(neutralPlayer);
+    neutralPlayer->addPlayerTerritory(target_);
+    issuer_->removePlayerTerritory(target_);
+
     std::ostringstream ss;
-    ss << "Blockade on " << target_->getName();
+    ss << "Blockade on " << target_->getName()
+       << ". Armies doubled to " << target_->getArmies()
+       << ". Territory now owned by Neutral.";
     effect_ = ss.str();
-    notify();  // Notify observers of execution
+
+    notify();
 }
+
 
 /**
  * @brief Gets the name of this order type
@@ -418,23 +443,23 @@ bool AirliftOrder::validate() const {
  * @brief Executes the airlift order if valid
  */
 void AirliftOrder::execute() {
-<<<<<<< HEAD
-    if (!validate()) { 
-        effect_ = "Invalid airlift"; 
-        notify();  // Notify observers of execution
-        return; 
+    if (!validate()) {
+        effect_ = "Invalid airlift";
+        notify();
+        return;
     }
-=======
-    if (!validate()) { effect_ = "Invalid airlift"; return; }
-    source_ -> removeArmies(amount_);
-    target_ -> addArmies(amount_);
->>>>>>> 096df05 (finished airlift order and bomb order)
+
+    source_->removeArmies(amount_);
+    target_->addArmies(amount_);
+
     std::ostringstream ss;
     ss << "Airlift " << amount_ << " from " << source_->getName()
        << " to " << target_->getName();
     effect_ = ss.str();
-    notify();  // Notify observers of execution
+
+    notify();
 }
+
 
 /**
  * @brief Gets the name of this order type
@@ -480,24 +505,30 @@ NegotiateOrder::NegotiateOrder(const NegotiateOrder& other)
  */
 bool NegotiateOrder::validate() const {
     if (!issuer_ || !other_) return false;
-    return issuer_ != other_;
-}
+    if (issuer_ == other_) return false;
+    return true;}
 
 /**
  * @brief Executes the negotiate order if valid
  */
 void NegotiateOrder::execute() {
-    if (!validate()) { 
-        effect_ = "Invalid negotiate"; 
-        notify();  // Notify observers of execution
-        return; 
+    if (!validate()) {
+        effect_ = "Invalid negotiate";
+        notify();
+        return;
     }
+
+    issuer_->addNegotiatedPlayer(other_);
+    other_->addNegotiatedPlayer(issuer_);
+
     std::ostringstream ss;
     ss << "Negotiate truce between " << issuer_->getPlayerName()
        << " and " << other_->getPlayerName();
     effect_ = ss.str();
-    notify();  // Notify observers of execution
+
+    notify();
 }
+
 
 /**
  * @brief Gets the name of this order type

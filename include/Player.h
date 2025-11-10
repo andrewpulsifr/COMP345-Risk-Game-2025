@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <ostream>
+#include <set>
 
 class Territory;
 class Hand;
@@ -36,6 +37,10 @@ public:
 	void removePlayerTerritory(Territory* territory); //Removes from Player's Owned Territories
     std::vector<Territory*> getOwnedTerritories() const; //Returns a vector containing every owned territory
 
+	void addNegotiatedPlayer(Player* p);
+    void clearNegotiatedPlayers();
+    bool isNegotiatedWith(Player* p) const;
+
 	std::vector<Territory*> toDefend(); //Returns a vector containing every attackable territory of player's
 	std::vector<Territory*> toAttack(); //Returns a vector containing every territory player can attack
 
@@ -46,11 +51,12 @@ private:
 	Hand* playerHand; //Player's Hand
 	bool cardAwardedThisTurn; // Flag to track if a card was awarded this turn
 	std::vector<Territory*> ownedTerritories; //List of Territories currently owned by Player
+	std::set<Player*> negotiatedPlayers; // Players this player has negotiated with
 	OrdersList* orders_; //List of orders issued by Player
 
 friend std::ostream& operator<<(std::ostream& os, const Player& player);
 };
 
 
-
+extern Player* neutralPlayer; //neutral player instance
 void testPlayers();

@@ -4,6 +4,7 @@
 #include "../include/Cards.h"
 #include <algorithm>
 #include <iostream>
+#include <set>
 
 
 //Player
@@ -64,7 +65,8 @@ Player::~Player() {
     delete playerHand;
     delete orders_;
 }
-
+// Neutral player instance
+Player* neutralPlayer = nullptr;
 
 // Getter for Player's Name.
 std::string Player::getPlayerName() const {
@@ -107,6 +109,18 @@ void Player::removePlayerTerritory(Territory* territory) {
 // Getter for Player's Owned Territories.
 std::vector<Territory*> Player::getOwnedTerritories() const {
     return ownedTerritories;
+}
+// Negotiation Management
+void Player::addNegotiatedPlayer(Player* p) { 
+    negotiatedPlayers.insert(p); 
+}
+
+void Player::clearNegotiatedPlayers() {
+    negotiatedPlayers.clear();
+ }
+
+bool Player::isNegotiatedWith(Player* p) const {
+    return negotiatedPlayers.find(p) != negotiatedPlayers.end();
 }
 
 //Attack / Defend Lists
