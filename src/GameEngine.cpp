@@ -755,6 +755,10 @@ void GameEngine::handleIssueOrder(const string& command) {
 void GameEngine::handleExecuteOrders(const string& command) {
     cout << "  -> Executing orders... (stub implementation)" << endl;
     (void)command; // Stub suppress unused parameter warning
+     for (Player* p : *players) {  
+        p->clearNegotiatedPlayers();
+    }
+    cout << "All player truces have been reset for the next turn.\n";
 }
 
 /**
