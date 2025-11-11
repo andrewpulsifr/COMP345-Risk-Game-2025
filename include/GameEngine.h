@@ -207,6 +207,9 @@ private:
     void handleExecuteOrders(const std::string& command);
     void handleEndGame(const std::string& command);
 
+    // Helper methods for map loading validation
+    bool extractMapFilename(const std::string& command, std::string& mapName) const;
+    bool validateMapFileExists(const std::string& mapPath) const;
 
     // Handling Gamestart command in Game startup phase (Part 2 of A2).
     void handleGamestart();
