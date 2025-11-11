@@ -42,12 +42,13 @@ void testGameStates() {
     // Initialize input processing for interactive state transitions
     string input;
     
+    
     // Main loop for processing user commands and managing state transitions
     while (std::getline(cin, input)) {
         // Clean up input string by removing leading/trailing whitespace
         input.erase(0, input.find_first_not_of(" \t"));
         input.erase(input.find_last_not_of(" \t") + 1);
-        
+
         // Skip empty input and prompt again
         if (input.empty()) {
             cout << "Enter command: ";
@@ -55,29 +56,23 @@ void testGameStates() {
         }
         
         // Handle quit/exit commands to terminate the test
-        if (input == "quit" || input == "exit") {
+        if (input == GameCommands::QUIT || input == "exit") {
             cout << "Exiting game engine test." << endl;
             break;
         }
         
-        // Handle informational commands that don't change game state
-        if (input == "help") {
-            engine.displayGameStatus();
-        } else if (input == "status") {
-            engine.displayGameStatus();
-        } else {
-            // Process actual game commands that trigger state transitions
-            engine.processCommand(input);
-            
-            // Display current state after command processing
-            cout << "  Current state: " << engine.getStateName() << endl;
-            
-            // Check if game has reached terminal state
-            if (engine.isGameOver()) {
-                cout << "Game has ended. Type 'quit' to exit or continue testing." << endl;
-            }
-        }
+        // Process actual game commands that trigger state transitions
+        engine.processCommand(input);
         
+        // Display current state after command processing
+        cout << "  Current state: " << engine.getStateName() << endl;
+        
+        // Check if game has reached terminal state
+        if (engine.isGameOver()) {
+            cout << "Game has ended. Type 'quit' to exit or continue testing." << endl;
+        }
+
+        engine.displayGameStatus(); // Display game status after each command
         cout << "\nEnter command: ";
     }
     
@@ -91,7 +86,7 @@ void testStartupPhase(int argc, char* argv[]) {
     cout << "Start the Game.." << endl;
     
     GameEngine engine;
-    CommandProcessor *commandPro;
+    CommandProcessor *commandPro = nullptr;
 
     // Add cards to the deck so that cards can be drawn when 'gamestart' command is used.
     engine.getDeck()->addCard(new Card(Card::Reinforcement));
@@ -122,15 +117,20 @@ void testStartupPhase(int argc, char* argv[]) {
         commandPro = new FileCommandProcessorAdapter(fileName);
         engine.startupPhase(engine, *commandPro);
     } else {
+        // Invalid arguments: commandPro remains nullptr (no initialization needed)
         std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
                     "   1. Console Mode:    <./executable-file-name> -console\n"
                     "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
                     "   Example: ./gamestart -file input.txt" << std::endl;
+        // Early return to make control flow explicit --> no cleanup needed when commandPro is nullptr
+        cout << "\n=== Testing Startup Phase Completed ===" << endl;
+        return;
     }
 
     // Delete and free up memory (engine will be automatically destroyed as its statically allocated).
+    // Note: At this point, commandPro is guaranteed to be initialized (either from console or file mode)
     delete commandPro;
     commandPro = nullptr;
-    
+
     cout << "\n=== Testing Startup Phase Completed ===" << endl;
 }

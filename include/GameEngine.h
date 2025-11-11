@@ -14,6 +14,7 @@
 
 #pragma once
 #include <string>
+#include <string_view>
 #include <map>
 #include <vector>
 #include <iostream>
@@ -59,6 +60,41 @@ private:
     std::string* name; // Command name as pointer (requirement: all data members must be pointer type)
     std::string* effect; // Save the effect of the command from the CommandProcessing.
 };
+
+/**
+ * @brief Command string constants for game state transitions
+ * 
+ * @details Provides a single source of truth for all valid game commands.
+ * These constants should be used throughout the codebase instead of hardcoded strings.
+ * 
+ * Implementation uses constexpr std::string_view instead of const std::string for:
+ * - Zero runtime overhead: No heap allocations at program startup
+ * - Compile-time evaluation: Values are computed at compile time
+ * - Smaller memory footprint: string_view is just a pointer + length (16 bytes)
+ * - Better performance: No dynamic memory management overhead
+ * - Type safety: Implicit conversion to std::string when needed
+ * 
+ * string_view is a non-owning view of a string - it points to the string literal
+ * in the program's read-only data segment, avoiding the need for runtime allocation.
+ * Since these commands are constant and never modified, string_view is ideal.
+ */
+namespace GameCommands {
+    constexpr std::string_view LOAD_MAP = "loadmap";
+    constexpr std::string_view VALIDATE_MAP = "validatemap";
+    constexpr std::string_view ADD_PLAYER = "addplayer";
+    constexpr std::string_view ASSIGN_COUNTRIES = "assigncountries";
+    constexpr std::string_view ISSUE_ORDER = "issueorder";
+    constexpr std::string_view END_ISSUE_ORDERS = "endissueorders";
+    constexpr std::string_view EXEC_ORDER = "execorder";
+    constexpr std::string_view END_EXEC_ORDERS = "endexecorders";
+    constexpr std::string_view WIN = "win";
+    constexpr std::string_view PLAY = "play";
+    constexpr std::string_view END = "end";
+    constexpr std::string_view GAME_START = "gamestart";
+    constexpr std::string_view REPLAY = "replay";
+    constexpr std::string_view START = "start";
+    constexpr std::string_view QUIT = "quit";
+}
 
 /**
  * @brief Enumeration of all possible game states
@@ -120,6 +156,9 @@ public:
     bool isValidCommand(const std::string& commandStr) const;
     std::vector<std::string> getValidCommands() const;
     
+    // Command validation
+    bool validCommandSpelling(const std::string& commandEntered) const;
+    
     // Game progression methods
     void startGame();
     void endGame();
@@ -128,8 +167,8 @@ public:
     // Utility methods for console interface
     void printCurrentState() const;
     void printValidCommands() const;
-    void printGamestartLog() const;
-    std::string printErrorMessage(const std::string& invalidCommand) const;
+    std::string printStateErrorMessage(const std::string& invalidCommand) const;
+    std::string printTypoErrorMessage(const std::string& invalidCommand) const;
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
 
@@ -168,9 +207,13 @@ private:
     void handleExecuteOrders(const std::string& command);
     void handleEndGame(const std::string& command);
 
+    // Helper methods for map loading validation
+    bool extractMapFilename(const std::string& command, std::string& mapName) const;
+    bool validateMapFileExists(const std::string& mapPath) const;
 
     // Handling Gamestart command in Game startup phase (Part 2 of A2).
-    void handleGamestart(const std::string& command);
+    void handleGamestart();
+    void printGamestartLog() const;
 };
 
 /**

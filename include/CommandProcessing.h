@@ -26,8 +26,7 @@ class CommandProcessor: public ILoggable , public Subject {
         virtual ~CommandProcessor(); // Destructor.
         virtual void getCommand(GameEngine& engine);
         Command* getCommandObjects();
-        bool validate(GameEngine& engine, Command* cmdptr);
-        bool validCommandSpelling(std::string& lineEntered);
+        bool validate(GameEngine& engine, Command& cmdptr);
         // Assignment Operator and Output Operator.
         CommandProcessor& operator=(const CommandProcessor& other);
         friend std::ostream& operator<<(std::ostream& os, const CommandProcessor& commandPro);

@@ -120,9 +120,9 @@ void testLoggingObserver() {
     cout << "------------------------------------------------------" << endl;
 
     cout << "Saving commands via CommandProcessor::saveCommand()..." << endl;
-    string cmd1 = "loadmap";
-    string cmd2 = "validatemap";
-    string cmd3 = "addplayer";
+    string cmd1{GameCommands::LOAD_MAP};
+    string cmd2{GameCommands::VALIDATE_MAP};
+    string cmd3{GameCommands::ADD_PLAYER};
     
     // Use testSaveCommand() to access protected saveCommand()
     Command* savedCmd1 = commandProcessor->testSaveCommand(cmd1);
@@ -151,8 +151,8 @@ void testLoggingObserver() {
     
     // Create a temporary command file with valid commands for current state
     ofstream tempFile("test_commands.txt");
-    tempFile << "loadmap" << endl;
-    tempFile << "validatemap" << endl;
+    tempFile << GameCommands::LOAD_MAP << endl;
+    tempFile << GameCommands::VALIDATE_MAP << endl;
     tempFile.close();
     
     // Create new GameEngine for file test
@@ -180,13 +180,13 @@ void testLoggingObserver() {
     cout << "-----------------------------------------" << endl;
 
     cout << "Processing 'loadmap' command..." << endl;
-    gameEngine->processCommand("loadmap");
+    gameEngine->processCommand(string{GameCommands::LOAD_MAP});
     
     cout << "Processing 'validatemap' command..." << endl;
-    gameEngine->processCommand("validatemap");
+    gameEngine->processCommand(string{GameCommands::VALIDATE_MAP});
     
     cout << "Processing 'addplayer' command..." << endl;
-    gameEngine->processCommand("addplayer");
+    gameEngine->processCommand(string{GameCommands::ADD_PLAYER});
 
     cout << "OK : GameEngine state changes logged to gamelog.txt" << endl;
     cout << endl;
