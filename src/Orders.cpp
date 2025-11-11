@@ -44,6 +44,19 @@ std::ostream& operator<<(std::ostream& os, const Order& order) {
     return os;
 }
 
+/**
+ * @brief Generates a log string for the order
+ * @return std::string String representation for logging
+ */
+std::string Order::stringToLog() const {
+    std::ostringstream oss;
+    oss << "Order: " << name();
+    if (!effect_.empty()) {
+        oss << " | Effect: " << effect_;
+    }
+    return oss.str();
+}
+
 // ---------- Deploy ----------
 
 /**
@@ -60,7 +73,14 @@ DeployOrder::DeployOrder() : Order("Deploy") {}
 DeployOrder::DeployOrder(Player* issuer, Territory* target, int amount)
     : Order("Deploy"), issuer_(issuer), target_(target), amount_(amount) {}
 
-DeployOrder::DeployOrder(const DeployOrder&) = default;
+/**
+ * @brief Copy constructor for Deploy order
+ * @param other DeployOrder to copy from
+ */
+DeployOrder::DeployOrder(const DeployOrder& other)
+    : Order("Deploy"), issuer_(other.issuer_), target_(other.target_), amount_(other.amount_) {
+    effect_ = other.effect_;
+}
 
 /**
  * @brief Validates if the deploy order is valid
@@ -75,11 +95,16 @@ bool DeployOrder::validate() const {
  * @brief Executes the deploy order if valid
  */
 void DeployOrder::execute() {
-    if (!validate()) { effect_ = "Invalid deploy"; return; }
+    if (!validate()) { 
+        effect_ = "Invalid deploy"; 
+        notify();  // Notify observers of execution
+        return; 
+    }
     std::ostringstream ss;
     ss << "Deploy " << amount_ << " to " << target_->getName()
        << " (owner: " << target_->getOwner()->getPlayerName() << ")";
     effect_ = ss.str();
+    notify();  // Notify observers of execution
 }
 
 /**
@@ -111,7 +136,14 @@ AdvanceOrder::AdvanceOrder() : Order("Advance") {}
 AdvanceOrder::AdvanceOrder(Player* issuer, Territory* source, Territory* target, int amount)
     : Order("Advance"), issuer_(issuer), source_(source), target_(target), amount_(amount) {}
 
-AdvanceOrder::AdvanceOrder(const AdvanceOrder&) = default;
+/**
+ * @brief Copy constructor for Advance order
+ * @param other AdvanceOrder to copy from
+ */
+AdvanceOrder::AdvanceOrder(const AdvanceOrder& other)
+    : Order("Advance"), issuer_(other.issuer_), source_(other.source_), target_(other.target_), amount_(other.amount_) {
+    effect_ = other.effect_;
+}
 
 /**
  * @brief Validates if the advance order is valid
@@ -127,11 +159,16 @@ bool AdvanceOrder::validate() const {
  * @brief Executes the advance order if valid
  */
 void AdvanceOrder::execute() {
-    if (!validate()) { effect_ = "Invalid advance"; return; }
+    if (!validate()) { 
+        effect_ = "Invalid advance"; 
+        notify();  // Notify observers of execution
+        return; 
+    }
     std::ostringstream ss;
     ss << "Advance " << amount_ << " from " << source_->getName()
        << " to " << target_->getName();
     effect_ = ss.str();
+    notify();  // Notify observers of execution
 }
 
 /**
@@ -161,7 +198,14 @@ BombOrder::BombOrder() : Order("Bomb") {}
 BombOrder::BombOrder(Player* issuer, Territory* target)
     : Order("Bomb"), issuer_(issuer), target_(target) {}
 
-BombOrder::BombOrder(const BombOrder&) = default;
+/**
+ * @brief Copy constructor for Bomb order
+ * @param other BombOrder to copy from
+ */
+BombOrder::BombOrder(const BombOrder& other)
+    : Order("Bomb"), issuer_(other.issuer_), target_(other.target_) {
+    effect_ = other.effect_;
+}
 
 /**
  * @brief Validates if the bomb order is valid
@@ -176,11 +220,16 @@ bool BombOrder::validate() const {
  * @brief Executes the bomb order if valid
  */
 void BombOrder::execute() {
-    if (!validate()) { effect_ = "Invalid bomb"; return; }
+    if (!validate()) { 
+        effect_ = "Invalid bomb"; 
+        notify();  // Notify observers of execution
+        return; 
+    }
     std::ostringstream ss;
     ss << "Bomb " << target_->getName() << " (owner: "
        << (target_->getOwner() ? target_->getOwner()->getPlayerName() : "none") << ")";
     effect_ = ss.str();
+    notify();  // Notify observers of execution
 }
 
 /**
@@ -210,7 +259,14 @@ BlockadeOrder::BlockadeOrder() : Order("Blockade") {}
 BlockadeOrder::BlockadeOrder(Player* issuer, Territory* target)
     : Order("Blockade"), issuer_(issuer), target_(target) {}
 
-BlockadeOrder::BlockadeOrder(const BlockadeOrder&) = default;
+/**
+ * @brief Copy constructor for Blockade order
+ * @param other BlockadeOrder to copy from
+ */
+BlockadeOrder::BlockadeOrder(const BlockadeOrder& other)
+    : Order("Blockade"), issuer_(other.issuer_), target_(other.target_) {
+    effect_ = other.effect_;
+}
 
 /**
  * @brief Validates if the blockade order is valid
@@ -225,10 +281,15 @@ bool BlockadeOrder::validate() const {
  * @brief Executes the blockade order if valid
  */
 void BlockadeOrder::execute() {
-    if (!validate()) { effect_ = "Invalid blockade"; return; }
+    if (!validate()) { 
+        effect_ = "Invalid blockade"; 
+        notify();  // Notify observers of execution
+        return; 
+    }
     std::ostringstream ss;
     ss << "Blockade on " << target_->getName();
     effect_ = ss.str();
+    notify();  // Notify observers of execution
 }
 
 /**
@@ -260,7 +321,14 @@ AirliftOrder::AirliftOrder() : Order("Airlift") {}
 AirliftOrder::AirliftOrder(Player* issuer, Territory* source, Territory* target, int amount)
     : Order("Airlift"), issuer_(issuer), source_(source), target_(target), amount_(amount) {}
 
-AirliftOrder::AirliftOrder(const AirliftOrder&) = default;
+/**
+ * @brief Copy constructor for Airlift order
+ * @param other AirliftOrder to copy from
+ */
+AirliftOrder::AirliftOrder(const AirliftOrder& other)
+    : Order("Airlift"), issuer_(other.issuer_), source_(other.source_), target_(other.target_), amount_(other.amount_) {
+    effect_ = other.effect_;
+}
 
 /**
  * @brief Validates if the airlift order is valid
@@ -275,11 +343,16 @@ bool AirliftOrder::validate() const {
  * @brief Executes the airlift order if valid
  */
 void AirliftOrder::execute() {
-    if (!validate()) { effect_ = "Invalid airlift"; return; }
+    if (!validate()) { 
+        effect_ = "Invalid airlift"; 
+        notify();  // Notify observers of execution
+        return; 
+    }
     std::ostringstream ss;
     ss << "Airlift " << amount_ << " from " << source_->getName()
        << " to " << target_->getName();
     effect_ = ss.str();
+    notify();  // Notify observers of execution
 }
 
 /**
@@ -311,7 +384,14 @@ NegotiateOrder::NegotiateOrder() : Order("Negotiate") {}
 NegotiateOrder::NegotiateOrder(Player* issuer, Player* other)
     : Order("Negotiate"), issuer_(issuer), other_(other) {}
 
-NegotiateOrder::NegotiateOrder(const NegotiateOrder&) = default;
+/**
+ * @brief Copy constructor for Negotiate order
+ * @param other NegotiateOrder to copy from
+ */
+NegotiateOrder::NegotiateOrder(const NegotiateOrder& other)
+    : Order("Negotiate"), issuer_(other.issuer_), other_(other.other_) {
+    effect_ = other.effect_;
+}
 
 /**
  * @brief Validates if the negotiate order is valid
@@ -326,11 +406,16 @@ bool NegotiateOrder::validate() const {
  * @brief Executes the negotiate order if valid
  */
 void NegotiateOrder::execute() {
-    if (!validate()) { effect_ = "Invalid negotiate"; return; }
+    if (!validate()) { 
+        effect_ = "Invalid negotiate"; 
+        notify();  // Notify observers of execution
+        return; 
+    }
     std::ostringstream ss;
     ss << "Negotiate truce between " << issuer_->getPlayerName()
        << " and " << other_->getPlayerName();
     effect_ = ss.str();
+    notify();  // Notify observers of execution
 }
 
 /**
@@ -413,6 +498,7 @@ OrdersList& OrdersList::operator=(OrdersList&& other) noexcept {
 void OrdersList::add(Order* order) {
     if (!order) return;
     orders.push_back(order);
+    notify();  // Notify observers that an order was added
 }
 
 /**
@@ -463,4 +549,21 @@ std::ostream& operator<<(std::ostream& os, const OrdersList& ordersList) {
         os << "  " << index << ") " << *ordersList.orders[index] << "\n";
     }
     return os;
+}
+
+/**
+ * @brief Generates a log string for the orders list
+ * @return std::string String representation for logging
+ */
+std::string OrdersList::stringToLog() const {
+    std::ostringstream oss;
+    oss << "OrdersList contains " << orders.size() << " order(s)";
+    if (!orders.empty()) {
+        oss << ": ";
+        for (std::size_t i = 0; i < orders.size(); ++i) {
+            if (i > 0) oss << ", ";
+            oss << orders[i]->name();
+        }
+    }
+    return oss.str();
 }

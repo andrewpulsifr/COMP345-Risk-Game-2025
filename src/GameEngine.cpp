@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <sstream>
 #include <random>
+#include <fstream>
 
 // Importing only the neccessary std functions.
 using std::cout;
@@ -100,6 +101,12 @@ string Command::getEffect() const { return *effect; }
 /** @brief Save the effect of the command. */
 void Command::saveEffect(const string& newEffect) {
     *effect = newEffect;
+    notify();  // Notify observers when effect is saved
+}
+
+/** @brief Generate log string for Command */
+string Command::stringToLog() const {
+    return "Command: " + *name + " | Effect: " + *effect;
 }
 
 // ======================= GameEngine Class =======================
@@ -222,32 +229,44 @@ ostream& operator<<(ostream& os, const GameEngine& engine) {
 }
 
 /** 
+ * @brief Generates a log string for the game engine
+ * @return std::string String representation for logging
+ */
+string GameEngine::stringToLog() const {
+    return "GameEngine: Current State = " + getStateName();
+}
+
+/** 
  * @brief Initialize the state transition table with valid transitions
  * 
- * @details Sets up all valid state transitions based on the assignment's state diagram:
- * - Commands like "loadmap", "validatemap", "addplayer", etc.
- * - Ensures only valid transitions are allowed for each state
+ * @details Sets up all valid state transitions based on the assignment's state diagram.
+ * All commands are defined in the GameCommands namespace (LOAD_MAP, VALIDATE_MAP, ADD_PLAYER, 
+ * GAME_START, ASSIGN_COUNTRIES, ISSUE_ORDER, etc.) to ensure consistency and prevent typos.
+ * Only transitions defined in this table are allowed for each state.
  */
 void GameEngine::initializeTransitions() {
+    using namespace GameCommands;
+    
     stateTransitions = new TransitionMap{
-        {{GameState::Start,            "loadmap"},       GameState::MapLoaded},
-        {{GameState::MapLoaded,        "loadmap"},       GameState::MapLoaded},
-        {{GameState::MapLoaded,        "validatemap"},   GameState::MapValidated},
-        {{GameState::MapValidated,     "addplayer"},     GameState::PlayersAdded},
-        {{GameState::PlayersAdded,     "addplayer"},     GameState::PlayersAdded},
-        {{GameState::PlayersAdded,     "assigncountries"}, GameState::AssignReinforcement},
-        {{GameState::PlayersAdded,     "gamestart"}, GameState::Gamestart},
-        {{GameState::Gamestart,     "assigncountries"}, GameState::AssignReinforcement},
-        {{GameState::AssignReinforcement,"issueorder"},  GameState::IssueOrders},
-        {{GameState::IssueOrders,      "issueorder"},    GameState::IssueOrders},
-        {{GameState::IssueOrders,      "endissueorders"},GameState::ExecuteOrders},
-        {{GameState::ExecuteOrders,    "execorder"},     GameState::ExecuteOrders},
-        {{GameState::ExecuteOrders,    "endexecorders"}, GameState::AssignReinforcement},
-        {{GameState::ExecuteOrders,    "win"},           GameState::Win},
-        {{GameState::Win,              "play"},          GameState::Start},
-        {{GameState::Win,              "end"},           GameState::End},
-        {{GameState::Win,     "replay"}, GameState::Replay},
-        {{GameState::Replay,     "start"}, GameState::Start},
+        // Startup phase transitions
+        {{GameState::Start,                string{LOAD_MAP}},           GameState::MapLoaded},
+        {{GameState::MapLoaded,            string{LOAD_MAP}},           GameState::MapLoaded},
+        {{GameState::MapLoaded,            string{VALIDATE_MAP}},       GameState::MapValidated},
+        {{GameState::MapValidated,         string{ADD_PLAYER}},         GameState::PlayersAdded},
+        {{GameState::PlayersAdded,         string{ADD_PLAYER}},         GameState::PlayersAdded},
+        {{GameState::PlayersAdded,         string{GAME_START}},         GameState::AssignReinforcement},
+        
+        // Main game loop transitions
+        {{GameState::AssignReinforcement,  string{ISSUE_ORDER}},        GameState::IssueOrders},
+        {{GameState::IssueOrders,          string{ISSUE_ORDER}},        GameState::IssueOrders},
+        {{GameState::IssueOrders,          string{END_ISSUE_ORDERS}},   GameState::ExecuteOrders},
+        {{GameState::ExecuteOrders,        string{EXEC_ORDER}},         GameState::ExecuteOrders},
+        {{GameState::ExecuteOrders,        string{END_EXEC_ORDERS}},    GameState::AssignReinforcement},
+        {{GameState::ExecuteOrders,        string{WIN}},                GameState::Win},
+        
+        // End game transitions
+        {{GameState::Win,                  string{REPLAY}},             GameState::Start},
+        {{GameState::Win,                  string{QUIT}},               GameState::End},
     };
 }
 
@@ -267,18 +286,25 @@ bool GameEngine::processCommand(const string& commandStr) {
  * @return true if command was valid and state transition occurred, false otherwise
  */
 bool GameEngine::processCommand(Command& cmd) {
-    string commandStr = cmd.getName();
-    
-    //Extract only the command, if a mapname or playername is entered.
-    std::string commandEntered = commandStr.substr(0, commandStr.find(" "));
+    const string& commandStr = cmd.getName();
 
-    if (!isValidCommand(commandEntered)) {
-        string errorMessage = printErrorMessage(commandStr);
-        cmd.saveEffect(errorMessage);
+    // Validate command spelling first (check if command exists)
+    if (!validCommandSpelling(commandStr)) {
+        cmd.saveEffect(printTypoErrorMessage(commandStr));
         return false;
     }
     
-    GameStateCmdPair key = make_pair(*currentState, commandEntered);
+    // Validate command is appropriate for current state
+    if (!isValidCommand(commandStr)) {
+        cmd.saveEffect(printStateErrorMessage(commandStr));
+        return false;
+    }
+    
+    // Extract command portion for transition lookup (before any space/arguments)
+    std::string commandOnly = commandStr.substr(0, commandStr.find(" "));
+    
+    // Command is valid - perform state transition
+    GameStateCmdPair key = make_pair(*currentState, commandOnly);
     GameState newState = (*stateTransitions)[key];
     
     cout << "Transitioning from " << getStateName(*currentState) 
@@ -336,8 +362,33 @@ Deck* GameEngine::getDeck() {
  * @return true if command is valid for current state, false otherwise
  */
 bool GameEngine::isValidCommand(const string& commandStr) const {
-    GameStateCmdPair key = make_pair(*currentState, commandStr);
+    // Extract only the command portion (before any space/arguments)
+    std::string commandOnly = commandStr.substr(0, commandStr.find(" "));
+    
+    GameStateCmdPair key = make_pair(*currentState, commandOnly);
     return stateTransitions->find(key) != stateTransitions->end();
+}
+
+/**
+ * @brief Check if command spelling is valid (not a typo)
+ * @param commandEntered The command string to validate
+ * @return true if command spelling is valid, false otherwise
+ */
+bool GameEngine::validCommandSpelling(const string& commandEntered) const {
+    using namespace GameCommands;
+    
+    // Extract only the command portion (before any space/arguments)
+    std::string commandOnly = commandEntered.substr(0, commandEntered.find(" "));
+    
+    if(commandOnly == LOAD_MAP || commandOnly == VALIDATE_MAP || commandOnly == ADD_PLAYER ||
+        commandOnly == ASSIGN_COUNTRIES || commandOnly == ISSUE_ORDER || commandOnly == END_ISSUE_ORDERS ||
+        commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS || commandOnly == WIN ||
+        commandOnly == PLAY || commandOnly == END || commandOnly == GAME_START || 
+        commandOnly == REPLAY || commandOnly == START || commandOnly == QUIT) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /**
@@ -353,6 +404,7 @@ vector<string> GameEngine::getValidCommands() const {
     }
     return validCmds;
 }
+
 
 /**
  * @brief Start a new game by setting state to Start
@@ -399,13 +451,53 @@ void GameEngine::printValidCommands() const {
 }
 
 /**
- * @brief Print error message for invalid command
+ * @brief Print error message for invalid command for current state
  * @param invalidCommand The command that was invalid
  */
-std::string GameEngine::printErrorMessage(const string& invalidCommand) const {
+std::string GameEngine::printStateErrorMessage(const string& invalidCommand) const {
     std::string errorMessage = std::string("ERROR: Invalid command '") + invalidCommand + "' for current state " + getStateName() + ".";
     cout << errorMessage << endl;
+    
+    // Show valid commands for current state
+    vector<string> validCmds = getValidCommands();
+    if (!validCmds.empty()) {
+        cout << "Valid commands in " << getStateName() << " state: ";
+        for (size_t i = 0; i < validCmds.size(); ++i) {
+            cout << validCmds[i];
+            if (i < validCmds.size() - 1) cout << ", ";
+        }
+        cout << endl;
+    }
 
+    return errorMessage;
+}
+
+/**
+ * @brief Print error message for non-existent command (typo)
+ * @param invalidCommand The command that doesn't exist
+ * @return The error message string
+ */
+std::string GameEngine::printTypoErrorMessage(const string& invalidCommand) const {
+    using namespace GameCommands;
+    
+    std::string errorMessage = std::string("ERROR: Unknown command '") + invalidCommand + "'. This command does not exist.";
+    cout << errorMessage << endl;
+    cout << "\nAll valid game commands:" << endl;
+    cout << "Startup Phase:" << endl;
+    cout << "  " << LOAD_MAP << " <mapfile>     - Load a map from assets/maps/" << endl;
+    cout << "  " << VALIDATE_MAP << "            - Validate the loaded map" << endl;
+    cout << "  " << ADD_PLAYER << " <playername>  - Add a player" << endl;
+    cout << "  " << GAME_START << "              - Start the game" << endl;
+    cout << "\nPlay Phase:" << endl;
+    cout << "  " << ISSUE_ORDER << "             - Issue an order" << endl;
+    cout << "  " << END_ISSUE_ORDERS << "        - End issuing orders" << endl;
+    cout << "  " << EXEC_ORDER << "              - Execute an order" << endl;
+    cout << "  " << END_EXEC_ORDERS << "         - End executing orders" << endl;
+    cout << "\nEnd Game:" << endl;
+    cout << "  " << WIN << "                    - Declare winner" << endl;
+    cout << "  " << REPLAY << "                  - Replay the game (from win state)" << endl;
+    cout << "  " << QUIT << "                    - Quit the game" << endl;
+    
     return errorMessage;
 }
 
@@ -413,9 +505,10 @@ std::string GameEngine::printErrorMessage(const string& invalidCommand) const {
  * @brief Display welcome message with instructions for using the game engine
  */
 void GameEngine::displayWelcomeMessage() const {
+    using namespace GameCommands;
+    
     cout << "\n=== Welcome to Warzone Game Engine ===" << endl;
     cout << "Type commands to navigate through game states." << endl;
-    cout << "Type 'help' to see valid commands for current state." << endl;
     cout << "Type 'quit' to exit the game." << endl;
     cout << "=======================================" << endl;
 }
@@ -425,6 +518,20 @@ void GameEngine::displayWelcomeMessage() const {
  */
 void GameEngine::displayGameStatus() const {
     cout << "\n--- Game Status ---" << endl;
+    
+    // Show game phase context
+    GameState state = *currentState;
+    if (state == GameState::Start || state == GameState::MapLoaded || 
+        state == GameState::MapValidated || state == GameState::PlayersAdded || 
+        state == GameState::Gamestart) {
+        cout << "Phase: Startup" << endl;
+    } else if (state == GameState::AssignReinforcement || state == GameState::IssueOrders || 
+               state == GameState::ExecuteOrders) {
+        cout << "Phase: Main Game Loop" << endl;
+    } else if (state == GameState::Win || state == GameState::Replay || state == GameState::End) {
+        cout << "Phase: End Game" << endl;
+    }
+    
     printCurrentState();
     printValidCommands();
     cout << "Players in game: " << players->size() << endl;
@@ -442,11 +549,12 @@ void GameEngine::startupPhase(GameEngine& engine, CommandProcessor& commandPro) 
 
 
 /**
- * @brief Set the current state (private helper)
+ * @brief Transition to a new state
  * @param newState The new state to transition to
  */
-void GameEngine::setState(GameState newState) {
+void GameEngine::transition(GameState newState) {
     *currentState = newState;
+    notify();
 }
 
 /**
@@ -471,28 +579,30 @@ bool GameEngine::isValidTransition(GameState from, const string& command, GameSt
  * @param command Command that triggered the transition
  */
 void GameEngine::executeStateTransition(GameState newState, const string& command) {
-    setState(newState);
+    using namespace GameCommands;
+    
+    transition(newState);
     
     //Extract only the command, if a mapname or playername is entered.
     std::string commandOnly = command.substr(0, command.find(" "));
 
     // Execute state-specific actions based on command
-    if (commandOnly == "loadmap") {
+    if (commandOnly == LOAD_MAP) {
         handleLoadMap(command);
-    } else if (commandOnly == "validatemap") {
+    } else if (commandOnly == VALIDATE_MAP) {
         handleValidateMap();
-    } else if (commandOnly == "addplayer") {
+    } else if (commandOnly == ADD_PLAYER) {
         handleAddPlayer(command);
-    } else if (commandOnly == "assigncountries") {
+    } else if (commandOnly == ASSIGN_COUNTRIES) {
         handleAssignCountries(command);
-    } else if (commandOnly == "issueorder") {
+    } else if (commandOnly == ISSUE_ORDER) {
         handleIssueOrder(command);
-    } else if (commandOnly == "gamestart") {
-        handleGamestart(command);
+    } else if (commandOnly == GAME_START) {
+        handleGamestart();
         printGamestartLog();
-    } else if (commandOnly == "endissueorders" || commandOnly == "execorder" || commandOnly == "endexecorders") {
+    } else if (commandOnly == END_ISSUE_ORDERS || commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS) {
         handleExecuteOrders(command);
-    } else if (commandOnly == "win" || commandOnly == "play" || commandOnly == "end") {
+    } else if (commandOnly == WIN || commandOnly == PLAY || commandOnly == END) {
         handleEndGame(command);
     }
 }
@@ -500,20 +610,92 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
 // State-specific action handlers --> stub implementations for now
 
 /**
+ * @brief Extract and validate the map filename from a loadmap command
+ * @param command The full command string (e.g., "loadmap World.map")
+ * @param mapName Output parameter - the extracted and trimmed map filename
+ * @return true if a valid filename was extracted, false otherwise
+ */
+bool GameEngine::extractMapFilename(const std::string& command, std::string& mapName) const {
+    // Extract the filename from command (after the space)
+    std::size_t nameIndex = command.find(' ');
+    
+    // Check if a map filename was provided
+    if (nameIndex == std::string::npos || nameIndex + 1 >= command.length()) {
+        std::cerr << "    ERROR: No map filename provided." << std::endl;
+        std::cerr << "    Usage: loadmap <filename>" << std::endl;
+        std::cerr << "    Example: loadmap World.map" << std::endl;
+        std::cerr << "    Available maps are in assets/maps/ directory" << std::endl;
+        return false;
+    }
+    
+    mapName = command.substr(nameIndex + 1);
+    
+    // Trim any leading/trailing whitespace from map name
+    size_t start = mapName.find_first_not_of(" \t\r\n");
+    size_t end = mapName.find_last_not_of(" \t\r\n");
+    
+    if (start == std::string::npos) {
+        std::cerr << "    ERROR: Map filename is empty or contains only whitespace." << std::endl;
+        std::cerr << "    Usage: loadmap <filename>" << std::endl;
+        return false;
+    }
+    
+    mapName = mapName.substr(start, end - start + 1);
+    return true;
+}
+
+/**
+ * @brief Validate that a map file exists at the specified path
+ * @param mapPath The full path to the map file
+ * @return true if the file exists and is accessible, false otherwise
+ */
+bool GameEngine::validateMapFileExists(const std::string& mapPath) const {
+    std::ifstream fileCheck(mapPath);
+    bool exists = fileCheck.good();
+    fileCheck.close();
+    
+    if (!exists) {
+        std::cerr << "    ERROR: Map file not found: " << mapPath << std::endl;
+        std::cerr << "    Please check that:" << std::endl;
+        std::cerr << "      1. The filename is correct (including .map extension)" << std::endl;
+        std::cerr << "      2. The file exists in assets/maps/ directory" << std::endl;
+        std::cerr << "    Hint: Check available maps in assets/maps/" << std::endl;
+    }
+    
+    return exists;
+}
+
+/**
  * @brief Handle map loading command
- * @param command The command that triggered this action
+ * @param command The command that triggered this action (e.g., "loadmap World.map")
  */
 void GameEngine::handleLoadMap(const string& command) {
     cout << "  -> Loading map..." << endl;
 
-    // Extract the mapname from command.
-    std::size_t nameIndex = command.find(' ');
-    std::string mapName = command.substr(nameIndex + 1);
+    // Extract and validate the map filename
+    std::string mapName;
+    if (!extractMapFilename(command, mapName)) {
+        return;
+    }
     
-    // Load map
-    mapLoader->loadMap(mapName, *gameMap);
-    std::cout << "    The Map '" << mapName << "' is loaded." << std::endl;
+    // Prepend the maps directory path (following the pattern from MapDriver)
+    std::string mapPath = "assets/maps/" + mapName;
+    
+    // Validate that the file exists
+    if (!validateMapFileExists(mapPath)) {
+        return;
+    }
+    
+    // Load map using the full path
+    try {
+        mapLoader->loadMap(mapPath, *gameMap);
+        std::cout << "    SUCCESS: Map '" << mapName << "' loaded from " << mapPath << "." << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "    ERROR: Failed to load map '" << mapName << "': " << e.what() << std::endl;
+        std::cerr << "    The map file may be corrupted or have invalid format." << std::endl;
+    }
 }
+
 
 /**
  * @brief Handle map validation command
@@ -585,7 +767,7 @@ void GameEngine::handleEndGame(const string& command) {
 }
 
 // Handle the 'gamestart command.'
-void GameEngine::handleGamestart(const string& command) {
+void GameEngine::handleGamestart() {
     
     cout << "  -> Handling Gamestart...\n" << endl;
     // (a) Fairly distribute all the territories to the player.
@@ -640,7 +822,7 @@ void GameEngine::handleGamestart(const string& command) {
 
 
     // (e) Switch game to play phase (the assignreinforcement state).
-        setState(GameState::AssignReinforcement);
+        transition(GameState::AssignReinforcement);
         std::cout << "  ...The state is switched to play.\n\n";
 
     
@@ -656,7 +838,6 @@ void GameEngine::printGamestartLog() const {
     // (a) Fairly distribute all the territories to the player.
         std::cout << "=== (a) Distributing territories: ===" << std::endl;
 
-        size_t numOfTerritories = gameMap->getTerritories().size();
         size_t numOfPlayers = players->size();
 
         // See the territories that each player own.

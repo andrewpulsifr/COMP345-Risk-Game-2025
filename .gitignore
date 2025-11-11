@@ -54,5 +54,10 @@ CMakeFiles/
 warzone_test.dSYM/
 warzone_test
 
+# Log files 
+gamelog.txt
+
+
 # cmd things
 build/
+test_commands.txt

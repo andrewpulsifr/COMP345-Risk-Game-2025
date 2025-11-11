@@ -49,35 +49,19 @@ CommandProcessor::~CommandProcessor() {
 }
 
 // validate() if command entered is a valid command.
-bool CommandProcessor::validate(GameEngine& engine, Command* cmdptr) {
-    std::string commandName = cmdptr->getName();
+bool CommandProcessor::validate(GameEngine& engine, Command& cmdptr) {
+    std::string commandName = cmdptr.getName();
 
     //Extract only the command, if a mapname or playername is entered.
     std::string commandOnly = commandName.substr(0, commandName.find(" "));
     
     // If command not valid in current state, save the error. Else, save it as valid.
     if(!engine.isValidCommand(commandOnly)) {
-        cmdptr->saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
-        std::cout << "ERROR: Invalid command '" << commandOnly << "' for current state " << engine.getStateName() + "." << std::endl;
+        cmdptr.saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
         return false;
     } else {
-        cmdptr->saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
-        std::cout << "The command '" << commandOnly << "' is valid for the current state " << engine.getStateName() << "." << std::endl;
+        cmdptr.saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
         return true;
-    }
-
-    std::cout << "**** Passed through validate()" << std::endl;
-}
-
-// check to see if there are any typos in the commandEntered. If yes, command will not be saved.
-bool CommandProcessor::validCommandSpelling(std::string& commandEntered) {
-
-    if(commandEntered == "loadmap" || commandEntered == "validatemap" || commandEntered == "addplayer" ||
-        commandEntered == "gamestart" || commandEntered == "replay" || commandEntered == "quit") {
-        return true;
-    } else {
-        std::cout << "The command you entered, '" << commandEntered << "' is an invalid command." << std::endl;
-        return false;
     }
 }
 
@@ -144,12 +128,26 @@ Command* CommandProcessor::saveCommand(std::string& commandRead) {
     Command* newCommandObj = new Command(commandRead);
     
     this->commandObjects.push_back(newCommandObj);
+    
+    notify();  // Notify observers when command is saved
 
     return newCommandObj;
 }
 
+/** @brief Generate log string for CommandProcessor */
+std::string CommandProcessor::stringToLog() const {
+    if (commandObjects.empty()) {
+        return "CommandProcessor: No commands saved";
+    }
+    
+    // Log the most recently saved command
+    Command* lastCommand = commandObjects.back();
+    return "CommandProcessor: Saved command - " + lastCommand->getName();
+}
+
 // getCommand() for GameEngine or Player objects to read from command line.
 void CommandProcessor::getCommand(GameEngine& engine) {
+    using namespace GameCommands;
     std::string lineEntered;
 
     // Adapted from the GameEngineDriver.cpp.
@@ -166,9 +164,9 @@ void CommandProcessor::getCommand(GameEngine& engine) {
             continue;
         }
 
-        // Handle quit/exit commands to terminate.
-        if (commandEntered == "quit" || commandEntered == "exit") {
-            std::cout << "\nExiting Game..." << std::endl;
+        // Handle quit/exit commands to terminate the test
+        if (commandEntered == QUIT || commandEntered == "exit") {
+            std::cout << "Exiting game engine test." << std::endl;
             break;
         }
         
@@ -178,19 +176,15 @@ void CommandProcessor::getCommand(GameEngine& engine) {
         } else if (commandEntered == "status") {
             engine.displayGameStatus();
         }
-        
-        bool isValidCommandSpelling = validCommandSpelling(commandEntered);
 
-        if(isValidCommandSpelling) {
-            // Save the full lineEntered(command + mapname/playername if present) and get its pointer.
-            Command* cmdptr = saveCommand(lineEntered);
+        // Save the full lineEntered(command + mapname/playername if present) and get its pointer.
+        Command* cmdptr = saveCommand(lineEntered);
 
-            bool validCommand = validate(engine, cmdptr);
+        bool validCommand = validate(engine, *cmdptr);
 
-            // If Command is valid, process the command to trigger state transition.
-            if(validCommand) {
-                engine.processCommand(*cmdptr);
-            }
+        // If Command is valid, process the command to trigger state transition.
+        if(validCommand) {
+            engine.processCommand(*cmdptr);
         }
 
         // Display current state after command processing
@@ -203,12 +197,6 @@ void CommandProcessor::getCommand(GameEngine& engine) {
 
     }
 }
-
-// Get pointer to the first element of the vector of Command Objects.
-Command* CommandProcessor::getCommandObjects() {
-    return commandObjects.at(0);
-}
-
 
 
 // ===== FileCommandProcessorAdapter class =====
@@ -271,18 +259,14 @@ void FileCommandProcessorAdapter::getCommand(GameEngine& engine) {
             break;
         }
 
-        bool isValidCommandSpelling = validCommandSpelling(commandEntered);
+        // Save the full lineReadFromFile (command + mapname/playername if present) and get its pointer.
+        Command* cmdptr = saveCommand(lineReadFromFile);
 
-        if(isValidCommandSpelling) {
-            // Save the full lineReadFromFile (command + mapname/playername if present) and get its pointer.
-            Command* cmdptr = saveCommand(lineReadFromFile);
+        bool validCommand = validate(engine, *cmdptr);
 
-            bool validCommand = validate(engine, cmdptr);
-
-            // If Command is valid, process the command to trigger state transition.
-            if(validCommand) {
-                engine.processCommand(*cmdptr);
-            }
+        // If Command is valid, process the command to trigger state transition.
+        if(validCommand) {
+            engine.processCommand(*cmdptr);
         }
 
         // Display current state after command processing
