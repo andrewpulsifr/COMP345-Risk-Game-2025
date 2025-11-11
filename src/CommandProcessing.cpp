@@ -1,3 +1,15 @@
+/**
+ * @file CommandProcessing.cpp
+ * @brief Implementation of Assignment 2 - Part 1: Command Processor and Command Adapter.
+ * @author Chhay (A2, P1)
+ * @date November 2025
+ * @version 1.0
+ * 
+ * This file contains the implementation of the command processor and command adapter that processes
+ * the command that is entered either through -console or read through -file. It works with the GameEngine to
+ * process the states of the game. The command adapter follows the Adapter Pattern.
+ */
+ 
 #include "../include/GameEngine.h"
 #include "../include/CommandProcessing.h"
 
@@ -46,11 +58,15 @@ bool CommandProcessor::validate(GameEngine& engine, Command* cmdptr) {
     // If command not valid in current state, save the error. Else, save it as valid.
     if(!engine.isValidCommand(commandOnly)) {
         cmdptr->saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
+        std::cout << "ERROR: Invalid command '" << commandOnly << "' for current state " << engine.getStateName() + "." << std::endl;
         return false;
     } else {
         cmdptr->saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
+        std::cout << "The command '" << commandOnly << "' is valid for the current state " << engine.getStateName() << "." << std::endl;
         return true;
     }
+
+    std::cout << "**** Passed through validate()" << std::endl;
 }
 
 // check to see if there are any typos in the commandEntered. If yes, command will not be saved.
@@ -150,9 +166,9 @@ void CommandProcessor::getCommand(GameEngine& engine) {
             continue;
         }
 
-        // Handle quit/exit commands to terminate the test
+        // Handle quit/exit commands to terminate.
         if (commandEntered == "quit" || commandEntered == "exit") {
-            std::cout << "Exiting game engine test." << std::endl;
+            std::cout << "\nExiting Game..." << std::endl;
             break;
         }
         
