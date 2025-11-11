@@ -132,11 +132,13 @@ void testOrderExecution() {
 
     //deploy
     DeployOrder deploy(&alice, t1, 5);
+    deploy.validate();
     deploy.execute();
     std::cout << "Deploy: " << deploy.effect() << ", t1 armies: " << t1->getArmies() << "\n";
 
     //advance
     AdvanceOrder advance(&alice, t1, t2, 3);
+    advance.validate();
     advance.execute();
     std::cout << "Advance: " << advance.effect() 
         << ", t1 armies: " << t1->getArmies()
@@ -147,12 +149,14 @@ void testOrderExecution() {
 
     //bomb
     BombOrder bomb(&alice, t2);
+    bomb.validate();
     bomb.execute();
     std::cout << "Bomb: " << bomb.effect() 
         << ", t2 armies: " << t2->getArmies() << "\n";
     
     //blockade
     BlockadeOrder blockade(&alice, t3);
+    blockade.validate();
     blockade.execute();
     std::cout << "Blockade: " << blockade.effect() 
         << ", t3 armies: " << t3->getArmies()
@@ -160,6 +164,7 @@ void testOrderExecution() {
 
     //airlift
     AirliftOrder airlift(&alice, t1, t3, 2);
+    airlift.validate();
     airlift.execute();
     std::cout << "Airlift: " << airlift.effect() 
         << ", t1 armies: " << t1->getArmies()
@@ -167,6 +172,7 @@ void testOrderExecution() {
 
     //negotiate
     NegotiateOrder negotiate(&alice, &bob);
+    negotiate.validate();
     negotiate.execute();
     std::cout << "Negotiate: " << negotiate.effect() << "\n";
 

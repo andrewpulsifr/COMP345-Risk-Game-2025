@@ -41,6 +41,11 @@ public:
     void clearNegotiatedPlayers();
     bool isNegotiatedWith(Player* p) const;
 
+	int getReinforcementPool() const;
+    void setReinforcementPool(int val);
+    void subtractFromReinforcementPool(int amt);
+
+
 	std::vector<Territory*> toDefend(); //Returns a vector containing every attackable territory of player's
 	std::vector<Territory*> toAttack(); //Returns a vector containing every territory player can attack
 
@@ -53,6 +58,8 @@ private:
 	std::vector<Territory*> ownedTerritories; //List of Territories currently owned by Player
 	std::set<Player*> negotiatedPlayers; // Players this player has negotiated with
 	OrdersList* orders_; //List of orders issued by Player
+	int reinforcementPool; //Number of armies in the reinforcement pool
+
 
 friend std::ostream& operator<<(std::ostream& os, const Player& player);
 };

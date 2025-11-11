@@ -88,10 +88,11 @@ DeployOrder::DeployOrder(const DeployOrder& other)
  * @brief Validates if the deploy order is valid
  * @return bool True if target is owned by issuer and amount > 0
  */
-bool DeployOrder::validate() const {//done
+bool DeployOrder::validate() const {
     if (!issuer_ || !target_ || amount_ <= 0) return false;
-    if(target_->getOwner() != issuer_) return false;
-    return target_->getOwner() == issuer_;
+    if (target_->getOwner() != issuer_) return false;
+    if (issuer_->getReinforcementPool() < amount_) return false;
+    return true;
 }
 
 /**
@@ -101,9 +102,12 @@ void DeployOrder::execute() {
     // Validate first
     if (!validate()) {
         effect_ = "Invalid deploy";
-        notify();              // keep observer notification on failure
+        notify();              
         return;
     }
+
+    // Subtract from the player's reinforcement pool
+    issuer_->subtractFromReinforcementPool(amount_);
 
     // Apply side effect
     target_->addArmies(amount_);
@@ -114,7 +118,7 @@ void DeployOrder::execute() {
        << ". New total: " << target_->getArmies();
     effect_ = ss.str();
 
-    notify();                  // and notify on success too
+    notify();                  
 }
 
 /**
@@ -166,6 +170,7 @@ bool AdvanceOrder::validate() const {
         if (issuer_->isNegotiatedWith(target_->getOwner())) return false;
     }
     if (!source_->isAdjacentTo(target_)) return false;
+    if (source_->getArmies() < amount_) return false;
     return true;
 }
 

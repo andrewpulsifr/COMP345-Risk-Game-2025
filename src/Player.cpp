@@ -15,7 +15,9 @@ Player::Player()
       playerHand(new Hand()),
       ownedTerritories(),
       orders_(new OrdersList()), 
-      cardAwardedThisTurn(false)
+      cardAwardedThisTurn(false),
+      negotiatedPlayers(),
+      reinforcementPool(0)
       {}
 
 
@@ -25,7 +27,9 @@ Player::Player(const Player& copyPlayer)
       playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
       orders_(new OrdersList(*copyPlayer.orders_)),
-      cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn)
+      cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn),
+      negotiatedPlayers(copyPlayer.negotiatedPlayers),
+      reinforcementPool(copyPlayer.reinforcementPool)
 {}
 
 
@@ -35,7 +39,9 @@ Player::Player(std::string name)
       playerHand(new Hand()),
       ownedTerritories(),
       orders_(new OrdersList()),
-      cardAwardedThisTurn(false)
+      cardAwardedThisTurn(false),
+      negotiatedPlayers(),
+      reinforcementPool(0)
 {}
 
 
@@ -55,7 +61,9 @@ Player& Player::operator=(const Player& copyPlayer) {
         ownedTerritories = copyPlayer.ownedTerritories;
         // deep copy into existing list
         *orders_ = *copyPlayer.orders_;
-    }
+        cardAwardedThisTurn = copyPlayer.cardAwardedThisTurn;
+        negotiatedPlayers = copyPlayer.negotiatedPlayers;  
+        reinforcementPool = copyPlayer.reinforcementPool;  }
     return *this;
 }
 
@@ -122,6 +130,12 @@ void Player::clearNegotiatedPlayers() {
 bool Player::isNegotiatedWith(Player* p) const {
     return negotiatedPlayers.find(p) != negotiatedPlayers.end();
 }
+
+int Player::getReinforcementPool() const { return reinforcementPool; }
+
+void Player::setReinforcementPool(int val) { reinforcementPool = val; }
+
+void Player::subtractFromReinforcementPool(int amt) { reinforcementPool -= amt; }
 
 //Attack / Defend Lists
 
