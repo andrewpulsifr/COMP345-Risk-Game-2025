@@ -29,7 +29,7 @@ void testOrdersLists();
 void testCards();
 void testGameStates();
 void testCommandProcessor(int argc, char* argv[]);
-void testStartupPhase();
+void testStartupPhase(int argc, char* argv[]);
 void testLoggingObserver();
 
 /**
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     testCards(); // Test deck, hand, drawing, and card playing with Order generation
     testGameStates(); // Test state transitions, command processing, and game flow
     testCommandProcessor(argc, argv);
-    testStartupPhase();
+    testStartupPhase(argc, argv);
     testLoggingObserver(); // Test Part 5: Observer pattern for logging
 
     std::cout << "\n";

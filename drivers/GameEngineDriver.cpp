@@ -1,18 +1,20 @@
 /**
  * @file GameEngineDriver.cpp
- * @brief Test driver for the GameEngine state machine functionality
+ * @brief Test driver for the GameEngine state machine functionality and for the Game Startup Phase.
  * @details This driver tests the GameEngine class to demonstrate:
  *          - Game state transitions and command processing
  *          - Interactive console interface for state navigation
  *          - Command validation and error handling
  *          - State machine pattern implementation
  *          - User input processing and game flow control
- * @author Andrew Pulsifer and Matteo 
- * @date October 2025
- * @version 1.0
+ * @author Andrew Pulsifer and Matteo  (A1, P5), Chhay (A2, P2)
+ * @date November 2025
+ * @version 2.0
  */
 
 #include "../include/GameEngine.h"
+#include "../include/CommandProcessing.h"
+#include "../include/Cards.h"
 #include <iostream>
 #include <string>
 
@@ -84,35 +86,51 @@ void testGameStates() {
 
 
 // === A2, PART 2: Game Startup Phase ===
-void testStartupPhase() {
-    // cout << "\n=== Testing Startup Phase ===" << endl;
+void testStartupPhase(int argc, char* argv[]) {
+    cout << "\n=== Testing Startup Phase ===\n" << endl;
+    cout << "Start the Game.." << endl;
     
-    // GameEngine engine;
-    // CommandProcessor *commandPro = nullptr;
+    GameEngine engine;
+    CommandProcessor *commandPro;
 
-    // if(argc == 2 && std::string(argv[1]) == "-console") {
-    //     std::cout << "\nMode Selected: Console..." << std::endl;
-    //     commandPro = new CommandProcessor();
-    //     commandPro->getCommand(engine);
+    // Add cards to the deck so that cards can be drawn when 'gamestart' command is used.
+    engine.getDeck()->addCard(new Card(Card::Reinforcement));
+    engine.getDeck()->addCard(new Card(Card::Reinforcement));
+    engine.getDeck()->addCard(new Card(Card::Bomb));
+    engine.getDeck()->addCard(new Card(Card::Bomb));
+    engine.getDeck()->addCard(new Card(Card::Blockade));
+    engine.getDeck()->addCard(new Card(Card::Blockade));
+    engine.getDeck()->addCard(new Card(Card::Diplomacy));
+    engine.getDeck()->addCard(new Card(Card::Diplomacy));
+    engine.getDeck()->addCard(new Card(Card::Airlift));
+    engine.getDeck()->addCard(new Card(Card::Airlift));
 
-    //     commandPro->printCommandObjects();
-    // } else if (argc == 3 && std::string(argv[1]) == "-file") {
-    //     std::string fileName = argv[2];
-    //     std::cout << "\nMode Selected: File...." << std::endl;
 
-    //     commandPro = new FileCommandProcessorAdapter(fileName);
-    //     commandPro->getCommand(engine);
 
-    //     commandPro->printCommandObjects();
-    // } else {
-    //     std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
-    //                 "   1. Console Mode:    <./executable-file-name> -console\n"
-    //                 "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
-    //                 "   Example: ./command -file input.txt" << std::endl;
-    // }
+    // Implement the CommandProcessor or its Adapter, depending on whether the user chooses to use the console or read from a file.
+    if(argc == 2 && std::string(argv[1]) == "-console") {
+        std::cout << "\nMode Selected: Console..." << std::endl;
+        commandPro = new CommandProcessor();
 
-    // // Delete and free up memory.
-    // delete commandPro;
-    // commandPro = nullptr;
+        // After initializing the commandProcessor, the startupPhase() method will handle the commands entered/read.
+        engine.startupPhase(engine, *commandPro);
+    
+    } else if (argc == 3 && std::string(argv[1]) == "-file") {
+        std::string fileName = argv[2];
+        std::cout << "\nMode Selected: File...." << std::endl;
+        
+        commandPro = new FileCommandProcessorAdapter(fileName);
+        engine.startupPhase(engine, *commandPro);
+    } else {
+        std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
+                    "   1. Console Mode:    <./executable-file-name> -console\n"
+                    "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
+                    "   Example: ./gamestart -file input.txt" << std::endl;
+    }
 
+    // Delete and free up memory (engine will be automatically destroyed as its statically allocated).
+    delete commandPro;
+    commandPro = nullptr;
+    
+    cout << "\n=== Testing Startup Phase Completed ===" << endl;
 }

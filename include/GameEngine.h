@@ -1,14 +1,15 @@
 /**
  * @file GameEngine.h
- * @brief Assignment 1 – Part 5 (Warzone): Game Engine with state management
+ * @brief Assignment 1 – Part 5 (Warzone): Game Engine with state management, and Assignment 2 - Part 2: Game Startup Phase.
  *
  * @details
  *  Implements a game engine that controls the flow of the game using states, transitions, and commands.
  *  The state represents a certain phase of the game and dictates valid actions or user commands.
  *  Commands may trigger transitions to other states, controlling the game flow.
  *
- * @note All Part-5 classes/functions live in this duo (GameEngine.h/GameEngine.cpp). 
+ * @note All A1, Part-5 and A2, Part 2 classes/functions live in this duo (GameEngine.h/GameEngine.cpp). 
  *       The driver `testGameStates()` is implemented in GameEngineDriver.cpp.
+ *       The driver 'testStartupPhase()' is implemented in GameEngineDriver.cpp.
  */
 
 #pragma once
@@ -25,6 +26,8 @@ class Player;
 class MapLoader;
 class Order;
 class Territory;
+class Deck;
+class CommandProcessor;
 
 /**
  * @brief Simple command object representing user input commands
@@ -80,7 +83,9 @@ enum class GameState {
     IssueOrders, 
     ExecuteOrders,
     Win,
-    End
+    End,
+    Gamestart,
+    Replay
 };
 
 /**
@@ -107,6 +112,9 @@ public:
     GameState getCurrentState() const;
     std::string getStateName() const;
     std::string getStateName(GameState state) const;
+
+    // Getter for deck.
+    Deck* getDeck();
     
     // Game state queries
     bool isValidCommand(const std::string& commandStr) const;
@@ -120,6 +128,7 @@ public:
     // Utility methods for console interface
     void printCurrentState() const;
     void printValidCommands() const;
+    void printGamestartLog() const;
     std::string printErrorMessage(const std::string& invalidCommand) const;
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
@@ -128,7 +137,7 @@ public:
     std::string stringToLog() const override;
 
     // === A2, PART 2: Game Startup Phase ===
-    void startupPhase();
+    void startupPhase(GameEngine& engine, CommandProcessor& commandPro);
 
 private:
     // Type aliases for readability
@@ -142,6 +151,7 @@ private:
     Map* gameMap; // The current game map using pointer as required
     std::vector<Player*>* players; // List of players in the game using pointer as required
     MapLoader* mapLoader; // Map loader instance (pointer as required)
+    Deck* deck; // One deck of cards for each game.
     
     // Private helper methods
     void initializeTransitions();
@@ -149,14 +159,18 @@ private:
     bool isValidTransition(GameState from, const std::string& command, GameState& to) const;
     void executeStateTransition(GameState newState, const std::string& command);
     
-    // State-specific action methods (stubs for future implementation)
+    // State-specific action methods
     void handleLoadMap(const std::string& command);
-    void handleValidateMap(const std::string& command);
+    void handleValidateMap();
     void handleAddPlayer(const std::string& command);
     void handleAssignCountries(const std::string& command);
     void handleIssueOrder(const std::string& command);
     void handleExecuteOrders(const std::string& command);
     void handleEndGame(const std::string& command);
+
+
+    // Handling Gamestart command in Game startup phase (Part 2 of A2).
+    void handleGamestart(const std::string& command);
 };
 
 /**
