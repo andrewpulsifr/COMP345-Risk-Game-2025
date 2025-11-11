@@ -80,6 +80,7 @@ namespace GameCommands {
     const std::string END = "end";
     const std::string GAME_START = "gamestart";
     const std::string REPLAY = "replay";
+    const std::string START = "start";
     const std::string QUIT = "quit";
 }
 
@@ -196,7 +197,8 @@ private:
 
 
     // Handling Gamestart command in Game startup phase (Part 2 of A2).
-    void handleGamestart(const std::string& command);
+    void handleGamestart();
+    void printGamestartLog() const;
 };
 
 /**
