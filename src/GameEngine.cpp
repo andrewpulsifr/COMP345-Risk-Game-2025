@@ -677,6 +677,7 @@ void GameEngine::printGamestartLog() const {
 
     // (c) Give 50 army units to each player.
         std::cout << "=== (c) Give 50 army units to each player: ===" << std::endl;
+        // TO DO: Uncomment after setReinforcementPool is integrated.
         // for(Player* p : *players) {
         //     std::cout << "Player " << p->getName() << " - Reinforcement Pool: " << p->getReinforcementPool();
         // }
