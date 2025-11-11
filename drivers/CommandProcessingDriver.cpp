@@ -1,3 +1,16 @@
+/**
+ * @file CommandProcessingDriver.cpp
+ * @brief Test driver for the commands entered by client, for the game.
+ * @details This driver tests the Command Processing class to demonstrate:
+ *          - The processing of commands entered (loadmap, validatemap, addplayer, gamestart, replay, quit).
+ *          - The reading and saving of commands to a vector of Command* objects in the CommandProcessor.
+ *          - Validate that the commands are valid in current state of the game.
+            - Commands can either be read from the command line (-console), or from file (-file).
+ * @author Chhay (A2, P1)
+ * @date November 2025
+ * @version 1.0
+ */
+
 #include <iostream>
 #include "../include/CommandProcessing.h"
 #include "../include/GameEngine.h"
