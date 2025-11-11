@@ -91,7 +91,7 @@ void testStartupPhase(int argc, char* argv[]) {
     cout << "Start the Game.." << endl;
     
     GameEngine engine;
-    CommandProcessor *commandPro;
+    CommandProcessor *commandPro = nullptr;
 
     // Add cards to the deck so that cards can be drawn when 'gamestart' command is used.
     engine.getDeck()->addCard(new Card(Card::Reinforcement));
@@ -129,8 +129,10 @@ void testStartupPhase(int argc, char* argv[]) {
     }
 
     // Delete and free up memory (engine will be automatically destroyed as its statically allocated).
-    delete commandPro;
-    commandPro = nullptr;
-    
+    if(commandPro) {
+        delete commandPro;
+        commandPro = nullptr;
+    }
+
     cout << "\n=== Testing Startup Phase Completed ===" << endl;
 }
