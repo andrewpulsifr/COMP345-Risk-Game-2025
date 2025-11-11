@@ -166,9 +166,9 @@ void CommandProcessor::getCommand(GameEngine& engine) {
             continue;
         }
 
-        // Handle quit/exit commands to terminate the test
+        // Handle quit/exit commands to terminate.
         if (commandEntered == "quit" || commandEntered == "exit") {
-            std::cout << "Exiting game engine test." << std::endl;
+            std::cout << "\nExiting Game..." << std::endl;
             break;
         }
         

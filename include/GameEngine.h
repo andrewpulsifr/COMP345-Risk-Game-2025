@@ -130,7 +130,7 @@ public:
     void displayGameStatus() const;
 
     // === A2, PART 2: Game Startup Phase ===
-    void startupPhase(GameEngine& engine, CommandProcessor* commandPro, int argc, char* argv[]);
+    void startupPhase(GameEngine& engine, CommandProcessor& commandPro);
 
 private:
     // Type aliases for readability

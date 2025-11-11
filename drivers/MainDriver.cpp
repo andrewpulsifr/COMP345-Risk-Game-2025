@@ -23,13 +23,12 @@
 #include "../include/GameEngine.h"
 
 // Forward declarations of driver test functions
-// void testLoadMaps();
-// void testPlayers();
-// void testOrdersLists();
-// void testCards();
-// void testGameStates();
-// void testCommandProcessor(int argc, char* argv[]);
-
+void testLoadMaps();
+void testPlayers();
+void testOrdersLists();
+void testCards();
+void testGameStates();
+void testCommandProcessor(int argc, char* argv[]);
 void testStartupPhase(int argc, char* argv[]);
 
 /**
@@ -45,13 +44,12 @@ void testStartupPhase(int argc, char* argv[]);
 int main(int argc, char* argv[]) {
     std::cout << "=== Starting Warzone Test Drivers ===\n\n";
     
-    // testLoadMaps(); // Test map loading, validation, and operations
-    // testPlayers(); // Test player functionality, territories, and hand management
-    // testOrdersLists(); // Test order creation, execution, and OrdersList operations
-    // testCards(); // Test deck, hand, drawing, and card playing with Order generation
-    // testGameStates(); // Test state transitions, command processing, and game flow
-    // testCommandProcessor(argc, argv);
-    
+    testLoadMaps(); // Test map loading, validation, and operations
+    testPlayers(); // Test player functionality, territories, and hand management
+    testOrdersLists(); // Test order creation, execution, and OrdersList operations
+    testCards(); // Test deck, hand, drawing, and card playing with Order generation
+    testGameStates(); // Test state transitions, command processing, and game flow
+    testCommandProcessor(argc, argv);
     testStartupPhase(argc, argv);
 
     std::cout << "\n";

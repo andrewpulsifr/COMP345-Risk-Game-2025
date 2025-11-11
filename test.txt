@@ -5,4 +5,3 @@ addplayer Maria
 addplayer John
 addplayer Juan
 gamestart
-replay

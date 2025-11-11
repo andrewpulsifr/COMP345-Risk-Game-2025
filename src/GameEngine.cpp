@@ -143,6 +143,11 @@ GameEngine::GameEngine(const GameEngine& other)
     for (Player* player : *other.players) {
         players->push_back(player);
     }
+
+    // Deep copy deck if it exists
+    if(other.deck) {
+        deck = new Deck(*other.deck);
+    }
 }
 
 /** @brief Destructor cleans up all dynamically allocated resources */
@@ -427,27 +432,12 @@ void GameEngine::displayGameStatus() const {
 }
 
 // === A2, PART 2: Game Startup Phase ===
-void GameEngine::startupPhase(GameEngine& engine, CommandProcessor* commandPro, int argc, char* argv[]) {
-    if(argc == 2 && std::string(argv[1]) == "-console") {
-        std::cout << "\nMode Selected: Console..." << std::endl;
-        commandPro = new CommandProcessor();
-        commandPro->getCommand(engine);
+void GameEngine::startupPhase(GameEngine& engine, CommandProcessor& commandPro) {
+    // Calls the getCommand() method of the CommandProcessor to process the commands.
+    commandPro.getCommand(engine);
 
-        std::cout << *commandPro << std::endl;
-    } else if (argc == 3 && std::string(argv[1]) == "-file") {
-        std::string fileName = argv[2];
-        std::cout << "\nMode Selected: File...." << std::endl;
-
-        commandPro = new FileCommandProcessorAdapter(fileName);
-        commandPro->getCommand(engine);
-
-        std::cout << *commandPro << std::endl;
-    } else {
-        std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
-                    "   1. Console Mode:    <./executable-file-name> -console\n"
-                    "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
-                    "   Example: ./gamestart -file input.txt" << std::endl;
-    }
+    // After all commands are executed, all Command objects and their effects will be printed in the Command Processor.
+    std::cout << commandPro << std::endl;
 }
 
 
@@ -630,7 +620,7 @@ void GameEngine::handleGamestart(const string& command) {
 
 
     // (c) Give 50 army units to each player.
-        // ** NEED TO MERGE PART 3 BEFORE UNCOMMENTING- BECAUSE IT INCLUDES THE REINFORCEMENT POOL. **
+        // ** TODO: IMPLEMENT (essentially just uncomment the code below) AFTER THE REINFORCEMENT POOL IS MERGED INTO MAIN. **
         // for(Player* p : *players) {
         //     p->setReinforcementPool(50);
         // }
@@ -678,7 +668,7 @@ void GameEngine::printGamestartLog() const {
 
     // (b) Determine randomly the order of play of players (Shuffling the actual vector).
         std::cout << "=== (b) Determine the order of players randomly, by shuffling the vector: ===" << std::endl;
-        std::cout << "  After shuffling  - Players: ";
+        std::cout << "  After shuffling - Players: ";
         for(Player* p : *players) {
             std::cout << p->getPlayerName() << " ";
         }
