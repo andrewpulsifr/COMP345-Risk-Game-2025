@@ -253,7 +253,6 @@ void GameEngine::initializeTransitions() {
         {{GameState::MapLoaded,            string{VALIDATE_MAP}},       GameState::MapValidated},
         {{GameState::MapValidated,         string{ADD_PLAYER}},         GameState::PlayersAdded},
         {{GameState::PlayersAdded,         string{ADD_PLAYER}},         GameState::PlayersAdded},
-        {{GameState::PlayersAdded,         string{ASSIGN_COUNTRIES}},   GameState::AssignReinforcement},
         {{GameState::PlayersAdded,         string{GAME_START}},         GameState::Gamestart},
         {{GameState::Gamestart,            string{ASSIGN_COUNTRIES}},   GameState::AssignReinforcement},
         {{GameState::AssignReinforcement,  string{ISSUE_ORDER}},        GameState::IssueOrders},
@@ -508,7 +507,6 @@ void GameEngine::displayWelcomeMessage() const {
     
     cout << "\n=== Welcome to Warzone Game Engine ===" << endl;
     cout << "Type commands to navigate through game states." << endl;
-    cout << "Type 'help' to see valid commands for current state." << endl;
     cout << "Type 'quit' to exit the game." << endl;
     cout << "=======================================" << endl;
 }

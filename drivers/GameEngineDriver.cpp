@@ -61,20 +61,15 @@ void testGameStates() {
             break;
         }
         
-        // Handle informational commands that don't change game state
-        if (input == "status") {
-            engine.displayGameStatus();
-        } else {
-            // Process actual game commands that trigger state transitions
-            engine.processCommand(input);
-            
-            // Display current state after command processing
-            cout << "  Current state: " << engine.getStateName() << endl;
-            
-            // Check if game has reached terminal state
-            if (engine.isGameOver()) {
-                cout << "Game has ended. Type 'quit' to exit or continue testing." << endl;
-            }
+        // Process actual game commands that trigger state transitions
+        engine.processCommand(input);
+        
+        // Display current state after command processing
+        cout << "  Current state: " << engine.getStateName() << endl;
+        
+        // Check if game has reached terminal state
+        if (engine.isGameOver()) {
+            cout << "Game has ended. Type 'quit' to exit or continue testing." << endl;
         }
 
         engine.displayGameStatus(); // Display game status after each command
