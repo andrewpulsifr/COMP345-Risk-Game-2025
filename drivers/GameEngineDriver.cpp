@@ -42,12 +42,13 @@ void testGameStates() {
     // Initialize input processing for interactive state transitions
     string input;
     
+    
     // Main loop for processing user commands and managing state transitions
     while (std::getline(cin, input)) {
         // Clean up input string by removing leading/trailing whitespace
         input.erase(0, input.find_first_not_of(" \t"));
         input.erase(input.find_last_not_of(" \t") + 1);
-        
+
         // Skip empty input and prompt again
         if (input.empty()) {
             cout << "Enter command: ";
@@ -61,9 +62,7 @@ void testGameStates() {
         }
         
         // Handle informational commands that don't change game state
-        if (input == "help") {
-            engine.displayGameStatus();
-        } else if (input == "status") {
+        if (input == "status") {
             engine.displayGameStatus();
         } else {
             // Process actual game commands that trigger state transitions
@@ -77,7 +76,8 @@ void testGameStates() {
                 cout << "Game has ended. Type 'quit' to exit or continue testing." << endl;
             }
         }
-        
+
+        engine.displayGameStatus(); // Display game status after each command
         cout << "\nEnter command: ";
     }
     
