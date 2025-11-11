@@ -287,7 +287,7 @@ bool GameEngine::processCommand(const string& commandStr) {
  */
 bool GameEngine::processCommand(Command& cmd) {
     const string& commandStr = cmd.getName();
-
+    
     // Validate command spelling first (check if command exists)
     if (!validCommandSpelling(commandStr)) {
         cmd.saveEffect(printTypoErrorMessage(commandStr));
@@ -379,7 +379,6 @@ bool GameEngine::validCommandSpelling(const string& commandEntered) const {
     
     // Extract only the command portion (before any space/arguments)
     std::string commandOnly = commandEntered.substr(0, commandEntered.find(" "));
-    
     if(commandOnly == LOAD_MAP || commandOnly == VALIDATE_MAP || commandOnly == ADD_PLAYER ||
         commandOnly == ASSIGN_COUNTRIES || commandOnly == ISSUE_ORDER || commandOnly == END_ISSUE_ORDERS ||
         commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS || commandOnly == WIN ||
@@ -814,7 +813,7 @@ void GameEngine::handleGamestart() {
         std::cout << "  ...Each player draws 2 cards from Deck.\n\n";
         for(Player* p : *players) {
             Hand* playerHand = p->getPlayerHand();
-            std::cout << "  ------Player " << p->getPlayerName() << ":\n    ";
+            std::cout << "    ------Player " << p->getPlayerName() << ":\n    ";
             deck->draw(*playerHand);
             std::cout << "    ";
             deck->draw(*playerHand);
@@ -823,7 +822,7 @@ void GameEngine::handleGamestart() {
 
     // (e) Switch game to play phase (the assignreinforcement state).
         transition(GameState::AssignReinforcement);
-        std::cout << "  ...The state is switched to play.\n\n";
+        std::cout << "\n  ...The state is switched to play.\n\n";
 
     
 }

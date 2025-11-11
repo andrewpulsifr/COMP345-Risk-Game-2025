@@ -127,7 +127,7 @@ void testStartupPhase(int argc, char* argv[]) {
         return;
     }
 
-    // Delete and free up memory (engine will be automatically destroyed as its statically allocated).
+    // Delete and free up memory (engine will be automatically destroyed as it's statically allocated).
     // Note: At this point, commandPro is guaranteed to be initialized (either from console or file mode)
     delete commandPro;
     commandPro = nullptr;
