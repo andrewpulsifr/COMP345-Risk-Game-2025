@@ -546,8 +546,8 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
         handleAssignCountries(command);
     } else if (commandOnly == ISSUE_ORDER) {
         handleIssueOrder(command);
-    } else if (commandOnly == "gamestart") {
-        handleGamestart(command);
+    } else if (commandOnly == GAME_START) {
+        handleGamestart();
         printGamestartLog();
     } else if (commandOnly == END_ISSUE_ORDERS || commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS) {
         handleExecuteOrders(command);
@@ -644,7 +644,7 @@ void GameEngine::handleEndGame(const string& command) {
 }
 
 // Handle the 'gamestart command.'
-void GameEngine::handleGamestart(const string& command) {
+void GameEngine::handleGamestart() {
     
     cout << "  -> Handling Gamestart...\n" << endl;
     // (a) Fairly distribute all the territories to the player.
@@ -699,7 +699,7 @@ void GameEngine::handleGamestart(const string& command) {
 
 
     // (e) Switch game to play phase (the assignreinforcement state).
-        setState(GameState::AssignReinforcement);
+        transition(GameState::AssignReinforcement);
         std::cout << "  ...The state is switched to play.\n\n";
 
     
@@ -715,7 +715,6 @@ void GameEngine::printGamestartLog() const {
     // (a) Fairly distribute all the territories to the player.
         std::cout << "=== (a) Distributing territories: ===" << std::endl;
 
-        size_t numOfTerritories = gameMap->getTerritories().size();
         size_t numOfPlayers = players->size();
 
         // See the territories that each player own.
