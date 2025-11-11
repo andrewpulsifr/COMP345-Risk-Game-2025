@@ -122,17 +122,20 @@ void testStartupPhase(int argc, char* argv[]) {
         commandPro = new FileCommandProcessorAdapter(fileName);
         engine.startupPhase(engine, *commandPro);
     } else {
+        // Invalid arguments: commandPro remains nullptr (no initialization needed)
         std::cout << "\nInvalid command line. Please enter a command line in one of the two formats:\n\n"
                     "   1. Console Mode:    <./executable-file-name> -console\n"
                     "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
                     "   Example: ./gamestart -file input.txt" << std::endl;
+        // Early return to make control flow explicit --> no cleanup needed when commandPro is nullptr
+        cout << "\n=== Testing Startup Phase Completed ===" << endl;
+        return;
     }
 
     // Delete and free up memory (engine will be automatically destroyed as its statically allocated).
-    if(commandPro) {
-        delete commandPro;
-        commandPro = nullptr;
-    }
+    // Note: At this point, commandPro is guaranteed to be initialized (either from console or file mode)
+    delete commandPro;
+    commandPro = nullptr;
 
     cout << "\n=== Testing Startup Phase Completed ===" << endl;
 }
