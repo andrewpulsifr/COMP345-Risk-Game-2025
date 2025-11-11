@@ -248,23 +248,25 @@ void GameEngine::initializeTransitions() {
     using namespace GameCommands;
     
     stateTransitions = new TransitionMap{
+        // Startup phase transitions
         {{GameState::Start,                string{LOAD_MAP}},           GameState::MapLoaded},
         {{GameState::MapLoaded,            string{LOAD_MAP}},           GameState::MapLoaded},
         {{GameState::MapLoaded,            string{VALIDATE_MAP}},       GameState::MapValidated},
         {{GameState::MapValidated,         string{ADD_PLAYER}},         GameState::PlayersAdded},
         {{GameState::PlayersAdded,         string{ADD_PLAYER}},         GameState::PlayersAdded},
-        {{GameState::PlayersAdded,         string{GAME_START}},         GameState::Gamestart},
-        {{GameState::Gamestart,            string{ASSIGN_COUNTRIES}},   GameState::AssignReinforcement},
+        {{GameState::PlayersAdded,         string{GAME_START}},         GameState::AssignReinforcement},
+        
+        // Main game loop transitions
         {{GameState::AssignReinforcement,  string{ISSUE_ORDER}},        GameState::IssueOrders},
         {{GameState::IssueOrders,          string{ISSUE_ORDER}},        GameState::IssueOrders},
         {{GameState::IssueOrders,          string{END_ISSUE_ORDERS}},   GameState::ExecuteOrders},
         {{GameState::ExecuteOrders,        string{EXEC_ORDER}},         GameState::ExecuteOrders},
         {{GameState::ExecuteOrders,        string{END_EXEC_ORDERS}},    GameState::AssignReinforcement},
         {{GameState::ExecuteOrders,        string{WIN}},                GameState::Win},
-        {{GameState::Win,                  string{PLAY}},               GameState::Start},
-        {{GameState::Win,                  string{END}},                GameState::End},
-        {{GameState::Win,                  string{REPLAY}},             GameState::Replay},
-        {{GameState::Replay,               string{START}},              GameState::Start},
+        
+        // End game transitions
+        {{GameState::Win,                  string{REPLAY}},             GameState::Start},
+        {{GameState::Win,                  string{QUIT}},               GameState::End},
     };
 }
 
