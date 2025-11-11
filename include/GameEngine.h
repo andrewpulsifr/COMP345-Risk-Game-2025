@@ -14,6 +14,7 @@
 
 #pragma once
 #include <string>
+#include <string_view>
 #include <map>
 #include <vector>
 #include <iostream>
@@ -65,23 +66,34 @@ private:
  * 
  * @details Provides a single source of truth for all valid game commands.
  * These constants should be used throughout the codebase instead of hardcoded strings.
+ * 
+ * Implementation uses constexpr std::string_view instead of const std::string for:
+ * - Zero runtime overhead: No heap allocations at program startup
+ * - Compile-time evaluation: Values are computed at compile time
+ * - Smaller memory footprint: string_view is just a pointer + length (16 bytes)
+ * - Better performance: No dynamic memory management overhead
+ * - Type safety: Implicit conversion to std::string when needed
+ * 
+ * string_view is a non-owning view of a string - it points to the string literal
+ * in the program's read-only data segment, avoiding the need for runtime allocation.
+ * Since these commands are constant and never modified, string_view is ideal.
  */
 namespace GameCommands {
-    const std::string LOAD_MAP = "loadmap";
-    const std::string VALIDATE_MAP = "validatemap";
-    const std::string ADD_PLAYER = "addplayer";
-    const std::string ASSIGN_COUNTRIES = "assigncountries";
-    const std::string ISSUE_ORDER = "issueorder";
-    const std::string END_ISSUE_ORDERS = "endissueorders";
-    const std::string EXEC_ORDER = "execorder";
-    const std::string END_EXEC_ORDERS = "endexecorders";
-    const std::string WIN = "win";
-    const std::string PLAY = "play";
-    const std::string END = "end";
-    const std::string GAME_START = "gamestart";
-    const std::string REPLAY = "replay";
-    const std::string START = "start";
-    const std::string QUIT = "quit";
+    constexpr std::string_view LOAD_MAP = "loadmap";
+    constexpr std::string_view VALIDATE_MAP = "validatemap";
+    constexpr std::string_view ADD_PLAYER = "addplayer";
+    constexpr std::string_view ASSIGN_COUNTRIES = "assigncountries";
+    constexpr std::string_view ISSUE_ORDER = "issueorder";
+    constexpr std::string_view END_ISSUE_ORDERS = "endissueorders";
+    constexpr std::string_view EXEC_ORDER = "execorder";
+    constexpr std::string_view END_EXEC_ORDERS = "endexecorders";
+    constexpr std::string_view WIN = "win";
+    constexpr std::string_view PLAY = "play";
+    constexpr std::string_view END = "end";
+    constexpr std::string_view GAME_START = "gamestart";
+    constexpr std::string_view REPLAY = "replay";
+    constexpr std::string_view START = "start";
+    constexpr std::string_view QUIT = "quit";
 }
 
 /**

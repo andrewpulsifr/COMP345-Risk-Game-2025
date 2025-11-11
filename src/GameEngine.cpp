@@ -238,32 +238,33 @@ string GameEngine::stringToLog() const {
 /** 
  * @brief Initialize the state transition table with valid transitions
  * 
- * @details Sets up all valid state transitions based on the assignment's state diagram:
- * - Commands like "loadmap", "validatemap", "addplayer", etc.
- * - Ensures only valid transitions are allowed for each state
+ * @details Sets up all valid state transitions based on the assignment's state diagram.
+ * All commands are defined in the GameCommands namespace (LOAD_MAP, VALIDATE_MAP, ADD_PLAYER, 
+ * GAME_START, ASSIGN_COUNTRIES, ISSUE_ORDER, etc.) to ensure consistency and prevent typos.
+ * Only transitions defined in this table are allowed for each state.
  */
 void GameEngine::initializeTransitions() {
     using namespace GameCommands;
     
     stateTransitions = new TransitionMap{
-        {{GameState::Start,                LOAD_MAP},           GameState::MapLoaded},
-        {{GameState::MapLoaded,            LOAD_MAP},           GameState::MapLoaded},
-        {{GameState::MapLoaded,            VALIDATE_MAP},       GameState::MapValidated},
-        {{GameState::MapValidated,         ADD_PLAYER},         GameState::PlayersAdded},
-        {{GameState::PlayersAdded,         ADD_PLAYER},         GameState::PlayersAdded},
-        {{GameState::PlayersAdded,         ASSIGN_COUNTRIES},   GameState::AssignReinforcement},
-        {{GameState::PlayersAdded,         GAME_START},         GameState::Gamestart},
-        {{GameState::Gamestart,            ASSIGN_COUNTRIES},   GameState::AssignReinforcement},
-        {{GameState::AssignReinforcement,  ISSUE_ORDER},        GameState::IssueOrders},
-        {{GameState::IssueOrders,          ISSUE_ORDER},        GameState::IssueOrders},
-        {{GameState::IssueOrders,          END_ISSUE_ORDERS},   GameState::ExecuteOrders},
-        {{GameState::ExecuteOrders,        EXEC_ORDER},         GameState::ExecuteOrders},
-        {{GameState::ExecuteOrders,        END_EXEC_ORDERS},    GameState::AssignReinforcement},
-        {{GameState::ExecuteOrders,        WIN},                GameState::Win},
-        {{GameState::Win,                  PLAY},               GameState::Start},
-        {{GameState::Win,                  END},                GameState::End},
-        {{GameState::Win,                  REPLAY},             GameState::Replay},
-        {{GameState::Replay,               START},              GameState::Start},
+        {{GameState::Start,                string{LOAD_MAP}},           GameState::MapLoaded},
+        {{GameState::MapLoaded,            string{LOAD_MAP}},           GameState::MapLoaded},
+        {{GameState::MapLoaded,            string{VALIDATE_MAP}},       GameState::MapValidated},
+        {{GameState::MapValidated,         string{ADD_PLAYER}},         GameState::PlayersAdded},
+        {{GameState::PlayersAdded,         string{ADD_PLAYER}},         GameState::PlayersAdded},
+        {{GameState::PlayersAdded,         string{ASSIGN_COUNTRIES}},   GameState::AssignReinforcement},
+        {{GameState::PlayersAdded,         string{GAME_START}},         GameState::Gamestart},
+        {{GameState::Gamestart,            string{ASSIGN_COUNTRIES}},   GameState::AssignReinforcement},
+        {{GameState::AssignReinforcement,  string{ISSUE_ORDER}},        GameState::IssueOrders},
+        {{GameState::IssueOrders,          string{ISSUE_ORDER}},        GameState::IssueOrders},
+        {{GameState::IssueOrders,          string{END_ISSUE_ORDERS}},   GameState::ExecuteOrders},
+        {{GameState::ExecuteOrders,        string{EXEC_ORDER}},         GameState::ExecuteOrders},
+        {{GameState::ExecuteOrders,        string{END_EXEC_ORDERS}},    GameState::AssignReinforcement},
+        {{GameState::ExecuteOrders,        string{WIN}},                GameState::Win},
+        {{GameState::Win,                  string{PLAY}},               GameState::Start},
+        {{GameState::Win,                  string{END}},                GameState::End},
+        {{GameState::Win,                  string{REPLAY}},             GameState::Replay},
+        {{GameState::Replay,               string{START}},              GameState::Start},
     };
 }
 
