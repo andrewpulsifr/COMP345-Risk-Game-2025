@@ -61,3 +61,6 @@ gamelog.txt
 # cmd things
 build/
 test_commands.txt
+test_error_commands.txt
+.gitignore
+test_success_commands.txt
