@@ -33,6 +33,9 @@ class Subject {
     void attach(Observer* observer);
     void detach(Observer* observer);
     void notify() const;
+    
+    // Observer propagation - allows parent subjects to propagate observers to child subjects
+    void propagateObserversTo(Subject* childSubject) const;
 
     private:
     std::vector<Observer*> observers;

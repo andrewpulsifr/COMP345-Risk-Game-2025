@@ -127,6 +127,9 @@ std::string CommandProcessor::readCommand() {
 Command* CommandProcessor::saveCommand(std::string& commandRead) {
     Command* newCommandObj = new Command(commandRead);
     
+    // Propagate observers to child Command so its saveEffect() notifications are observed
+    this->propagateObserversTo(newCommandObj);
+    
     this->commandObjects.push_back(newCommandObj);
     
     notify();  // Notify observers when command is saved

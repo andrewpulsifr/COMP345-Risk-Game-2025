@@ -73,6 +73,31 @@ void Subject::notify() const {
     }
 }
 
+/**
+ * @brief Propagate all observers from this subject to a child subject
+ * @param childSubject The child subject to receive the observers
+ * 
+ * This method enables parent subjects to automatically share their observers
+ * with child subjects they create. This is useful for hierarchical logging where
+ * you want child objects (e.g., Command objects created by CommandProcessor)
+ * to automatically inherit the parent's observers without manual attachment.
+ * 
+ * @note This was created for fileProcessor because observers were not being
+ * propagated to Command objects created within CommandProcessor. 
+ */
+void Subject::propagateObserversTo(Subject* childSubject) const {
+    if (childSubject == nullptr) {
+        return;
+    }
+    
+    // Attach all of this subject's observers to the child subject
+    for (Observer* observer : observers) {
+        if (observer != nullptr) {
+            childSubject->attach(observer);
+        }
+    }
+}
+
 // ======================= LogObserver Class =======================
 LogObserver::LogObserver(): logFilePath("gamelog.txt") {
     std::ofstream logFile(logFilePath, std::ios::trunc); // Clear File
