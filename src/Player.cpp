@@ -135,36 +135,60 @@ void Player::issueOrder(Order* orderIssued) {
     orders_->add(orderIssued);
 }
 
+
+/**
+ * Attempts to create exactly one order for this player in the current pass.
+ *
+ * Semantics:
+ *  - Returns true  => An order WAS created and appended to this player's OrdersList
+ *                     during THIS CALL.
+ *  - Returns false => No order was created during THIS CALL (either no valid action
+ *                     exists right now, or constraints prevent issuing).
+ *
+ * Part 3 Rules:
+ *  - While reinforcementPool > 0, only Deploy orders may be created.
+ *  - When reinforcementPool == 0, non-deploy orders (Advance, card-based) may be created.
+ *
+ * The round-robin loop in GameEngine will call issueOrder() once per player per pass,
+ * and repeat passes until every player returns false in a pass.
+ */
+// Returns true iff THIS CALL created exactly one order and appended it to orders_.
+// Returns false if no valid order could be issued on this pass.
+// Part 3 semantics enforced:
+//  - While reinforcementPool > 0: only Deploy orders may be created.
+//  - When reinforcementPool == 0: may issue non-deploy orders (Advance, etc.).
 bool Player::issueOrder() {
-     if (ownedTerritories.empty()) {
+    // If I literally own nothing, I can't issue anything.
+    if (ownedTerritories.empty()) {
         return false;
     }
 
-    if (reinforcementPool == 0 && orders_ && !orders_->empty()) {
-        Order* last = orders_->getOrders().back();
-        if (last && last->name() != "Deploy") {
-            return false;
-        }
-    }
-
-
-    //While there are units in the pool, will only issue deploy orders
-     if (reinforcementPool > 0) {
+    // ---------------------------
+    // (A) DEPLOY-ONLY while pool > 0
+    // ---------------------------
+    if (reinforcementPool > 0) {
+        // Prefer a defend target; otherwise any owned territory.
         std::vector<Territory*> defendList = toDefend();
         Territory* target = nullptr;
 
         if (!defendList.empty()) {
             target = defendList.front();
-        } else if (!ownedTerritories.empty()) {
+        } else {
+            // Fallback: first owned territory
             target = ownedTerritories.front();
         }
 
         if (!target) {
-            //if theres nothing valid to deploy on (just in case)
+            // No valid place to deploy this pass.
             return false;
         }
 
-        int deployAmount = reinforcementPool;
+        // Simple heuristic: dump the whole pool this pass.
+        const int deployAmount = reinforcementPool;
+        if (deployAmount <= 0) {
+            return false;
+        }
+
         reinforcementPool = 0;
 
         Order* deployOrder = new DeployOrder(this, target, deployAmount);
@@ -172,66 +196,59 @@ bool Player::issueOrder() {
 
         std::cout << "Player " << playerName << " issues Deploy("
                   << deployAmount << " on " << target->getName() << ")\n";
-
         return true;
+    }
 
-     }
+    // ---------------------------
+    // (B) NON-DEPLOY orders when pool == 0
+    // Try an offensive Advance first (attack a neighboring enemy).
+    // ---------------------------
+    for (Territory* src : ownedTerritories) {
+        if (!src || src->getArmies() <= 1) continue;
 
-     {
-        //Try an offensive Advance first
-        std::vector<Territory*> attackList = toAttack();
-        if (!attackList.empty()) {
-            for(Territory* src : ownedTerritories) {
-                if(!src || src->getArmies() <= 1) continue;
+        for (Territory* adj : src->getAdjacents()) {
+            if (!adj) continue;
+            if (adj->getOwner() != this) {
+                int advanceAmount = src->getArmies() / 2; // simple heuristic
+                if (advanceAmount <= 0) continue;
 
-                for(Territory* adj : src->getAdjacents()) {
-                    if(!adj) continue;
-                    if(adj->getOwner() != this) {
-                        int advanceAmount = src->getArmies() / 2;
-                        if (advanceAmount <= 0) continue;
+                Order* advanceOrder = new AdvanceOrder(this, src, adj, advanceAmount);
+                orders_->add(advanceOrder);
 
-                        Order* advanceOrder = new AdvanceOrder(this, src, adj, advanceAmount);
-                        orders_->add(advanceOrder);
-
-                        std::cout << "Player " << playerName << " issues Advance("
-                                  << advanceAmount << " from " << src->getName()
-                                  << " to " << adj->getName() << ")\n";
-
-                        return true;
-                    }
-                }
-            }
-
-        }
-     }
-
-     {
-        //If no enemy neighbours, try a defensive Advance between own territories
-        for(Territory* src : ownedTerritories) {
-            if(!src || src->getArmies() <= 1) continue;
-
-            for(Territory* adj : src->getAdjacents()) {
-                if(adj && adj->getOwner() == this) {
-                    int advanceAmount = src->getArmies() / 2;
-                    if (advanceAmount <= 0) continue;
-
-                    Order* advanceOrder = new AdvanceOrder(this, src, adj, advanceAmount);
-                    orders_->add(advanceOrder);
-
-                    std::cout << "Player " << playerName << " issues Advance("
-                              << advanceAmount << " from " << src->getName()
-                              << " to " << adj->getName() << ")\n";
-                    return true;
-                }
+                std::cout << "Player " << playerName << " issues Advance("
+                          << advanceAmount << " from " << src->getName()
+                          << " to " << adj->getName() << ")\n";
+                return true;
             }
         }
+    }
 
-     }
+    // ---------------------------
+    // (C) If no enemy neighbors, try a defensive Advance (redistribute).
+    // ---------------------------
+    for (Territory* src : ownedTerritories) {
+        if (!src || src->getArmies() <= 1) continue;
 
-     //Nothing to do this turn
+        for (Territory* adj : src->getAdjacents()) {
+            if (adj && adj->getOwner() == this) {
+                int advanceAmount = src->getArmies() / 2;
+                if (advanceAmount <= 0) continue;
+
+                Order* advanceOrder = new AdvanceOrder(this, src, adj, advanceAmount);
+                orders_->add(advanceOrder);
+
+                std::cout << "Player " << playerName << " issues Advance("
+                          << advanceAmount << " from " << src->getName()
+                          << " to " << adj->getName() << ")\n";
+                return true;
+            }
+        }
+    }
+
+    // Nothing to issue this pass.
     return false;
-
 }
+
 
 /**
  * @brief Issues the next order in the player's order list

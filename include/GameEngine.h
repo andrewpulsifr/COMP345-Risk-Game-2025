@@ -169,3 +169,4 @@ private:
  * Invalid commands result in error messages without state transitions.
  */
 void testGameStates();
+void testMainGameLoop();
