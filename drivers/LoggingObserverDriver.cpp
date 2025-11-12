@@ -125,14 +125,10 @@ void testLoggingObserver() {
     string cmd3{GameCommands::ADD_PLAYER};
     
     // Use testSaveCommand() to access protected saveCommand()
+    // Note: Observers are automatically propagated to Command objects
     Command* savedCmd1 = commandProcessor->testSaveCommand(cmd1);
     Command* savedCmd2 = commandProcessor->testSaveCommand(cmd2);
     Command* savedCmd3 = commandProcessor->testSaveCommand(cmd3);
-    
-    // Attach observer to commands and set their effects
-    savedCmd1->attach(logObserver);
-    savedCmd2->attach(logObserver);
-    savedCmd3->attach(logObserver);
     
     cout << "Setting command effects via Command::saveEffect()..." << endl;
     savedCmd1->saveEffect("Map loaded successfully");
@@ -511,9 +507,7 @@ void testLoggingObserver() {
     
     // Detach logObserver from all subjects before deleting it
     commandProcessor->detach(logObserver);
-    savedCmd1->detach(logObserver);
-    savedCmd2->detach(logObserver);
-    savedCmd3->detach(logObserver);
+    // Note: savedCmd1, savedCmd2, savedCmd3 observers auto-propagated, will be cleaned up with commandProcessor
     deployOrder->detach(logObserver);
     advanceOrder->detach(logObserver);
     bombOrder->detach(logObserver);
