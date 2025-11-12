@@ -325,6 +325,10 @@ bool GameEngine::processCommand(Command& cmd) {
         // Action failed - use specific error reason
         std::string failureEffect = "Failed to execute command '" + commandStr + "'. " + errorMsg;
         cmd.saveEffect(failureEffect);
+        
+        // Also output error to console for user feedback
+        std::cout << "  ERROR: " << errorMsg << std::endl;
+        
         return false;
     }
 }
