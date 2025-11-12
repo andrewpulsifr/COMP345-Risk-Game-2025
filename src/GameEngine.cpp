@@ -1189,7 +1189,10 @@ void testMainGameLoop() {
     cout << "\n=============================================\n";
     cout << "   End of testMainGameLoop() demonstration\n";
     cout << "=============================================\n\n";
-// Handle the 'gamestart command.'
+
+/**
+ * @brief Handle the 'gamestart' command entered.
+ */
 void GameEngine::handleGamestart() {
     
     cout << "  -> Handling Gamestart...\n" << endl;
@@ -1251,8 +1254,9 @@ void GameEngine::handleGamestart() {
     
 }
 
-
-// Prints out the status of each step after executing the 'gamestart' command.
+/**
+ * @brief Prints out the status of each step after executing the 'gamestart' command.
+ */
 void GameEngine::printGamestartLog() const {
     std::cout << "=======================================" << std::endl;
     std::cout << "=== PRINTING OUT THE GAMESTART LOG: ===" << std::endl;
