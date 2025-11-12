@@ -21,10 +21,15 @@
 
 // ===== CommandProcessor class =====
 
-// Default constructor for CommandProcessor.
+/**
+ * @brief Default constructor for CommandProcessor.
+ */
 CommandProcessor::CommandProcessor() : commandObjects() {}
 
-// Deep copy constructor for CommmandProcessor.
+/**
+ * @brief Deep copy constructor for CommmandProcessor.
+ * @param obj, CommandProcessor object that is being copied.
+ */
 CommandProcessor::CommandProcessor(const CommandProcessor &obj) {
     for(std::size_t i = 0; i < obj.commandObjects.size(); i++) {
         Command* commandptr = obj.commandObjects.at(i);
@@ -37,7 +42,9 @@ CommandProcessor::CommandProcessor(const CommandProcessor &obj) {
     }
 }
 
-// Destructor for CommandProcessor.
+/**
+ * @brief Destructor for CommandProcessor.
+ */
 CommandProcessor::~CommandProcessor() {
     for(std::size_t i = 0; i < commandObjects.size(); i++) {
         delete commandObjects.at(i);
@@ -48,25 +55,33 @@ CommandProcessor::~CommandProcessor() {
     std::cout << "** The CommandProcessor object is destroyed." << std::endl;
 }
 
-// validate() if command entered is a valid command.
-bool CommandProcessor::validate(GameEngine& engine, Command& cmdptr) {
-    std::string commandName = cmdptr.getName();
+/**
+ * @brief Validate and check if the command entered is a valid command.
+ * @param engine, passed to check if command is valid and get the current state.
+ * @param cmd, the Command that is being validated.
+ * @return bool if the command is valid.
+ */
+bool CommandProcessor::validate(GameEngine& engine, Command& cmd) {
+    std::string commandName = cmd.getName();
 
     //Extract only the command, if a mapname or playername is entered.
     std::string commandOnly = commandName.substr(0, commandName.find(" "));
     
     // If command not valid in current state, save the error. Else, save it as valid.
     if(!engine.isValidCommand(commandOnly)) {
-        cmdptr.saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
+        cmd.saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
         return false;
     } else {
-        cmdptr.saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
+        cmd.saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
         return true;
     }
 }
 
-
-// Assignment Operator for CommandProcessor.
+/**
+ * @brief Assignment Operator for CommandProcessor.
+ * @param other, CommandProcessor object that is being assigned to current object.
+ * @return a reference to the new CommandProcessor object.
+ */
  CommandProcessor& CommandProcessor::operator=(const CommandProcessor& other) {
     if(this != &other) {
 
@@ -87,7 +102,9 @@ bool CommandProcessor::validate(GameEngine& engine, Command& cmdptr) {
     return *this;
  }
 
- // Output Operator for CommandProcessor.
+ /**
+ * @brief Output Operator for CommandProcessor.
+ */
 std::ostream& operator<<(std::ostream& os, const CommandProcessor& commandPro) {
     std::size_t size = commandPro.commandObjects.size();
     os << "\nCommandProcessor has " << size << " command(s). ";
@@ -105,7 +122,10 @@ std::ostream& operator<<(std::ostream& os, const CommandProcessor& commandPro) {
     }
 }
 
-// readCommand().
+ /**
+ * @brief readCommand(): Prompts the user to enter a command.
+ * @return a string value that is a command.
+ */
 std::string CommandProcessor::readCommand() {
     std::string lineEntered;
     
@@ -123,9 +143,16 @@ std::string CommandProcessor::readCommand() {
     return lineEntered;
 }
 
-// saveCommand() and return a pointer to the object.
+/**
+ * @brief saveCommand(): save Command as a Command object in a (private) vector
+ * of Command objects.
+ * @return a Command pointer to the object added to the vector.
+ */
 Command* CommandProcessor::saveCommand(std::string& commandRead) {
     Command* newCommandObj = new Command(commandRead);
+    
+    // Propagate observers to child Command so its saveEffect() notifications are observed
+    this->propagateObserversTo(newCommandObj);
     
     this->commandObjects.push_back(newCommandObj);
     
@@ -134,7 +161,9 @@ Command* CommandProcessor::saveCommand(std::string& commandRead) {
     return newCommandObj;
 }
 
-/** @brief Generate log string for CommandProcessor */
+/**
+ * @brief Generate log string for CommandProcessor
+ */
 std::string CommandProcessor::stringToLog() const {
     if (commandObjects.empty()) {
         return "CommandProcessor: No commands saved";
@@ -145,7 +174,10 @@ std::string CommandProcessor::stringToLog() const {
     return "CommandProcessor: Saved command - " + lastCommand->getName();
 }
 
-// getCommand() for GameEngine or Player objects to read from command line.
+/**
+ * @brief getCommand(): for GameEngine or Player objects to read and process commands from the command line.
+ * @param engine, passed to process command and to display game status.
+ */
 void CommandProcessor::getCommand(GameEngine& engine) {
     using namespace GameCommands;
     std::string lineEntered;
@@ -201,7 +233,10 @@ void CommandProcessor::getCommand(GameEngine& engine) {
 
 // ===== FileCommandProcessorAdapter class =====
 
-//Default Constructor.
+/**
+ * @brief Default constructor of the FileCommandProcessorAdapter class.
+ * @param fileName, a private variable of the FileCommandProcessorAdapter class.
+ */
 FileCommandProcessorAdapter::FileCommandProcessorAdapter(std::string fileName) {
     file.open(fileName);
     
@@ -213,7 +248,10 @@ FileCommandProcessorAdapter::FileCommandProcessorAdapter(std::string fileName) {
     std::cout << "The file '" + fileName + "' is opened successfully!\n" << std::endl;
 }
 
-//Destructor for the CommandProcessorAdapter.
+/**
+ * @brief Destructor of the CommandProcessorAdapter.
+ * @param fileName, a private variable of the FileCommandProcessorAdapter class.
+ */
 FileCommandProcessorAdapter::~FileCommandProcessorAdapter() {
     
     // If file stream not closed, close it.
@@ -224,8 +262,11 @@ FileCommandProcessorAdapter::~FileCommandProcessorAdapter() {
     std::cout << "** The FileCommandProcessorAdapter object is destroyed." << std::endl;
 }
 
-
-//Implementation of the virtual function from CommandProcessing in the Adapter class.
+/**
+ * @brief readCommand(): the implementation of the virtual function inherited from the CommandProcessing class.
+ * this method reads a line from a text file.
+ * @return a line read from the file.
+ */
 std::string FileCommandProcessorAdapter::readCommand() {
     std::string lineReadFromFile;
 
@@ -243,6 +284,10 @@ std::string FileCommandProcessorAdapter::readCommand() {
     
 }
 
+/**
+ * @brief getCommand(): the implementation of another virtual function inherited from the CommandProcessing class.
+ * this method continuously reads from the file until the end of the file is reached.
+ */
 void FileCommandProcessorAdapter::getCommand(GameEngine& engine) {
     std::string lineReadFromFile;
 

@@ -15,6 +15,7 @@
 #include "../include/GameEngine.h"
 #include "../include/Map.h"
 #include "../include/Player.h"
+#include "../include/Orders.h"
 #include "../include/Cards.h"
 #include "../include/CommandProcessing.h"
 #include <iostream>
@@ -303,17 +304,34 @@ bool GameEngine::processCommand(Command& cmd) {
     // Extract command portion for transition lookup (before any space/arguments)
     std::string commandOnly = commandStr.substr(0, commandStr.find(" "));
     
-    // Command is valid - perform state transition
+    // Command is valid --> look up target state
     GameStateCmdPair key = make_pair(*currentState, commandOnly);
     GameState newState = (*stateTransitions)[key];
     
-    cout << "Transitioning from " << getStateName(*currentState) 
-         << " to " << getStateName(newState) 
-         << " via command '" << commandStr << "'." << endl;
+    // Execute the state transition (which will only transition if action succeeds)
+    GameState oldState = *currentState;
+    std::string errorMsg;  // Capture specific error messages from handlers
+    executeStateTransition(newState, commandStr, errorMsg);
     
-    cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
-    executeStateTransition(newState, commandStr);
-    return true;
+    // Check if action succeeded (state may or may not have changed)
+    // Success is indicated by errorMsg being empty
+    if (errorMsg.empty()) {
+        cout << "Transitioning from " << getStateName(oldState) 
+                << " to " << getStateName(*currentState) 
+                << " via command '" << commandStr << "'." << endl;
+        
+        cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
+        return true;
+    } else {
+        // Action failed - use specific error reason
+        std::string failureEffect = "Failed to execute command '" + commandStr + "'. " + errorMsg;
+        cmd.saveEffect(failureEffect);
+        
+        // Also output error to console for user feedback
+        std::cout << "  ERROR: " << errorMsg << std::endl;
+        
+        return false;
+    }
 }
 
 /**
@@ -577,22 +595,24 @@ bool GameEngine::isValidTransition(GameState from, const string& command, GameSt
  * @brief Execute state transition and perform associated actions
  * @param newState Target state to transition to
  * @param command Command that triggered the transition
+ * @param errorMsg Output parameter for error messages if action fails
  */
-void GameEngine::executeStateTransition(GameState newState, const string& command) {
+void GameEngine::executeStateTransition(GameState newState, const string& command, std::string& errorMsg) {
     using namespace GameCommands;
-    
-    transition(newState);
     
     //Extract only the command, if a mapname or playername is entered.
     std::string commandOnly = command.substr(0, command.find(" "));
 
     // Execute state-specific actions based on command
+    // Only transition if the action succeeds
+    bool success = true;
+    
     if (commandOnly == LOAD_MAP) {
-        handleLoadMap(command);
+        success = handleLoadMap(command, errorMsg);
     } else if (commandOnly == VALIDATE_MAP) {
-        handleValidateMap();
+        success = handleValidateMap(errorMsg);
     } else if (commandOnly == ADD_PLAYER) {
-        handleAddPlayer(command);
+        success = handleAddPlayer(command, errorMsg);
     } else if (commandOnly == ASSIGN_COUNTRIES) {
         handleAssignCountries(command);
     } else if (commandOnly == ISSUE_ORDER) {
@@ -605,6 +625,11 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
     } else if (commandOnly == WIN || commandOnly == PLAY || commandOnly == END) {
         handleEndGame(command);
     }
+    
+    // Only perform state transition if the action succeeded
+    if (success) {
+        transition(newState);
+    }
 }
 
 // State-specific action handlers --> stub implementations for now
@@ -613,14 +638,16 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
  * @brief Extract and validate the map filename from a loadmap command
  * @param command The full command string (e.g., "loadmap World.map")
  * @param mapName Output parameter - the extracted and trimmed map filename
+ * @param errorMsg Output parameter - error message if extraction fails
  * @return true if a valid filename was extracted, false otherwise
  */
-bool GameEngine::extractMapFilename(const std::string& command, std::string& mapName) const {
+bool GameEngine::extractMapFilename(const std::string& command, std::string& mapName, std::string& errorMsg) const {
     // Extract the filename from command (after the space)
     std::size_t nameIndex = command.find(' ');
     
     // Check if a map filename was provided
     if (nameIndex == std::string::npos || nameIndex + 1 >= command.length()) {
+        errorMsg = "ERROR: No map filename provided. Usage: loadmap <filename>";
         std::cerr << "    ERROR: No map filename provided." << std::endl;
         std::cerr << "    Usage: loadmap <filename>" << std::endl;
         std::cerr << "    Example: loadmap World.map" << std::endl;
@@ -635,6 +662,7 @@ bool GameEngine::extractMapFilename(const std::string& command, std::string& map
     size_t end = mapName.find_last_not_of(" \t\r\n");
     
     if (start == std::string::npos) {
+        errorMsg = "ERROR: Map filename is empty or contains only whitespace.";
         std::cerr << "    ERROR: Map filename is empty or contains only whitespace." << std::endl;
         std::cerr << "    Usage: loadmap <filename>" << std::endl;
         return false;
@@ -668,14 +696,16 @@ bool GameEngine::validateMapFileExists(const std::string& mapPath) const {
 /**
  * @brief Handle map loading command
  * @param command The command that triggered this action (e.g., "loadmap World.map")
+ * @param errorMsg Output parameter for error message if loading fails
+ * @return true if map was successfully loaded, false otherwise
  */
-void GameEngine::handleLoadMap(const string& command) {
+bool GameEngine::handleLoadMap(const string& command, std::string& errorMsg) {
     cout << "  -> Loading map..." << endl;
 
     // Extract and validate the map filename
     std::string mapName;
-    if (!extractMapFilename(command, mapName)) {
-        return;
+    if (!extractMapFilename(command, mapName, errorMsg)) {
+        return false;
     }
     
     // Prepend the maps directory path (following the pattern from MapDriver)
@@ -683,24 +713,30 @@ void GameEngine::handleLoadMap(const string& command) {
     
     // Validate that the file exists
     if (!validateMapFileExists(mapPath)) {
-        return;
+        errorMsg = "ERROR: Map file not found: " + mapPath;
+        return false;
     }
     
     // Load map using the full path
     try {
         mapLoader->loadMap(mapPath, *gameMap);
         std::cout << "    SUCCESS: Map '" << mapName << "' loaded from " << mapPath << "." << std::endl;
+        return true;
     } catch (const std::exception& e) {
+        errorMsg = "ERROR: Failed to load map '" + mapName + "': " + std::string(e.what());
         std::cerr << "    ERROR: Failed to load map '" << mapName << "': " << e.what() << std::endl;
         std::cerr << "    The map file may be corrupted or have invalid format." << std::endl;
+        return false;
     }
 }
 
 
 /**
  * @brief Handle map validation command
+ * @param errorMsg Output parameter for error message if validation fails
+ * @return true if map is valid, false otherwise
  */
-void GameEngine::handleValidateMap() {
+bool GameEngine::handleValidateMap(std::string& errorMsg) {
     cout << "  -> Validating map..." << endl;
     
     // validate the map.
@@ -708,26 +744,53 @@ void GameEngine::handleValidateMap() {
 
     if(validMap) {
         std::cout << "    The map is valid." << std::endl;
+        return true;
     } else {
+        errorMsg = "ERROR: Map validation failed. The map does not meet the required criteria.";
         std::cout << "    The map is NOT valid." << std::endl;
+        return false;
     }
 }
 
 /**
  * @brief Handle add player command
  * @param command The command that triggered this action
+ * @param errorMsg Output parameter for error message if adding player fails
+ * @return true if player was successfully added, false otherwise
  */
-void GameEngine::handleAddPlayer(const string& command) {
+bool GameEngine::handleAddPlayer(const string& command, std::string& errorMsg) {
     cout << "  -> Adding player..." << endl;
 
-    // Extract the mapname from command.
+    // Extract the player name from command.
     std::size_t nameIndex = command.find(' ');
+    
+    // Validate that a player name was provided
+    if (nameIndex == std::string::npos || nameIndex + 1 >= command.length()) {
+        errorMsg = "ERROR: No player name provided. Usage: addplayer <playername>";
+        std::cerr << "    ERROR: No player name provided." << std::endl;
+        std::cerr << "    Usage: addplayer <playername>" << std::endl;
+        std::cerr << "    Example: addplayer Alice" << std::endl;
+        return false;
+    }
+    
     std::string playerName = command.substr(nameIndex + 1);
+    
+    // Trim whitespace
+    size_t start = playerName.find_first_not_of(" \t\r\n");
+    size_t end = playerName.find_last_not_of(" \t\r\n");
+    if (start == std::string::npos) {
+        errorMsg = "ERROR: Player name is empty or contains only whitespace.";
+        std::cerr << "    ERROR: Player name is empty or contains only whitespace." << std::endl;
+        std::cerr << "    Usage: addplayer <playername>" << std::endl;
+        return false;
+    }
+    playerName = playerName.substr(start, end - start + 1);
 
     // Add player into GameEngine's vectors of players.
     players->push_back(new Player(playerName));
 
     std::cout << "    Player '" << playerName << "' successfully added." << std::endl;
+    return true;
 }
 
 /**
@@ -770,7 +833,433 @@ void GameEngine::handleEndGame(const string& command) {
     (void)command; // Stub suppress unused parameter warning
 }
 
-// Handle the 'gamestart command.'
+/**
+ * @brief Main game loop managing the phases of the game
+ */
+void GameEngine::reinforcementPhase() {
+    if(!gameMap || !players || players->empty()) {
+        cout << "Reinforcement phase skipped (no map or players).\n";
+        return;
+    }
+
+    std::cout << "\n--- Reinforcement Phase ---\n";
+
+    const auto& continents = gameMap->getContinents();
+
+    for(Player* p : *players) {
+        if (!p) continue;
+
+        vector<Territory*> ownedTerritories = p->getOwnedTerritories();
+        int territoryCount = static_cast<int>(ownedTerritories.size());
+
+        if(territoryCount == 0) {
+            cout << "Player " << p->getPlayerName() << " controls no territories (no reinforcements).\n";
+            continue;
+        }
+
+        //Base: floor(#territories / 3), minimum 3
+          int base = territoryCount / 3;
+        if (base < 3) base = 3;
+
+        // Continent bonuses
+        int bonus = 0;
+        for (Continent* c : continents) {
+            if (!c) continue;
+            bool ownsAll = true;
+            for (Territory* t : c->getTerritories()) {
+                if (!t || t->getOwner() != p) {
+                    ownsAll = false;
+                    break;
+                }
+            }
+            if (ownsAll) {
+                bonus += c->getBonus();
+            }
+        }
+
+        int total = base + bonus;
+        p->addReinforcements(total);
+
+        std::cout << "Player " << p->getPlayerName()
+                  << " owns " << territoryCount
+                  << " territories: +" << base << " base, +"
+                  << bonus << " continent bonus = "
+                  << total << " armies. Pool: "
+                  << p->getReinforcementPool() << "\n";
+    }
+
+}
+
+
+/**
+ * @brief Issue orders phase where players issue their orders in round-robin fashion
+ */
+void GameEngine::issueOrdersPhase() {
+    std::cout << "\n--- Issue Orders Phase ---\n";
+    if (!players || players->empty()) return;
+
+    const std::size_t n = players->size();
+    // Track whether each player already issued a non-deploy in THIS phase
+    std::vector<bool> nonDeployIssued(n, false);
+
+    bool issuedInPass = false;
+    std::size_t safetyCounter = 0;
+    const std::size_t safetyLimit = 1000; // hard cap to avoid livelock from bad logic
+
+    do {
+        issuedInPass = false;
+
+        for (std::size_t i = 0; i < n; ++i) {
+            Player* p = (*players)[i];
+            if (!p) continue;
+
+            // If no reinforcements left and this player already issued one non-deploy this phase,
+            // skip further non-deploys until next phase (after execution changes state).
+            if (p->getReinforcementPool() == 0 && nonDeployIssued[i]) {
+                continue;
+            }
+
+            OrdersList* ol = p->getOrdersList();
+            const std::size_t before = (ol ? ol->size() : 0);
+
+            const bool created = p->issueOrder();
+            if (!created) continue;
+
+            issuedInPass = true;
+
+            // Detect what was just added to mark non-deploy once per phase.
+            if (ol && ol->size() > before) {
+                const auto& vec = ol->getOrders();      // const std::vector<Order*>&
+                if (!vec.empty()) {
+                    Order* justAdded = vec.back();       // last enqueued order
+                    if (justAdded && justAdded->name() != "Deploy") {
+                        nonDeployIssued[i] = true;
+                    }
+                }
+            }
+        }
+
+        // Safety: if something is still producing orders endlessly without progress,
+        // break out to avoid infinite phase.
+        if (++safetyCounter > safetyLimit) {
+            std::cout << "[Warn] Issue Orders safety limit reached; breaking out.\n";
+            break;
+        }
+
+        // Repeat another pass only if at least one player created an order this pass.
+    } while (issuedInPass);
+}
+
+
+/**
+ * @brief Execute orders phase where players' orders are executed in round-robin fashion
+ */
+void GameEngine::executeOrdersPhase() {
+    if (!players || players->empty()) {
+        std::cout << "\n--- Execute Orders Phase skipped (no players) ---\n";
+        return;
+    }
+
+    std::cout << "\n--- Execute Orders Phase ---\n";
+
+    // ========= 1) Execute all DEPLOY orders first =========
+    while (true) {
+        bool executedAnyDeploy = false;
+
+        for (Player* p : *players) {
+            if (!p) continue;
+
+            OrdersList* ol = p->getOrdersList();
+            if (!ol) continue;
+
+            // Try to remove one "Deploy" order from this player's list
+            Order* deploy = ol->popFirstByName("Deploy");
+            if (deploy) {
+                std::cout << "[Deploy] " << *deploy << "\n";
+                deploy->execute();
+                delete deploy;
+                executedAnyDeploy = true;
+            }
+        }
+
+        // When no Deploy was found anywhere in this pass, we're done
+        if (!executedAnyDeploy) {
+            break;
+        }
+    }
+
+    // ========= 2) Execute all remaining (non-deploy) orders round-robin =========
+    bool executedAny = true;
+    while (executedAny) {
+        executedAny = false;
+
+        for (Player* p : *players) {
+            if (!p) continue;
+
+            OrdersList* ol = p->getOrdersList();
+            if (!ol || ol->empty()) continue;
+
+            Order* o = ol->popfront();
+            if (!o) continue;
+
+            std::cout << "[Order] " << *o << "\n";
+            o->execute();
+            delete o;
+            executedAny = true;
+        }
+    }
+
+    // (Your existing removeDefeatedPlayers / checkWinCondition are called in mainGameLoop)
+}
+
+
+
+
+
+
+/**
+ * @brief Remove defeated players who have no territories left
+ */
+void GameEngine::removeDefeatedPlayers() {
+    if (!players) return;
+
+    auto& vec = *players;
+    vec.erase(
+        std::remove_if(vec.begin(), vec.end(),
+            [](Player* p) {
+                if (!p) return true; // remove nulls
+                if (p->getOwnedTerritories().empty()) {
+                    std::cout << "Player " << p->getPlayerName()
+                              << " has been eliminated (no territories).\n";
+                    delete p;
+                    return true;
+                }
+                return false;
+            }),
+        vec.end()
+    );
+}
+
+
+/**
+ * @brief Check for win condition: if a player has won the game
+ * @param winner Reference to store pointer to winning player if found
+ * @return true if there is a winner, false otherwise
+ */
+bool GameEngine::checkWinCondition(Player*& winner) const {
+    winner = nullptr;
+
+    if (!players || players->empty()) return false;
+
+    // Simple rule: if only one player left, they win.
+    if (players->size() == 1) {
+        winner = (*players)[0];
+        return winner != nullptr;
+    }
+
+    if (!gameMap) return false;
+
+    // Alternative: all territories owned by the same player
+    for (Territory* t : gameMap->getTerritories()) {
+        if (!t) continue;
+        Player* owner = t->getOwner();
+        if (!owner) return false;
+
+        if (!winner) {
+            winner = owner;
+        } else if (winner != owner) {
+            return false; // more than one owner
+        }
+    }
+
+    return winner != nullptr;
+}
+
+/**
+ * @brief Main game loop managing the phases of the game
+ */
+void GameEngine::mainGameLoop() {
+    if (!gameMap || !players || players->empty()) {
+        std::cout << "Cannot start main game loop: map or players not initialized.\n";
+        return;
+    }
+
+    std::cout << "\n===== MAIN GAME LOOP START =====\n";
+
+    bool gameOver = false;
+    int turn = 1;
+
+    while (!gameOver) {
+    std::cout << "\n===== TURN " << turn << " =====\n";
+
+    reinforcementPhase();
+    issueOrdersPhase();
+    executeOrdersPhase();
+    removeDefeatedPlayers();
+
+    Player* winner = nullptr;
+    if (checkWinCondition(winner)) {
+        if (winner) {
+            std::cout << "\n*** Player " << winner->getPlayerName()
+                      << " wins the game! ***\n";
+        } else {
+            std::cout << "\n*** Game over (no winner). ***\n";
+        }
+        gameOver = true;
+    }
+
+    ++turn;
+}
+
+
+    std::cout << "===== MAIN GAME LOOP END =====\n";
+}
+
+/**
+ * @brief Test hook to set internal map and players for demo/testing purposes
+ * @param demoMap Pointer to the map to use
+ * @param demoPlayers Pointer to the vector of players to use
+ */
+void GameEngine::setMapAndPlayersForDemo(Map* map, std::vector<Player*>* ps) {
+    gameMap = map;
+    players = ps;
+}
+
+// Helper: give ownership + armies and sync with player's territory list
+static void ownTerritory(Player* p, Territory* t, int armies) {
+    if (!p || !t) return;
+    t->setOwner(p);
+    t->setArmies(armies);
+    p->addPlayerTerritory(t);
+}
+
+// === Required free function ===
+void testMainGameLoop() {
+    cout << "=============================================\n";
+    cout << "          testMainGameLoop() - Part 3\n";
+    cout << "=============================================\n\n";
+
+    // ---------------------------------------------------------------------
+    // Build a tiny demo map:
+    //  - 1 continent (bonus 5)
+    //  - 3 territories: Alaska, Northwest Territory, Alberta
+    //  - fully adjacent so toAttack()/toDefend() have options
+    // ---------------------------------------------------------------------
+    Map* demoMap = new Map();
+
+    Continent* cont = new Continent(1, "DemoContinent", 5);
+    demoMap->addContinent(cont);
+
+    Territory* alaska   = new Territory(1, "Alaska");
+    Territory* nw       = new Territory(2, "Northwest Territory");
+    Territory* alberta  = new Territory(3, "Alberta");
+
+    cont->addTerritory(alaska);
+    cont->addTerritory(nw);
+    cont->addTerritory(alberta);
+
+    demoMap->addTerritory(alaska);
+    demoMap->addTerritory(nw);
+    demoMap->addTerritory(alberta);
+
+    // Make them all mutually adjacent
+    alaska->addAdjacent(nw);
+    alaska->addAdjacent(alberta);
+    nw->addAdjacent(alaska);
+    nw->addAdjacent(alberta);
+    alberta->addAdjacent(alaska);
+    alberta->addAdjacent(nw);
+
+    // ---------------------------------------------------------------------
+    // Create 3 players
+    // ---------------------------------------------------------------------
+    Player* alpha   = new Player("Alpha");
+    Player* bravo   = new Player("Bravo");
+    Player* charlie = new Player("Charlie");
+
+    std::vector<Player*>* players = new std::vector<Player*>();
+    players->push_back(alpha);
+    players->push_back(bravo);
+    players->push_back(charlie);
+
+    // One territory each for the first reinforcement demo
+    ownTerritory(alpha, alaska, 5);
+    ownTerritory(bravo, nw, 5);
+    ownTerritory(charlie, alberta, 5);
+
+    cout << "[Setup] Demo map with 3 territories created.\n";
+    cout << "[Setup] Alpha: Alaska | Bravo: Northwest Territory | Charlie: Alberta\n\n";
+
+    // Hook them into the engine
+    GameEngine engine;
+    engine.setMapAndPlayersForDemo(demoMap, players);
+
+    cout << "GameEngine initialized in Start state.\n";
+
+    // ---------------------------------------------------------------------
+    // (1) Reinforcement: case A – everyone has 1 territory
+    // ---------------------------------------------------------------------
+    cout << "=== (1a) Reinforcement: 1 territory each ===\n";
+    cout << "Expected: each player gets 3 armies (minimum rule).\n\n";
+    engine.reinforcementPhase(); // prints pools via GameEngine implementation
+
+    // ---------------------------------------------------------------------
+    // (1) Reinforcement: case B – Alpha owns whole continent
+    // ---------------------------------------------------------------------
+    // Reset pools so math is obvious
+    alpha->setReinforcementPool(0);
+    bravo->setReinforcementPool(0);
+    charlie->setReinforcementPool(0);
+
+    // Move territories to Alpha
+    bravo->removePlayerTerritory(nw);
+    charlie->removePlayerTerritory(alberta);
+    ownTerritory(alpha, nw, 5);
+    ownTerritory(alpha, alberta, 5);
+
+    cout << "\n=== (1b) Reinforcement: Alpha owns all territories ===\n";
+    cout << "Expected: Alpha gets max(3, 3/3) + 5 = 8 armies.\n\n";
+    engine.reinforcementPhase();
+
+    // ---------------------------------------------------------------------
+    // (4) Card play: Alpha plays Bomb to create an order
+    // ---------------------------------------------------------------------
+    cout << "\n[Cards] Alpha receives a Bomb card.\n";
+    Deck tempDeck;
+    Card* bomb = new Card(Card::typeOfCard::Bomb);
+    alpha->getPlayerHand()->addCard(bomb);
+    cout << "[Cards] Alpha plays Bomb to create an order via Card::play().\n";
+    bomb->play(*alpha, tempDeck, *alpha->getPlayerHand());
+
+    // NOTE:
+    //  - issueOrder() (GameEngine::issueOrdersPhase) respects:
+    //      (2) Only Deploy while reinforcementPool > 0
+    //      (3) Advance using toAttack()/toDefend()
+    //    so we just run the loop and let your Player logic demonstrate it.
+
+    // Reset pools so main loop behavior is clean
+    alpha->setReinforcementPool(0);
+    bravo->setReinforcementPool(0);
+    charlie->setReinforcementPool(0);
+
+    cout << "\n=== Running mainGameLoop() to demonstrate (2)-(6) ===\n\n";
+
+    // mainGameLoop will:
+    //  - (1) call reinforcementPhase() each turn
+    //  - (2) call issueOrdersPhase() (round-robin, deploy-while-pool rule)
+    //  - (3) call executeOrdersPhase() (deploys first, then others)
+    //  - (5) remove players with 0 territories
+    //  - (6) detect when one player owns all territories (Alpha) and end
+    engine.mainGameLoop();
+
+    cout << "\n=============================================\n";
+    cout << "   End of testMainGameLoop() demonstration\n";
+    cout << "=============================================\n\n";
+}
+
+/**
+ * @brief Handle the 'gamestart' command entered.
+ */
 void GameEngine::handleGamestart() {
     
     cout << "  -> Handling Gamestart...\n" << endl;
@@ -806,10 +1295,9 @@ void GameEngine::handleGamestart() {
 
 
     // (c) Give 50 army units to each player.
-        // ** TODO: IMPLEMENT (essentially just uncomment the code below) AFTER THE REINFORCEMENT POOL IS MERGED INTO MAIN. **
-        // for(Player* p : *players) {
-        //     p->setReinforcementPool(50);
-        // }
+        for(Player* p : *players) {
+            p->setReinforcementPool(50);
+        }
     
         std::cout << "  ...50 army units are assigned to each player.\n\n";
 
@@ -828,12 +1316,11 @@ void GameEngine::handleGamestart() {
     // (e) Switch game to play phase (the assignreinforcement state).
         transition(GameState::AssignReinforcement);
         std::cout << "  ...The state is switched to play.\n\n";
-
-    
 }
 
-
-// Prints out the status of each step after executing the 'gamestart' command.
+/**
+ * @brief Prints out the status of each step after executing the 'gamestart' command.
+ */
 void GameEngine::printGamestartLog() const {
     std::cout << "=======================================" << std::endl;
     std::cout << "=== PRINTING OUT THE GAMESTART LOG: ===" << std::endl;
@@ -862,10 +1349,9 @@ void GameEngine::printGamestartLog() const {
 
     // (c) Give 50 army units to each player.
         std::cout << "=== (c) Give 50 army units to each player: ===" << std::endl;
-        // TO DO: Uncomment after setReinforcementPool is integrated.
-        // for(Player* p : *players) {
-        //     std::cout << "Player " << p->getName() << " - Reinforcement Pool: " << p->getReinforcementPool();
-        // }
+        for(Player* p : *players) {
+            std::cout << "Player " << p->getPlayerName() << " - Reinforcement Pool: " << p->getReinforcementPool();
+        }
         std::cout << "\n\n";
 
 
