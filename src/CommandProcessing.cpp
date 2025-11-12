@@ -28,7 +28,7 @@ CommandProcessor::CommandProcessor() : commandObjects() {}
 
 /**
  * @brief Deep copy constructor for CommmandProcessor.
-/* @param obj, CommandProcessor object that is being copied.
+ * @param obj, CommandProcessor object that is being copied.
  */
 CommandProcessor::CommandProcessor(const CommandProcessor &obj) {
     for(std::size_t i = 0; i < obj.commandObjects.size(); i++) {

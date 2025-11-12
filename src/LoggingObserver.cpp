@@ -1,4 +1,4 @@
-#include "LoggingObserver.h"
+#include "../include/LoggingObserver.h"
 
 // ======================= Subject Class =======================
 
