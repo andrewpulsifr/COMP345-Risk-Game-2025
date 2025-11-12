@@ -1362,7 +1362,7 @@ void GameEngine::printGamestartLog() const {
     // (c) Give 50 army units to each player.
         std::cout << "=== (c) Give 50 army units to each player: ===" << std::endl;
         for(Player* p : *players) {
-            std::cout << "Player " << p->getPlayerName() << " - Reinforcement Pool: " << p->getReinforcementPool();
+            std::cout << "Player " << p->getPlayerName() << " - Reinforcement Pool: " << p->getReinforcementPool() << std::endl;
         }
         std::cout << "\n\n";
 
