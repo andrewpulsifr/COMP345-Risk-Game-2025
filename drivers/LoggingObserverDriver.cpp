@@ -125,14 +125,10 @@ void testLoggingObserver() {
     string cmd3{GameCommands::ADD_PLAYER};
     
     // Use testSaveCommand() to access protected saveCommand()
+    // Note: Observers are automatically propagated to Command objects
     Command* savedCmd1 = commandProcessor->testSaveCommand(cmd1);
     Command* savedCmd2 = commandProcessor->testSaveCommand(cmd2);
     Command* savedCmd3 = commandProcessor->testSaveCommand(cmd3);
-    
-    // Attach observer to commands and set their effects
-    savedCmd1->attach(logObserver);
-    savedCmd2->attach(logObserver);
-    savedCmd3->attach(logObserver);
     
     cout << "Setting command effects via Command::saveEffect()..." << endl;
     savedCmd1->saveEffect("Map loaded successfully");
@@ -149,10 +145,12 @@ void testLoggingObserver() {
     cout << "Test 3b: Testing FileCommandProcessorAdapter logging" << endl;
     cout << "-----------------------------------------------------" << endl;
     
-    // Create a temporary command file with valid commands for current state
+    // Create a temporary command file with valid commands that will succeed
     ofstream tempFile("test_commands.txt");
-    tempFile << GameCommands::LOAD_MAP << endl;
+    tempFile << GameCommands::LOAD_MAP << " World.map" << endl;
     tempFile << GameCommands::VALIDATE_MAP << endl;
+    tempFile << GameCommands::ADD_PLAYER << " Alice" << endl;
+    tempFile << GameCommands::ADD_PLAYER << " Bob" << endl;
     tempFile.close();
     
     // Create new GameEngine for file test
@@ -163,14 +161,153 @@ void testLoggingObserver() {
     FileCommandProcessorAdapter* fileAdapter = new FileCommandProcessorAdapter("test_commands.txt");
     fileAdapter->attach(logObserver);
     
+    // Process all commands from file
     fileAdapter->getCommand(*fileTestEngine);
-    fileAdapter->getCommand(*fileTestEngine);
+    
+    // Assert: Verify final state is PlayersAdded (all commands succeeded)
+    bool finalStateCorrect = (fileTestEngine->getStateName() == "PlayersAdded");
+    cout << "Assert: Final state after file commands is 'PlayersAdded'... " 
+         << (finalStateCorrect ? "PASS" : "FAIL") << endl;
+    if (!finalStateCorrect) {
+        cout << "  ERROR: Expected 'PlayersAdded' but got '" << fileTestEngine->getStateName() << "'" << endl;
+    }
+    
+    // Read log file to verify successful command effects
+    ifstream successLogCheck("gamelog.txt");
+    string successLogContents;
+    if (successLogCheck.is_open()) {
+        string line;
+        while (getline(successLogCheck, line)) {
+            successLogContents += line + "\n";
+        }
+        successLogCheck.close();
+        
+        // Assert: Check for successful command effects in log
+        // Log format is: "Command: <name> | Effect: <effect>"
+        bool hasLoadMapSuccess = successLogContents.find("Command: loadmap World.map | Effect:") != string::npos &&
+                                 successLogContents.find("valid for the current state") != string::npos;
+        bool hasValidateMapSuccess = successLogContents.find("Command: validatemap | Effect:") != string::npos &&
+                                     successLogContents.find("valid for the current state") != string::npos;
+        bool hasAddPlayerAlice = successLogContents.find("Command: addplayer Alice | Effect:") != string::npos &&
+                                 successLogContents.find("valid for the current state") != string::npos;
+        bool hasAddPlayerBob = successLogContents.find("Command: addplayer Bob | Effect:") != string::npos &&
+                               successLogContents.find("valid for the current state") != string::npos;
+        
+        cout << "Assert: 'loadmap World.map' success logged... " 
+             << (hasLoadMapSuccess ? "PASS" : "FAIL") << endl;
+        cout << "Assert: 'validatemap' success logged... " 
+             << (hasValidateMapSuccess ? "PASS" : "FAIL") << endl;
+        cout << "Assert: 'addplayer Alice' success logged... " 
+             << (hasAddPlayerAlice ? "PASS" : "FAIL") << endl;
+        cout << "Assert: 'addplayer Bob' success logged... " 
+             << (hasAddPlayerBob ? "PASS" : "FAIL") << endl;
+        
+        bool allSuccessAssertionsPassed = finalStateCorrect && hasLoadMapSuccess && 
+                                          hasValidateMapSuccess && hasAddPlayerAlice && 
+                                          hasAddPlayerBob;
+        
+        if (allSuccessAssertionsPassed) {
+            cout << "OK : All FileCommandProcessorAdapter success assertions PASSED" << endl;
+        } else {
+            cout << "FAIL : Some FileCommandProcessorAdapter assertions FAILED" << endl;
+        }
+    } else {
+        cout << "ERROR: Could not read gamelog.txt for success verification" << endl;
+    }
     
     // Detach and cleanup fileTestEngine immediately after use
     fileTestEngine->detach(logObserver);
     delete fileTestEngine;
     
-    cout << "OK : FileCommandProcessorAdapter commands logged to gamelog.txt" << endl;
+    cout << endl;
+
+    // ========================================
+    // Test 3c: Test error handling with invalid commands
+    // ========================================
+    cout << "Test 3c: Testing error handling with invalid commands" << endl;
+    cout << "------------------------------------------------------" << endl;
+    
+    // Create a test file with commands that will fail
+    // Note: To test "No player name" error, we need to be in a state where addplayer is valid
+    ofstream errorTestFile("test_error_commands.txt");
+    errorTestFile << GameCommands::LOAD_MAP << endl;  // Missing filename - fails in Start state
+    errorTestFile << GameCommands::LOAD_MAP << " NonExistent.map" << endl;  // File doesn't exist - fails in Start state
+    errorTestFile << GameCommands::LOAD_MAP << " World.map" << endl;  // Valid - transitions to MapLoaded
+    errorTestFile << GameCommands::VALIDATE_MAP << endl;  // Valid - transitions to MapValidated
+    errorTestFile << GameCommands::ADD_PLAYER << endl;  // Missing player name - fails in MapValidated state
+    errorTestFile << GameCommands::VALIDATE_MAP << endl;  // Invalid in current state (PlayersAdded after previous success)
+    errorTestFile.close();
+    
+    // Create new GameEngine for error test
+    GameEngine* errorTestEngine = new GameEngine();
+    errorTestEngine->attach(logObserver);
+    
+    cout << "Reading error test commands from file..." << endl;
+    FileCommandProcessorAdapter* errorAdapter = new FileCommandProcessorAdapter("test_error_commands.txt");
+    errorAdapter->attach(logObserver);
+
+    // Process all commands from file
+    errorAdapter->getCommand(*errorTestEngine);
+    
+    // Assert: Verify engine reached MapValidated state after loadmap + validatemap succeeded
+    // Note: We had some successful commands to get to a state where we can test "No player name" error
+    bool stateIsMapValidated = (errorTestEngine->getStateName() == "MapValidated");
+    cout << "Assert: Final state after mixed commands is 'MapValidated'... " 
+         << (stateIsMapValidated ? "PASS" : "FAIL") << endl;
+    if (!stateIsMapValidated) {
+        cout << "  ERROR: Expected 'MapValidated' but got '" << errorTestEngine->getStateName() << "'" << endl;
+    }
+    
+    // Read the log file to verify error messages were logged
+    ifstream errorLogCheck("gamelog.txt");
+    string errorLogContents;
+    if (errorLogCheck.is_open()) {
+        string line;
+        while (getline(errorLogCheck, line)) {
+            errorLogContents += line + "\n";
+        }
+        errorLogCheck.close();
+        
+        // Assert: Check for specific error messages in log
+        // Error format is: "Command: <name> | Effect: Failed to execute command '<name>'. ERROR: <reason>"
+        bool hasNoFilenameError = errorLogContents.find("Command: loadmap | Effect: Failed to execute command") != string::npos &&
+                                  errorLogContents.find("No map filename provided") != string::npos;
+        bool hasFileNotFoundError = errorLogContents.find("Command: loadmap NonExistent.map | Effect: Failed to execute command") != string::npos &&
+                                    errorLogContents.find("Map file not found") != string::npos;
+        bool hasNoPlayerNameError = errorLogContents.find("Command: addplayer | Effect:") != string::npos &&
+                                    errorLogContents.find("No player name provided") != string::npos;
+        // After successful loadmap+validatemap, we're in MapValidated, so validatemap is invalid
+        bool hasInvalidStateError = errorLogContents.find("Command: validatemap | Effect:") != string::npos &&
+                                    errorLogContents.find("Invalid command 'validatemap' for current state") != string::npos;
+        
+        cout << "Assert: 'No map filename' error logged... " 
+             << (hasNoFilenameError ? "PASS" : "FAIL") << endl;
+        cout << "Assert: 'Map file not found' error logged... " 
+             << (hasFileNotFoundError ? "PASS" : "FAIL") << endl;
+        cout << "Assert: 'No player name' error logged... " 
+             << (hasNoPlayerNameError ? "PASS" : "FAIL") << endl;
+        cout << "Assert: 'Invalid command validatemap' error logged... " 
+             << (hasInvalidStateError ? "PASS" : "FAIL") << endl;
+        
+        bool allErrorAssertionsPassed = stateIsMapValidated && hasNoFilenameError && 
+                                        hasFileNotFoundError && hasNoPlayerNameError && 
+                                        hasInvalidStateError;
+        
+        if (allErrorAssertionsPassed) {
+            cout << "OK : All error handling assertions PASSED" << endl;
+        } else {
+            cout << "FAIL : Some error handling assertions FAILED" << endl;
+        }
+    } else {
+        cout << "ERROR: Could not read gamelog.txt for error verification" << endl;
+    }
+    
+    // Cleanup
+    errorTestEngine->detach(logObserver);
+    delete errorTestEngine;
+    delete errorAdapter;
+    
+    cout << "OK : Error handling test completed" << endl;
     cout << endl;
 
     // ========================================
@@ -179,14 +316,17 @@ void testLoggingObserver() {
     cout << "Test 4: Testing GameEngine state logging" << endl;
     cout << "-----------------------------------------" << endl;
 
-    cout << "Processing 'loadmap' command..." << endl;
-    gameEngine->processCommand(string{GameCommands::LOAD_MAP});
+    cout << "Processing 'loadmap World.map' command..." << endl;
+    gameEngine->processCommand(string{GameCommands::LOAD_MAP} + " World.map");
     
     cout << "Processing 'validatemap' command..." << endl;
     gameEngine->processCommand(string{GameCommands::VALIDATE_MAP});
     
-    cout << "Processing 'addplayer' command..." << endl;
-    gameEngine->processCommand(string{GameCommands::ADD_PLAYER});
+    cout << "Processing 'addplayer Alice' command..." << endl;
+    gameEngine->processCommand(string{GameCommands::ADD_PLAYER} + " Alice");
+    
+    cout << "Processing 'addplayer Bob' command..." << endl;
+    gameEngine->processCommand(string{GameCommands::ADD_PLAYER} + " Bob");
 
     cout << "OK : GameEngine state changes logged to gamelog.txt" << endl;
     cout << endl;
@@ -367,9 +507,7 @@ void testLoggingObserver() {
     
     // Detach logObserver from all subjects before deleting it
     commandProcessor->detach(logObserver);
-    savedCmd1->detach(logObserver);
-    savedCmd2->detach(logObserver);
-    savedCmd3->detach(logObserver);
+    // Note: savedCmd1, savedCmd2, savedCmd3 observers auto-propagated, will be cleaned up with commandProcessor
     deployOrder->detach(logObserver);
     advanceOrder->detach(logObserver);
     bombOrder->detach(logObserver);
