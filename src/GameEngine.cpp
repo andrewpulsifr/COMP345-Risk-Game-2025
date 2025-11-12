@@ -1107,6 +1107,17 @@ void GameEngine::mainGameLoop() {
     reinforcementPhase();
     issueOrdersPhase();
     executeOrdersPhase();
+    
+    // Award cards to players who conquered at least one territory this turn
+    for (Player* player : *players) {
+        if (player->getCardAwardedThisTurn()) {
+            deck->draw(*player->getPlayerHand());
+            std::cout << "  -> " << player->getPlayerName() 
+                      << " conquered a territory and draws a card!\n";
+            player->setCardAwardedThisTurn(false); // Reset for next turn
+        }
+    }
+    
     removeDefeatedPlayers();
 
     Player* winner = nullptr;
