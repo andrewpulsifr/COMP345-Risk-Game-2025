@@ -232,11 +232,14 @@ void testLoggingObserver() {
     cout << "------------------------------------------------------" << endl;
     
     // Create a test file with commands that will fail
+    // Note: To test "No player name" error, we need to be in a state where addplayer is valid
     ofstream errorTestFile("test_error_commands.txt");
-    errorTestFile << GameCommands::LOAD_MAP << endl;  // Missing filename
-    errorTestFile << GameCommands::LOAD_MAP << " NonExistent.map" << endl;  // File doesn't exist
-    errorTestFile << GameCommands::ADD_PLAYER << endl;  // Missing player name
-    errorTestFile << GameCommands::VALIDATE_MAP << endl;  // No map loaded yet
+    errorTestFile << GameCommands::LOAD_MAP << endl;  // Missing filename - fails in Start state
+    errorTestFile << GameCommands::LOAD_MAP << " NonExistent.map" << endl;  // File doesn't exist - fails in Start state
+    errorTestFile << GameCommands::LOAD_MAP << " World.map" << endl;  // Valid - transitions to MapLoaded
+    errorTestFile << GameCommands::VALIDATE_MAP << endl;  // Valid - transitions to MapValidated
+    errorTestFile << GameCommands::ADD_PLAYER << endl;  // Missing player name - fails in MapValidated state
+    errorTestFile << GameCommands::VALIDATE_MAP << endl;  // Invalid in current state (PlayersAdded after previous success)
     errorTestFile.close();
     
     // Create new GameEngine for error test
@@ -247,15 +250,16 @@ void testLoggingObserver() {
     FileCommandProcessorAdapter* errorAdapter = new FileCommandProcessorAdapter("test_error_commands.txt");
     errorAdapter->attach(logObserver);
 
-    // Process all commands from file - should all fail with specific error messages
+    // Process all commands from file
     errorAdapter->getCommand(*errorTestEngine);
     
-    // Assert: Verify engine is still in Start state (no successful transitions)
-    bool stateIsStart = (errorTestEngine->getStateName() == "Start");
-    cout << "Assert: Final state after error commands is 'Start'... " 
-         << (stateIsStart ? "PASS" : "FAIL") << endl;
-    if (!stateIsStart) {
-        cout << "  ERROR: Expected 'Start' but got '" << errorTestEngine->getStateName() << "'" << endl;
+    // Assert: Verify engine reached MapValidated state after loadmap + validatemap succeeded
+    // Note: We had some successful commands to get to a state where we can test "No player name" error
+    bool stateIsMapValidated = (errorTestEngine->getStateName() == "MapValidated");
+    cout << "Assert: Final state after mixed commands is 'MapValidated'... " 
+         << (stateIsMapValidated ? "PASS" : "FAIL") << endl;
+    if (!stateIsMapValidated) {
+        cout << "  ERROR: Expected 'MapValidated' but got '" << errorTestEngine->getStateName() << "'" << endl;
     }
     
     // Read the log file to verify error messages were logged
@@ -276,8 +280,9 @@ void testLoggingObserver() {
                                     errorLogContents.find("Map file not found") != string::npos;
         bool hasNoPlayerNameError = errorLogContents.find("Command: addplayer | Effect:") != string::npos &&
                                     errorLogContents.find("No player name provided") != string::npos;
+        // After successful loadmap+validatemap, we're in MapValidated, so validatemap is invalid
         bool hasInvalidStateError = errorLogContents.find("Command: validatemap | Effect:") != string::npos &&
-                                    errorLogContents.find("Invalid command 'validatemap' for current state Start") != string::npos;
+                                    errorLogContents.find("Invalid command 'validatemap' for current state") != string::npos;
         
         cout << "Assert: 'No map filename' error logged... " 
              << (hasNoFilenameError ? "PASS" : "FAIL") << endl;
@@ -288,7 +293,7 @@ void testLoggingObserver() {
         cout << "Assert: 'Invalid command validatemap' error logged... " 
              << (hasInvalidStateError ? "PASS" : "FAIL") << endl;
         
-        bool allErrorAssertionsPassed = stateIsStart && hasNoFilenameError && 
+        bool allErrorAssertionsPassed = stateIsMapValidated && hasNoFilenameError && 
                                         hasFileNotFoundError && hasNoPlayerNameError && 
                                         hasInvalidStateError;
         
