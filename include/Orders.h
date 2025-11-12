@@ -17,19 +17,26 @@
 #include <string>
 #include <vector>
 #include <iosfwd>
+#include "LoggingObserver.h"
 
 
 class Player;
 class Territory;
 
 // ======================= Base Order =======================
-class Order {
+class Order : public ILoggable , public Subject {
 protected:
     std::string description;
     std::string effect_;
 
-public:
+    // Ensure no implicit conversions from string to Order
     explicit Order(std::string desc);
+
+    // Delete copy/assignment at Order level since Subject can't be copied
+    Order(const Order&) = delete;
+    Order& operator=(const Order&) = delete;
+
+public:
     virtual ~Order();
     virtual Order* clone() const = 0; //For copying orderslists mostly
 
@@ -37,6 +44,8 @@ public:
     virtual void execute() = 0;
     virtual std::string name() const = 0;
 
+    // ILoggable interface implementation
+    std::string stringToLog() const override;
 
     const std::string& effect() const;
     const std::string& getDescription() const;
@@ -147,7 +156,7 @@ private:
 };
 
 // ======================= OrdersList =======================
-class OrdersList {
+class OrdersList : public ILoggable, public Subject {
 private:
     std::vector<Order*> orders; 
 
@@ -171,6 +180,8 @@ public:
     Order* popfront();
     Order* popFirstByName(const std::string& name);
     const std::vector<Order*>& getOrders() const;
+    // ILoggable interface implementation
+    std::string stringToLog() const override;
 
     friend std::ostream& operator<<(std::ostream& os, const OrdersList& ol);
 };

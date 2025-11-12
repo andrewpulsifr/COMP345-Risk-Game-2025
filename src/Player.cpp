@@ -328,7 +328,7 @@ bool Player::hasTerritories() const {
 
 // Stream overloading for Player.
 std::ostream& operator<<(std::ostream& os, const Player& player) {
-    os << "Player: " << player.getPlayerName() << "\nOwned Territories: ";
+    os << "Player: " << player.getPlayerName() << "\n  " << player.getOwnedTerritories().size() << " Owned Territories: ";
     for (Territory* territory : player.getOwnedTerritories()) {
         os << territory->getName() << " ";
     }
