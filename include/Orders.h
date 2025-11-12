@@ -19,6 +19,7 @@
 #include <iosfwd>
 #include "LoggingObserver.h"
 
+
 class Player;
 class Territory;
 
@@ -173,6 +174,12 @@ public:
     void move(int from, int to);
     void print() const;
 
+    bool empty() const;
+    size_t size() const;
+    Order* front() const;
+    Order* popfront();
+    Order* popFirstByName(const std::string& name);
+    const std::vector<Order*>& getOrders() const;
     // ILoggable interface implementation
     std::string stringToLog() const override;
 
