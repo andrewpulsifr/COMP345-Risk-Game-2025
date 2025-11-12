@@ -312,21 +312,18 @@ bool GameEngine::processCommand(Command& cmd) {
     std::string errorMsg;  // Capture specific error messages from handlers
     executeStateTransition(newState, commandStr, errorMsg);
     
-    // Check if state actually changed (action succeeded)
-    if (*currentState != oldState) {
+    // Check if action succeeded (state may or may not have changed)
+    // Success is indicated by errorMsg being empty
+    if (errorMsg.empty()) {
         cout << "Transitioning from " << getStateName(oldState) 
-             << " to " << getStateName(*currentState) 
-             << " via command '" << commandStr << "'." << endl;
+                << " to " << getStateName(*currentState) 
+                << " via command '" << commandStr << "'." << endl;
+        
         cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
         return true;
     } else {
-        // Action failed, state didn't change - combine effect description with specific error reason
-        std::string failureEffect = "Failed to execute command '" + commandStr + "'. ";
-        if (!errorMsg.empty()) {
-            failureEffect += errorMsg;
-        } else {
-            failureEffect += "Unknown error occurred.";
-        }
+        // Action failed - use specific error reason
+        std::string failureEffect = "Failed to execute command '" + commandStr + "'. " + errorMsg;
         cmd.saveEffect(failureEffect);
         return false;
     }
