@@ -55,12 +55,14 @@ bool CommandProcessor::validate(GameEngine& engine, Command& cmdptr) {
     //Extract only the command, if a mapname or playername is entered.
     std::string commandOnly = commandName.substr(0, commandName.find(" "));
     
-    // If command not valid in current state, save the error. Else, save it as valid.
+    // If command not valid in current state, save the error.
+    // NOTE: For valid commands, the effect will be set by GameEngine::processCommand()
+    // with a descriptive message about what actually happened.
     if(!engine.isValidCommand(commandOnly)) {
         cmdptr.saveEffect("ERROR: Invalid command '" + commandOnly + "' for current state " + engine.getStateName() + ".");
         return false;
     } else {
-        cmdptr.saveEffect("The command '" + commandOnly + "' is valid for the current state " + engine.getStateName() + ".");
+        // Command is valid - don't set effect here, let GameEngine set descriptive effect
         return true;
     }
 }

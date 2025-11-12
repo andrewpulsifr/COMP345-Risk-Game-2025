@@ -314,7 +314,7 @@ bool GameEngine::processCommand(Command& cmd) {
     
     // Check if action succeeded
     // Success is indicated by effectMsg not starting with "ERROR:"
-    bool success = (effectMsg.find("ERROR:") != 0);
+    bool success = (effectMsg.find("ERROR:") == std::string::npos);
     
     if (success) {
         cout << "Transitioning from " << getStateName(oldState) 
