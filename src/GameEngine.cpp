@@ -1251,6 +1251,7 @@ void testMainGameLoop() {
     cout << "\n=============================================\n";
     cout << "   End of testMainGameLoop() demonstration\n";
     cout << "=============================================\n\n";
+}
 
 /**
  * @brief Handle the 'gamestart' command entered.
@@ -1290,10 +1291,9 @@ void GameEngine::handleGamestart() {
 
 
     // (c) Give 50 army units to each player.
-        // ** TODO: IMPLEMENT (essentially just uncomment the code below) AFTER THE REINFORCEMENT POOL IS MERGED INTO MAIN. **
-        // for(Player* p : *players) {
-        //     p->setReinforcementPool(50);
-        // }
+        for(Player* p : *players) {
+            p->setReinforcementPool(50);
+        }
     
         std::cout << "  ...50 army units are assigned to each player.\n\n";
 
@@ -1312,8 +1312,6 @@ void GameEngine::handleGamestart() {
     // (e) Switch game to play phase (the assignreinforcement state).
         transition(GameState::AssignReinforcement);
         std::cout << "  ...The state is switched to play.\n\n";
-
-    
 }
 
 /**
@@ -1347,10 +1345,9 @@ void GameEngine::printGamestartLog() const {
 
     // (c) Give 50 army units to each player.
         std::cout << "=== (c) Give 50 army units to each player: ===" << std::endl;
-        // TO DO: Uncomment after setReinforcementPool is integrated.
-        // for(Player* p : *players) {
-        //     std::cout << "Player " << p->getName() << " - Reinforcement Pool: " << p->getReinforcementPool();
-        // }
+        for(Player* p : *players) {
+            std::cout << "Player " << p->getPlayerName() << " - Reinforcement Pool: " << p->getReinforcementPool();
+        }
         std::cout << "\n\n";
 
 
