@@ -66,4 +66,5 @@ friend std::ostream& operator<<(std::ostream& os, const Player& player);
 
 
 extern Player* neutralPlayer; //neutral player instance
+Player* getOrCreateNeutral();
 void testPlayers();

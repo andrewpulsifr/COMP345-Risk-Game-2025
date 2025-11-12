@@ -76,6 +76,13 @@ Player::~Player() {
 // Neutral player instance
 Player* neutralPlayer = nullptr;
 
+Player* getOrCreateNeutral() {
+    if (!neutralPlayer) {
+        neutralPlayer = new Player("Neutral");
+    }
+    return neutralPlayer;
+}
+
 // Getter for Player's Name.
 std::string Player::getPlayerName() const {
     return playerName;

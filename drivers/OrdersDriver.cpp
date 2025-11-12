@@ -131,6 +131,7 @@ void testOrderExecution() {
     t3->setOwner(&alice); t3->setArmies(6);
 
     //deploy
+    alice.setReinforcementPool(5);
     DeployOrder deploy(&alice, t1, 5);
     deploy.validate();
     deploy.execute();
@@ -171,10 +172,11 @@ void testOrderExecution() {
         << ", t3 armies: " << t3->getArmies() << "\n";
 
     //negotiate
-    NegotiateOrder negotiate(&alice, &bob);
-    negotiate.validate();
-    negotiate.execute();
-    std::cout << "Negotiate: " << negotiate.effect() << "\n";
+   NegotiateOrder negotiate(&alice, &bob);
+   negotiate.execute(); // issue truce
+   AdvanceOrder advance2(&alice, t1, t2, 2);
+   advance2.execute();
+   std::cout << "Advance after Negotiate: " << advance2.effect() << "\n";
 
     //Cleanup
     delete t1; delete t2; delete t3; delete neutralPlayer;
