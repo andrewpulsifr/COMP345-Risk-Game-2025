@@ -196,12 +196,12 @@ private:
     void initializeTransitions();
     void transition(GameState newState);
     bool isValidTransition(GameState from, const std::string& command, GameState& to) const;
-    void executeStateTransition(GameState newState, const std::string& command, std::string& errorMsg);
+    void executeStateTransition(GameState newState, const std::string& command, std::string& effectMsg);
     
-    // State-specific action methods
-    bool handleLoadMap(const std::string& command, std::string& errorMsg);
-    bool handleValidateMap(std::string& errorMsg);
-    bool handleAddPlayer(const std::string& command, std::string& errorMsg);
+    // State-specific action methods (effectMsg captures success or error message)
+    bool handleLoadMap(const std::string& command, std::string& effectMsg);
+    bool handleValidateMap(std::string& effectMsg);
+    bool handleAddPlayer(const std::string& command, std::string& effectMsg);
     void handleAssignCountries(const std::string& command);
     void handleIssueOrder(const std::string& command);
     void handleExecuteOrders(const std::string& command);
