@@ -303,17 +303,26 @@ bool GameEngine::processCommand(Command& cmd) {
     // Extract command portion for transition lookup (before any space/arguments)
     std::string commandOnly = commandStr.substr(0, commandStr.find(" "));
     
-    // Command is valid - perform state transition
+    // Command is valid --> look up target state
     GameStateCmdPair key = make_pair(*currentState, commandOnly);
     GameState newState = (*stateTransitions)[key];
     
-    cout << "Transitioning from " << getStateName(*currentState) 
-         << " to " << getStateName(newState) 
-         << " via command '" << commandStr << "'." << endl;
-    
-    cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
+    // Execute the state transition (which will only transition if action succeeds)
+    GameState oldState = *currentState;
     executeStateTransition(newState, commandStr);
-    return true;
+    
+    // Check if state actually changed (action succeeded)
+    if (*currentState != oldState) {
+        cout << "Transitioning from " << getStateName(oldState) 
+             << " to " << getStateName(*currentState) 
+             << " via command '" << commandStr << "'." << endl;
+        cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
+        return true;
+    } else {
+        // Action failed, state didn't change
+        cmd.saveEffect("ERROR: Command '" + commandStr + "' failed to execute.");
+        return false;
+    }
 }
 
 /**
@@ -581,18 +590,19 @@ bool GameEngine::isValidTransition(GameState from, const string& command, GameSt
 void GameEngine::executeStateTransition(GameState newState, const string& command) {
     using namespace GameCommands;
     
-    transition(newState);
-    
     //Extract only the command, if a mapname or playername is entered.
     std::string commandOnly = command.substr(0, command.find(" "));
 
     // Execute state-specific actions based on command
+    // Only transition if the action succeeds
+    bool success = true;
+    
     if (commandOnly == LOAD_MAP) {
-        handleLoadMap(command);
+        success = handleLoadMap(command);
     } else if (commandOnly == VALIDATE_MAP) {
-        handleValidateMap();
+        success = handleValidateMap();
     } else if (commandOnly == ADD_PLAYER) {
-        handleAddPlayer(command);
+        success = handleAddPlayer(command);
     } else if (commandOnly == ASSIGN_COUNTRIES) {
         handleAssignCountries(command);
     } else if (commandOnly == ISSUE_ORDER) {
@@ -604,6 +614,11 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
         handleExecuteOrders(command);
     } else if (commandOnly == WIN || commandOnly == PLAY || commandOnly == END) {
         handleEndGame(command);
+    }
+    
+    // Only perform state transition if the action succeeded
+    if (success) {
+        transition(newState);
     }
 }
 
@@ -668,14 +683,15 @@ bool GameEngine::validateMapFileExists(const std::string& mapPath) const {
 /**
  * @brief Handle map loading command
  * @param command The command that triggered this action (e.g., "loadmap World.map")
+ * @return true if map was successfully loaded, false otherwise
  */
-void GameEngine::handleLoadMap(const string& command) {
+bool GameEngine::handleLoadMap(const string& command) {
     cout << "  -> Loading map..." << endl;
 
     // Extract and validate the map filename
     std::string mapName;
     if (!extractMapFilename(command, mapName)) {
-        return;
+        return false;
     }
     
     // Prepend the maps directory path (following the pattern from MapDriver)
@@ -683,24 +699,27 @@ void GameEngine::handleLoadMap(const string& command) {
     
     // Validate that the file exists
     if (!validateMapFileExists(mapPath)) {
-        return;
+        return false;
     }
     
     // Load map using the full path
     try {
         mapLoader->loadMap(mapPath, *gameMap);
         std::cout << "    SUCCESS: Map '" << mapName << "' loaded from " << mapPath << "." << std::endl;
+        return true;
     } catch (const std::exception& e) {
         std::cerr << "    ERROR: Failed to load map '" << mapName << "': " << e.what() << std::endl;
         std::cerr << "    The map file may be corrupted or have invalid format." << std::endl;
+        return false;
     }
 }
 
 
 /**
  * @brief Handle map validation command
+ * @return true if map is valid, false otherwise
  */
-void GameEngine::handleValidateMap() {
+bool GameEngine::handleValidateMap() {
     cout << "  -> Validating map..." << endl;
     
     // validate the map.
@@ -708,26 +727,49 @@ void GameEngine::handleValidateMap() {
 
     if(validMap) {
         std::cout << "    The map is valid." << std::endl;
+        return true;
     } else {
         std::cout << "    The map is NOT valid." << std::endl;
+        return false;
     }
 }
 
 /**
  * @brief Handle add player command
  * @param command The command that triggered this action
+ * @return true if player was successfully added, false otherwise
  */
-void GameEngine::handleAddPlayer(const string& command) {
+bool GameEngine::handleAddPlayer(const string& command) {
     cout << "  -> Adding player..." << endl;
 
-    // Extract the mapname from command.
+    // Extract the player name from command.
     std::size_t nameIndex = command.find(' ');
+    
+    // Validate that a player name was provided
+    if (nameIndex == std::string::npos || nameIndex + 1 >= command.length()) {
+        std::cerr << "    ERROR: No player name provided." << std::endl;
+        std::cerr << "    Usage: addplayer <playername>" << std::endl;
+        std::cerr << "    Example: addplayer Alice" << std::endl;
+        return false;
+    }
+    
     std::string playerName = command.substr(nameIndex + 1);
+    
+    // Trim whitespace
+    size_t start = playerName.find_first_not_of(" \t\r\n");
+    size_t end = playerName.find_last_not_of(" \t\r\n");
+    if (start == std::string::npos) {
+        std::cerr << "    ERROR: Player name is empty or contains only whitespace." << std::endl;
+        std::cerr << "    Usage: addplayer <playername>" << std::endl;
+        return false;
+    }
+    playerName = playerName.substr(start, end - start + 1);
 
     // Add player into GameEngine's vectors of players.
     players->push_back(new Player(playerName));
 
     std::cout << "    Player '" << playerName << "' successfully added." << std::endl;
+    return true;
 }
 
 /**

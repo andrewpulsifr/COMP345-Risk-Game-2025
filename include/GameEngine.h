@@ -199,9 +199,9 @@ private:
     void executeStateTransition(GameState newState, const std::string& command);
     
     // State-specific action methods
-    void handleLoadMap(const std::string& command);
-    void handleValidateMap();
-    void handleAddPlayer(const std::string& command);
+    bool handleLoadMap(const std::string& command);
+    bool handleValidateMap();
+    bool handleAddPlayer(const std::string& command);
     void handleAssignCountries(const std::string& command);
     void handleIssueOrder(const std::string& command);
     void handleExecuteOrders(const std::string& command);
