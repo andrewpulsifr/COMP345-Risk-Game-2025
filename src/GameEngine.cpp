@@ -309,7 +309,8 @@ bool GameEngine::processCommand(Command& cmd) {
     
     // Execute the state transition (which will only transition if action succeeds)
     GameState oldState = *currentState;
-    executeStateTransition(newState, commandStr);
+    std::string errorMsg;  // Capture specific error messages from handlers
+    executeStateTransition(newState, commandStr, errorMsg);
     
     // Check if state actually changed (action succeeded)
     if (*currentState != oldState) {
@@ -319,8 +320,14 @@ bool GameEngine::processCommand(Command& cmd) {
         cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
         return true;
     } else {
-        // Action failed, state didn't change
-        cmd.saveEffect("ERROR: Command '" + commandStr + "' failed to execute.");
+        // Action failed, state didn't change - combine effect description with specific error reason
+        std::string failureEffect = "Failed to execute command '" + commandStr + "'. ";
+        if (!errorMsg.empty()) {
+            failureEffect += errorMsg;
+        } else {
+            failureEffect += "Unknown error occurred.";
+        }
+        cmd.saveEffect(failureEffect);
         return false;
     }
 }
@@ -586,8 +593,9 @@ bool GameEngine::isValidTransition(GameState from, const string& command, GameSt
  * @brief Execute state transition and perform associated actions
  * @param newState Target state to transition to
  * @param command Command that triggered the transition
+ * @param errorMsg Output parameter for error messages if action fails
  */
-void GameEngine::executeStateTransition(GameState newState, const string& command) {
+void GameEngine::executeStateTransition(GameState newState, const string& command, std::string& errorMsg) {
     using namespace GameCommands;
     
     //Extract only the command, if a mapname or playername is entered.
@@ -598,11 +606,11 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
     bool success = true;
     
     if (commandOnly == LOAD_MAP) {
-        success = handleLoadMap(command);
+        success = handleLoadMap(command, errorMsg);
     } else if (commandOnly == VALIDATE_MAP) {
-        success = handleValidateMap();
+        success = handleValidateMap(errorMsg);
     } else if (commandOnly == ADD_PLAYER) {
-        success = handleAddPlayer(command);
+        success = handleAddPlayer(command, errorMsg);
     } else if (commandOnly == ASSIGN_COUNTRIES) {
         handleAssignCountries(command);
     } else if (commandOnly == ISSUE_ORDER) {
@@ -628,14 +636,16 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
  * @brief Extract and validate the map filename from a loadmap command
  * @param command The full command string (e.g., "loadmap World.map")
  * @param mapName Output parameter - the extracted and trimmed map filename
+ * @param errorMsg Output parameter - error message if extraction fails
  * @return true if a valid filename was extracted, false otherwise
  */
-bool GameEngine::extractMapFilename(const std::string& command, std::string& mapName) const {
+bool GameEngine::extractMapFilename(const std::string& command, std::string& mapName, std::string& errorMsg) const {
     // Extract the filename from command (after the space)
     std::size_t nameIndex = command.find(' ');
     
     // Check if a map filename was provided
     if (nameIndex == std::string::npos || nameIndex + 1 >= command.length()) {
+        errorMsg = "ERROR: No map filename provided. Usage: loadmap <filename>";
         std::cerr << "    ERROR: No map filename provided." << std::endl;
         std::cerr << "    Usage: loadmap <filename>" << std::endl;
         std::cerr << "    Example: loadmap World.map" << std::endl;
@@ -650,6 +660,7 @@ bool GameEngine::extractMapFilename(const std::string& command, std::string& map
     size_t end = mapName.find_last_not_of(" \t\r\n");
     
     if (start == std::string::npos) {
+        errorMsg = "ERROR: Map filename is empty or contains only whitespace.";
         std::cerr << "    ERROR: Map filename is empty or contains only whitespace." << std::endl;
         std::cerr << "    Usage: loadmap <filename>" << std::endl;
         return false;
@@ -683,14 +694,15 @@ bool GameEngine::validateMapFileExists(const std::string& mapPath) const {
 /**
  * @brief Handle map loading command
  * @param command The command that triggered this action (e.g., "loadmap World.map")
+ * @param errorMsg Output parameter for error message if loading fails
  * @return true if map was successfully loaded, false otherwise
  */
-bool GameEngine::handleLoadMap(const string& command) {
+bool GameEngine::handleLoadMap(const string& command, std::string& errorMsg) {
     cout << "  -> Loading map..." << endl;
 
     // Extract and validate the map filename
     std::string mapName;
-    if (!extractMapFilename(command, mapName)) {
+    if (!extractMapFilename(command, mapName, errorMsg)) {
         return false;
     }
     
@@ -699,6 +711,7 @@ bool GameEngine::handleLoadMap(const string& command) {
     
     // Validate that the file exists
     if (!validateMapFileExists(mapPath)) {
+        errorMsg = "ERROR: Map file not found: " + mapPath;
         return false;
     }
     
@@ -708,6 +721,7 @@ bool GameEngine::handleLoadMap(const string& command) {
         std::cout << "    SUCCESS: Map '" << mapName << "' loaded from " << mapPath << "." << std::endl;
         return true;
     } catch (const std::exception& e) {
+        errorMsg = "ERROR: Failed to load map '" + mapName + "': " + std::string(e.what());
         std::cerr << "    ERROR: Failed to load map '" << mapName << "': " << e.what() << std::endl;
         std::cerr << "    The map file may be corrupted or have invalid format." << std::endl;
         return false;
@@ -717,9 +731,10 @@ bool GameEngine::handleLoadMap(const string& command) {
 
 /**
  * @brief Handle map validation command
+ * @param errorMsg Output parameter for error message if validation fails
  * @return true if map is valid, false otherwise
  */
-bool GameEngine::handleValidateMap() {
+bool GameEngine::handleValidateMap(std::string& errorMsg) {
     cout << "  -> Validating map..." << endl;
     
     // validate the map.
@@ -729,6 +744,7 @@ bool GameEngine::handleValidateMap() {
         std::cout << "    The map is valid." << std::endl;
         return true;
     } else {
+        errorMsg = "ERROR: Map validation failed. The map does not meet the required criteria.";
         std::cout << "    The map is NOT valid." << std::endl;
         return false;
     }
@@ -737,9 +753,10 @@ bool GameEngine::handleValidateMap() {
 /**
  * @brief Handle add player command
  * @param command The command that triggered this action
+ * @param errorMsg Output parameter for error message if adding player fails
  * @return true if player was successfully added, false otherwise
  */
-bool GameEngine::handleAddPlayer(const string& command) {
+bool GameEngine::handleAddPlayer(const string& command, std::string& errorMsg) {
     cout << "  -> Adding player..." << endl;
 
     // Extract the player name from command.
@@ -747,6 +764,7 @@ bool GameEngine::handleAddPlayer(const string& command) {
     
     // Validate that a player name was provided
     if (nameIndex == std::string::npos || nameIndex + 1 >= command.length()) {
+        errorMsg = "ERROR: No player name provided. Usage: addplayer <playername>";
         std::cerr << "    ERROR: No player name provided." << std::endl;
         std::cerr << "    Usage: addplayer <playername>" << std::endl;
         std::cerr << "    Example: addplayer Alice" << std::endl;
@@ -759,6 +777,7 @@ bool GameEngine::handleAddPlayer(const string& command) {
     size_t start = playerName.find_first_not_of(" \t\r\n");
     size_t end = playerName.find_last_not_of(" \t\r\n");
     if (start == std::string::npos) {
+        errorMsg = "ERROR: Player name is empty or contains only whitespace.";
         std::cerr << "    ERROR: Player name is empty or contains only whitespace." << std::endl;
         std::cerr << "    Usage: addplayer <playername>" << std::endl;
         return false;
