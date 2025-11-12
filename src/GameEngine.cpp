@@ -309,25 +309,28 @@ bool GameEngine::processCommand(Command& cmd) {
     
     // Execute the state transition (which will only transition if action succeeds)
     GameState oldState = *currentState;
-    std::string errorMsg;  // Capture specific error messages from handlers
-    executeStateTransition(newState, commandStr, errorMsg);
+    std::string effectMsg;  // Capture effect message from handlers (success or failure)
+    executeStateTransition(newState, commandStr, effectMsg);
     
-    // Check if action succeeded (state may or may not have changed)
-    // Success is indicated by errorMsg being empty
-    if (errorMsg.empty()) {
+    // Check if action succeeded
+    // Success is indicated by effectMsg not starting with "ERROR:"
+    bool success = (effectMsg.find("ERROR:") == std::string::npos);
+    
+    if (success) {
         cout << "Transitioning from " << getStateName(oldState) 
                 << " to " << getStateName(*currentState) 
                 << " via command '" << commandStr << "'." << endl;
         
-        cmd.saveEffect("The command '" + commandStr + "' is valid for the current state " + getStateName() + ".");
+        // Save the descriptive effect message from the handler
+        cmd.saveEffect(effectMsg);
         return true;
     } else {
         // Action failed - use specific error reason
-        std::string failureEffect = "Failed to execute command '" + commandStr + "'. " + errorMsg;
+        std::string failureEffect = "Failed to execute command '" + commandStr + "'. " + effectMsg;
         cmd.saveEffect(failureEffect);
         
         // Also output error to console for user feedback
-        std::cout << "  ERROR: " << errorMsg << std::endl;
+        std::cout << "  " << effectMsg << std::endl;
         
         return false;
     }
@@ -594,9 +597,9 @@ bool GameEngine::isValidTransition(GameState from, const string& command, GameSt
  * @brief Execute state transition and perform associated actions
  * @param newState Target state to transition to
  * @param command Command that triggered the transition
- * @param errorMsg Output parameter for error messages if action fails
+ * @param effectMsg Output parameter for effect message (success description or error)
  */
-void GameEngine::executeStateTransition(GameState newState, const string& command, std::string& errorMsg) {
+void GameEngine::executeStateTransition(GameState newState, const string& command, std::string& effectMsg) {
     using namespace GameCommands;
     
     //Extract only the command, if a mapname or playername is entered.
@@ -607,28 +610,34 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
     bool success = true;
     
     if (commandOnly == LOAD_MAP) {
-        success = handleLoadMap(command, errorMsg);
+        success = handleLoadMap(command, effectMsg);
     } else if (commandOnly == VALIDATE_MAP) {
-        success = handleValidateMap(errorMsg);
+        success = handleValidateMap(effectMsg);
     } else if (commandOnly == ADD_PLAYER) {
-        success = handleAddPlayer(command, errorMsg);
+        success = handleAddPlayer(command, effectMsg);
     } else if (commandOnly == ASSIGN_COUNTRIES) {
         handleAssignCountries(command);
+        effectMsg = "Countries assigned to players.";
     } else if (commandOnly == ISSUE_ORDER) {
         handleIssueOrder(command);
+        effectMsg = "Order issued.";
     } else if (commandOnly == GAME_START) {
         handleGamestart();
         printGamestartLog();
+        effectMsg = "Game started: territories distributed, turn order randomized, cards dealt.";
     } else if (commandOnly == END_ISSUE_ORDERS || commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS) {
         handleExecuteOrders(command);
+        effectMsg = "Orders executed.";
     } else if (commandOnly == WIN || commandOnly == PLAY || commandOnly == END) {
         handleEndGame(command);
+        effectMsg = "Game ended.";
     }
     
     // Only perform state transition if the action succeeded
     if (success) {
         transition(newState);
     }
+    // effectMsg parameter already contains the result message for caller
 }
 
 // State-specific action handlers --> stub implementations for now
@@ -695,15 +704,15 @@ bool GameEngine::validateMapFileExists(const std::string& mapPath) const {
 /**
  * @brief Handle map loading command
  * @param command The command that triggered this action (e.g., "loadmap World.map")
- * @param errorMsg Output parameter for error message if loading fails
+ * @param effectMsg Output parameter for effect message (success or error)
  * @return true if map was successfully loaded, false otherwise
  */
-bool GameEngine::handleLoadMap(const string& command, std::string& errorMsg) {
+bool GameEngine::handleLoadMap(const string& command, std::string& effectMsg) {
     cout << "  -> Loading map..." << endl;
 
     // Extract and validate the map filename
     std::string mapName;
-    if (!extractMapFilename(command, mapName, errorMsg)) {
+    if (!extractMapFilename(command, mapName, effectMsg)) {
         return false;
     }
     
@@ -712,7 +721,7 @@ bool GameEngine::handleLoadMap(const string& command, std::string& errorMsg) {
     
     // Validate that the file exists
     if (!validateMapFileExists(mapPath)) {
-        errorMsg = "ERROR: Map file not found: " + mapPath;
+        effectMsg = "ERROR: Map file not found: " + mapPath;
         return false;
     }
     
@@ -720,9 +729,10 @@ bool GameEngine::handleLoadMap(const string& command, std::string& errorMsg) {
     try {
         mapLoader->loadMap(mapPath, *gameMap);
         std::cout << "    SUCCESS: Map '" << mapName << "' loaded from " << mapPath << "." << std::endl;
+        effectMsg = "Map '" + mapName + "' successfully loaded from " + mapPath + ".";
         return true;
     } catch (const std::exception& e) {
-        errorMsg = "ERROR: Failed to load map '" + mapName + "': " + std::string(e.what());
+        effectMsg = "ERROR: Failed to load map '" + mapName + "': " + std::string(e.what());
         std::cerr << "    ERROR: Failed to load map '" << mapName << "': " << e.what() << std::endl;
         std::cerr << "    The map file may be corrupted or have invalid format." << std::endl;
         return false;
@@ -732,10 +742,10 @@ bool GameEngine::handleLoadMap(const string& command, std::string& errorMsg) {
 
 /**
  * @brief Handle map validation command
- * @param errorMsg Output parameter for error message if validation fails
+ * @param effectMsg Output parameter for effect message (success or error)
  * @return true if map is valid, false otherwise
  */
-bool GameEngine::handleValidateMap(std::string& errorMsg) {
+bool GameEngine::handleValidateMap(std::string& effectMsg) {
     cout << "  -> Validating map..." << endl;
     
     // validate the map.
@@ -743,9 +753,10 @@ bool GameEngine::handleValidateMap(std::string& errorMsg) {
 
     if(validMap) {
         std::cout << "    The map is valid." << std::endl;
+        effectMsg = "Map validation successful. The map meets all required criteria.";
         return true;
     } else {
-        errorMsg = "ERROR: Map validation failed. The map does not meet the required criteria.";
+        effectMsg = "ERROR: Map validation failed. The map does not meet the required criteria.";
         std::cout << "    The map is NOT valid." << std::endl;
         return false;
     }
@@ -754,10 +765,10 @@ bool GameEngine::handleValidateMap(std::string& errorMsg) {
 /**
  * @brief Handle add player command
  * @param command The command that triggered this action
- * @param errorMsg Output parameter for error message if adding player fails
+ * @param effectMsg Output parameter for effect message (success or error)
  * @return true if player was successfully added, false otherwise
  */
-bool GameEngine::handleAddPlayer(const string& command, std::string& errorMsg) {
+bool GameEngine::handleAddPlayer(const string& command, std::string& effectMsg) {
     cout << "  -> Adding player..." << endl;
 
     // Extract the player name from command.
@@ -765,7 +776,7 @@ bool GameEngine::handleAddPlayer(const string& command, std::string& errorMsg) {
     
     // Validate that a player name was provided
     if (nameIndex == std::string::npos || nameIndex + 1 >= command.length()) {
-        errorMsg = "ERROR: No player name provided. Usage: addplayer <playername>";
+        effectMsg = "ERROR: No player name provided. Usage: addplayer <playername>";
         std::cerr << "    ERROR: No player name provided." << std::endl;
         std::cerr << "    Usage: addplayer <playername>" << std::endl;
         std::cerr << "    Example: addplayer Alice" << std::endl;
@@ -778,7 +789,7 @@ bool GameEngine::handleAddPlayer(const string& command, std::string& errorMsg) {
     size_t start = playerName.find_first_not_of(" \t\r\n");
     size_t end = playerName.find_last_not_of(" \t\r\n");
     if (start == std::string::npos) {
-        errorMsg = "ERROR: Player name is empty or contains only whitespace.";
+        effectMsg = "ERROR: Player name is empty or contains only whitespace.";
         std::cerr << "    ERROR: Player name is empty or contains only whitespace." << std::endl;
         std::cerr << "    Usage: addplayer <playername>" << std::endl;
         return false;
@@ -789,6 +800,7 @@ bool GameEngine::handleAddPlayer(const string& command, std::string& errorMsg) {
     players->push_back(new Player(playerName));
 
     std::cout << "    Player '" << playerName << "' successfully added." << std::endl;
+    effectMsg = "Player '" + playerName + "' successfully added to the game.";
     return true;
 }
 
