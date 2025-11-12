@@ -106,3 +106,79 @@ void testOrdersLists() {
 
     cout << "=== end testOrdersLists ===\n";
 }
+
+void testOrderExecution() {
+    std::cout << "\n=== testOrderExecution ===\n";
+
+    //Setup players and territories
+    Player alice("Alice"), bob("Bob");
+    neutralPlayer = new Player("Neutral"); 
+
+    Map m;
+    Territory* t1 = new Territory(1, "Territory-1");
+    Territory* t2 = new Territory(2, "Territory-2");
+    Territory* t3 = new Territory(3, "Territory-3");
+
+    t1->addAdjacent(t2);
+    t2->addAdjacent(t1);
+
+    m.addTerritory(t1);
+    m.addTerritory(t2);
+    m.addTerritory(t3); 
+
+    t1->setOwner(&alice); t1->setArmies(10);
+    t2->setOwner(&bob);   t2->setArmies(8);
+    t3->setOwner(&alice); t3->setArmies(6);
+
+    //deploy
+    DeployOrder deploy(&alice, t1, 5);
+    deploy.validate();
+    deploy.execute();
+    std::cout << "Deploy: " << deploy.effect() << ", t1 armies: " << t1->getArmies() << "\n";
+
+    //advance
+    AdvanceOrder advance(&alice, t1, t2, 3);
+    advance.validate();
+    advance.execute();
+    std::cout << "Advance: " << advance.effect() 
+        << ", t1 armies: " << t1->getArmies()
+        << ", t2 armies: " << t2->getArmies() << "\n";
+    AdvanceOrder advance2(&alice, t1, t2, 2);
+    advance2.execute();
+    std::cout << "Advance after Negotiate: " << advance2.effect() << "\n";
+
+    //bomb
+    BombOrder bomb(&alice, t2);
+    bomb.validate();
+    bomb.execute();
+    std::cout << "Bomb: " << bomb.effect() 
+        << ", t2 armies: " << t2->getArmies() << "\n";
+    
+    //blockade
+    BlockadeOrder blockade(&alice, t3);
+    blockade.validate();
+    blockade.execute();
+    std::cout << "Blockade: " << blockade.effect() 
+        << ", t3 armies: " << t3->getArmies()
+        << ", t3 new owner: " << (t3->getOwner() ? t3->getOwner()->getPlayerName() : "none") << "\n";
+
+    //airlift
+    AirliftOrder airlift(&alice, t1, t3, 2);
+    airlift.validate();
+    airlift.execute();
+    std::cout << "Airlift: " << airlift.effect() 
+        << ", t1 armies: " << t1->getArmies()
+        << ", t3 armies: " << t3->getArmies() << "\n";
+
+    //negotiate
+    NegotiateOrder negotiate(&alice, &bob);
+    negotiate.validate();
+    negotiate.execute();
+    std::cout << "Negotiate: " << negotiate.effect() << "\n";
+
+    //Cleanup
+    delete t1; delete t2; delete t3; delete neutralPlayer;
+
+    std::cout << "=== end testOrderExecution ===\n";
+}
+

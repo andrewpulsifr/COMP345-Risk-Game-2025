@@ -4,6 +4,7 @@
 #include "../include/Cards.h"
 #include <algorithm>
 #include <iostream>
+#include <set>
 
 
 //Player
@@ -13,9 +14,11 @@ Player::Player()
     : playerName("defaultName"),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()),
-      reinforcementPool(0) {}
-      
+      orders_(new OrdersList()), 
+      cardAwardedThisTurn(false),
+      negotiatedPlayers(),
+      reinforcementPool(0)
+      {}
 
 
 // Deep Copy Constructor for Player.
@@ -24,6 +27,8 @@ Player::Player(const Player& copyPlayer)
       playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
       orders_(new OrdersList(*copyPlayer.orders_)),
+      cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn),
+      negotiatedPlayers(copyPlayer.negotiatedPlayers),
       reinforcementPool(copyPlayer.reinforcementPool)
 {}
 
@@ -33,8 +38,11 @@ Player::Player(std::string name)
     : playerName(std::move(name)),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()), 
-      reinforcementPool(0) {}
+      orders_(new OrdersList()),
+      cardAwardedThisTurn(false),
+      negotiatedPlayers(),
+      reinforcementPool(0)
+{}
 
 
 /**
@@ -53,8 +61,9 @@ Player& Player::operator=(const Player& copyPlayer) {
         ownedTerritories = copyPlayer.ownedTerritories;
         // deep copy into existing list
         *orders_ = *copyPlayer.orders_;
-        reinforcementPool = copyPlayer.reinforcementPool;
-    }
+        cardAwardedThisTurn = copyPlayer.cardAwardedThisTurn;
+        negotiatedPlayers = copyPlayer.negotiatedPlayers;  
+        reinforcementPool = copyPlayer.reinforcementPool;  }
     return *this;
 }
 
@@ -64,7 +73,8 @@ Player::~Player() {
     delete playerHand;
     delete orders_;
 }
-
+// Neutral player instance
+Player* neutralPlayer = nullptr;
 
 // Getter for Player's Name.
 std::string Player::getPlayerName() const {
@@ -74,6 +84,16 @@ std::string Player::getPlayerName() const {
 // Getter for Player's Hand.
 Hand* Player::getPlayerHand() const {
     return playerHand;
+}
+
+// Card Awarded This Turn Setter 
+void Player::setCardAwardedThisTurn(bool awarded) {
+    cardAwardedThisTurn = awarded;
+}
+
+// Card Awarded This Turn Getter
+bool Player::getCardAwardedThisTurn() const {
+    return cardAwardedThisTurn;
 }
 
 
@@ -98,6 +118,24 @@ void Player::removePlayerTerritory(Territory* territory) {
 std::vector<Territory*> Player::getOwnedTerritories() const {
     return ownedTerritories;
 }
+// Negotiation Management
+void Player::addNegotiatedPlayer(Player* p) { 
+    negotiatedPlayers.insert(p); 
+}
+
+void Player::clearNegotiatedPlayers() {
+    negotiatedPlayers.clear();
+ }
+
+bool Player::isNegotiatedWith(Player* p) const {
+    return negotiatedPlayers.find(p) != negotiatedPlayers.end();
+}
+
+int Player::getReinforcementPool() const { return reinforcementPool; }
+
+void Player::setReinforcementPool(int val) { reinforcementPool = val; }
+
+void Player::subtractFromReinforcementPool(int amt) { reinforcementPool -= amt; }
 
 //Attack / Defend Lists
 

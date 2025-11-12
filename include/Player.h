@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <ostream>
+#include <set>
 
 class Territory;
 class Hand;
@@ -28,10 +29,22 @@ public:
     std::string getPlayerName() const; //Getter for playerName
 	Hand* getPlayerHand() const;
 
+	void setCardAwardedThisTurn(bool awarded); //setter for cardAwardedThisTurn
+    bool getCardAwardedThisTurn() const; //getter for cardAwardedThisTurn
+
     Player& operator=(const Player& other);
 	void addPlayerTerritory(Territory* territory); //Adds to Player's Owned Territories
 	void removePlayerTerritory(Territory* territory); //Removes from Player's Owned Territories
     std::vector<Territory*> getOwnedTerritories() const; //Returns a vector containing every owned territory
+
+	void addNegotiatedPlayer(Player* p);
+    void clearNegotiatedPlayers();
+    bool isNegotiatedWith(Player* p) const;
+
+	int getReinforcementPool() const;
+    void setReinforcementPool(int val);
+    void subtractFromReinforcementPool(int amt);
+
 
 	std::vector<Territory*> toDefend(); //Returns a vector containing every attackable territory of player's
 	std::vector<Territory*> toAttack(); //Returns a vector containing every territory player can attack
@@ -53,8 +66,12 @@ public:
 private:
 	std::string playerName; //Player's Name
 	Hand* playerHand; //Player's Hand
+	bool cardAwardedThisTurn; // Flag to track if a card was awarded this turn
 	std::vector<Territory*> ownedTerritories; //List of Territories currently owned by Player
+	std::set<Player*> negotiatedPlayers; // Players this player has negotiated with
 	OrdersList* orders_; //List of orders issued by Player
+	int reinforcementPool; //Number of armies in the reinforcement pool
+
 
 	int reinforcementPool = 0; //Number of reinforcements available to Player
 
@@ -62,5 +79,5 @@ friend std::ostream& operator<<(std::ostream& os, const Player& player);
 };
 
 
-
+extern Player* neutralPlayer; //neutral player instance
 void testPlayers();
