@@ -131,10 +131,6 @@ bool Player::isNegotiatedWith(Player* p) const {
     return negotiatedPlayers.find(p) != negotiatedPlayers.end();
 }
 
-int Player::getReinforcementPool() const { return reinforcementPool; }
-
-void Player::setReinforcementPool(int val) { reinforcementPool = val; }
-
 void Player::subtractFromReinforcementPool(int amt) { reinforcementPool -= amt; }
 
 //Attack / Defend Lists
