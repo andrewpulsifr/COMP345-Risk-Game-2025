@@ -18,10 +18,12 @@ class Territory;
 class Hand;
 class Order;
 class OrdersList;
+class PlayerStrategy;
 
 class Player {
 public:
 	Player(); //Default Constructor
+	Player(PlayerStrategy* strategy);
 	Player(const Player& copyPlayer); //Copy Constructor
 	Player(std::string name); //Parametrized Constructor
 	~Player(); //destructor
@@ -44,7 +46,7 @@ public:
 	std::vector<Territory*> toDefend(); //Returns a vector containing every attackable territory of player's
 	std::vector<Territory*> toAttack(); //Returns a vector containing every territory player can attack
 
-	void issueOrder(Order* orderIssued); //Adds an Order to be issued
+	bool issueOrder(Order* orderIssued); //Adds an Order to be issued
 	
 	bool issueOrder();
 
@@ -59,6 +61,8 @@ public:
 	Order* checkNextOrder() const; //Removes and returns the next order to be executed
 	OrdersList* getOrdersList() const; //Getter for orders_
 
+	void setPlayerStrategy(PlayerStrategy* strategy); // Setter for player strategy
+	PlayerStrategy* getPlayerStrategy() const; // Getter for player strategy
 private:
 	std::string playerName; //Player's Name
 	Hand* playerHand; //Player's Hand
@@ -67,6 +71,7 @@ private:
 	std::set<Player*> negotiatedPlayers; // Players this player has negotiated with
 	OrdersList* orders_; //List of orders issued by Player
 	int reinforcementPool; //Number of armies in the reinforcement pool
+	PlayerStrategy *playerStrategy; // Player's strategy
 
 friend std::ostream& operator<<(std::ostream& os, const Player& player);
 };

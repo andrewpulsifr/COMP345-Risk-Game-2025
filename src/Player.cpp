@@ -2,6 +2,7 @@
 #include "../include/Map.h"
 #include "../include/Orders.h"
 #include "../include/Cards.h"
+#include "../include/PlayerStrategies.h"
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -20,6 +21,17 @@ Player::Player()
       reinforcementPool(0)
       {}
 
+// Constructor with strategy parameter for Player.
+Player::Player(PlayerStrategy* strategy)
+    : playerName("defaultName"),
+        playerHand(new Hand()),
+        ownedTerritories(),
+        orders_(new OrdersList()),
+        cardAwardedThisTurn(false),
+        negotiatedPlayers(),
+        reinforcementPool(0),
+        playerStrategy(strategy)
+        {}
 
 // Deep Copy Constructor for Player.
 Player::Player(const Player& copyPlayer)
@@ -86,6 +98,14 @@ Hand* Player::getPlayerHand() const {
     return playerHand;
 }
 
+void Player::setPlayerStrategy(PlayerStrategy* strategy) {
+    playerStrategy = strategy;
+}
+
+PlayerStrategy* Player::getPlayerStrategy() const {
+    return playerStrategy;
+}
+
 // Card Awarded This Turn Setter 
 void Player::setCardAwardedThisTurn(bool awarded) {
     cardAwardedThisTurn = awarded;
@@ -137,6 +157,10 @@ void Player::subtractFromReinforcementPool(int amt) { reinforcementPool -= amt; 
 
 // Returns a player's attackable territory.
 std::vector<Territory*> Player::toDefend() {
+    //  if I have a strategy, delegate to it.
+    if (playerStrategy) {
+        return playerStrategy->toDefend();
+    }
     return ownedTerritories;
 }
 
@@ -145,6 +169,10 @@ std::vector<Territory*> Player::toDefend() {
  * @return std::vector<Territory*> List of all adjacent enemy territories that can be attacked
  */
 std::vector<Territory*> Player::toAttack() {
+    // if I have a strategy, delegate to it.
+    if (playerStrategy) {
+        return playerStrategy->toAttack();
+    }
     std::vector<Territory*> attackList;
     for (Territory* mine : ownedTerritories) {
         for (Territory* adj : mine->getAdjacents()) {
@@ -164,9 +192,15 @@ std::vector<Territory*> Player::toAttack() {
  * @brief Issues a new order and adds it to the player's order list
  * @param orderIssued Pointer to the order being issued
  */
-void Player::issueOrder(Order* orderIssued) {
-    if (!orders_ || !orderIssued) return;
+bool Player::issueOrder(Order* orderIssued) {
+    if (!orders_ || !orderIssued) return false;
+
+    // If I have a strategy, delegate to it.
+    if(playerStrategy)
+        return playerStrategy->issueOrder();
+        
     orders_->add(orderIssued);
+    return true;
 }
 
 
@@ -195,6 +229,11 @@ bool Player::issueOrder() {
     // If I literally own nothing, I can't issue anything.
     if (ownedTerritories.empty()) {
         return false;
+    }
+
+    // If I have a strategy, delegate to it.
+    if(playerStrategy) {
+        return playerStrategy->issueOrder();
     }
 
     // ---------------------------
@@ -283,7 +322,6 @@ bool Player::issueOrder() {
     return false;
 }
 
-
 /**
  * @brief Issues the next order in the player's order list
  * @return bool True if an order was issued, false if no orders are available
@@ -354,11 +392,6 @@ bool Player::hasTerritories() const {
     return !ownedTerritories.empty();
 }
 
-
-
-
-
-//Debug / Print
 
 // Stream overloading for Player.
 std::ostream& operator<<(std::ostream& os, const Player& player) {
