@@ -17,10 +17,12 @@ class Order;
 class PlayerStrategy {
 	
 	public:
-		PlayerStrategy();
+        PlayerStrategy();
+		PlayerStrategy(Player* player);
 		virtual ~PlayerStrategy();
 		
 		virtual bool issueOrder() = 0;
+        virtual bool issueOrder(Order* orderIssued) = 0;
 		virtual std::vector<Territory*> toAttack() = 0;
 		virtual std::vector<Territory*> toDefend() = 0;
 
@@ -28,6 +30,9 @@ class PlayerStrategy {
 		PlayerStrategy(const PlayerStrategy& other);
 		PlayerStrategy& operator=(const PlayerStrategy& other);
 		friend std::ostream& operator<<(std::ostream& os, const PlayerStrategy& ps);
+
+        Player* getPlayer() const;
+        void setPlayer(Player* player);
 
 	protected: 
 		Player * player_;
