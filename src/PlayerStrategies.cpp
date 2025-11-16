@@ -9,7 +9,10 @@
 /** Currently all functions are placeholders.
  * @TODO: Determine if these must be implemented or if they can all be
  * defaulted. */
-PlayerStrategy::PlayerStrategy() = default;
+
+PlayerStrategy::PlayerStrategy() : player_(nullptr) {}
+
+PlayerStrategy::PlayerStrategy(Player* player) : player_(player) {}
 
 PlayerStrategy::~PlayerStrategy() {
     // Empty but needed for proper cleanup of derived classes
@@ -32,6 +35,14 @@ std::ostream& operator<<(std::ostream& os, const PlayerStrategy& strategy) {
     (void)strategy;
     os << "PlayerStrategy Unknown Type";
     return os;
+}
+
+Player* PlayerStrategy::getPlayer() const {
+    return player_;
+}
+
+void PlayerStrategy::setPlayer(Player* player) {
+    player_ = player;
 }
 
 // ====================== AggressivePlayerStrategy =======================
