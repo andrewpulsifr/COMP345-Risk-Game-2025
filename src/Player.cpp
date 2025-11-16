@@ -15,10 +15,11 @@ Player::Player()
     : playerName("defaultName"),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()), 
       cardAwardedThisTurn(false),
       negotiatedPlayers(),
-      reinforcementPool(0)
+      reinforcementPool(0),
+      orders_(new OrdersList()), 
+      playerStrategy()
       {}
 
 // Constructor with strategy parameter for Player.
@@ -26,10 +27,10 @@ Player::Player(PlayerStrategy* strategy)
     : playerName("defaultName"),
         playerHand(new Hand()),
         ownedTerritories(),
-        orders_(new OrdersList()),
         cardAwardedThisTurn(false),
         negotiatedPlayers(),
         reinforcementPool(0),
+        orders_(new OrdersList()),
         playerStrategy(strategy)
         {}
 
@@ -38,10 +39,11 @@ Player::Player(const Player& copyPlayer)
     : playerName(copyPlayer.playerName),
       playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
-      orders_(new OrdersList(*copyPlayer.orders_)),
       cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn),
       negotiatedPlayers(copyPlayer.negotiatedPlayers),
-      reinforcementPool(copyPlayer.reinforcementPool)
+      reinforcementPool(copyPlayer.reinforcementPool),
+      orders_(new OrdersList(*copyPlayer.orders_)),
+      playerStrategy(copyPlayer.playerStrategy)
 {}
 
 
@@ -50,10 +52,11 @@ Player::Player(std::string name)
     : playerName(std::move(name)),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()),
       cardAwardedThisTurn(false),
       negotiatedPlayers(),
-      reinforcementPool(0)
+      reinforcementPool(0),
+      orders_(new OrdersList()),
+      playerStrategy()
 {}
 
 
@@ -161,7 +164,7 @@ std::vector<Territory*> Player::toDefend() {
     if (playerStrategy) {
         return playerStrategy->toDefend();
     }
-    return ownedTerritories;
+    return ownedTerritories; // TODO: delete once strategies are implemented
 }
 
 /**
@@ -173,6 +176,9 @@ std::vector<Territory*> Player::toAttack() {
     if (playerStrategy) {
         return playerStrategy->toAttack();
     }
+    /** TODO: Remove and migrate logic below to concrete strategies
+     * Use only to as per the spec 
+     */
     std::vector<Territory*> attackList;
     for (Territory* mine : ownedTerritories) {
         for (Territory* adj : mine->getAdjacents()) {
@@ -197,7 +203,10 @@ bool Player::issueOrder(Order* orderIssued) {
 
     // If I have a strategy, delegate to it.
     if(playerStrategy)
-        return playerStrategy->issueOrder();
+        return playerStrategy->issueOrder(orderIssued);
+     /** TODO: Remove and migrate logic below to concrete strategies
+     * Use only to as per the spec 
+     */
         
     orders_->add(orderIssued);
     return true;
@@ -236,6 +245,9 @@ bool Player::issueOrder() {
         return playerStrategy->issueOrder();
     }
 
+    /** TODO: Remove and migrate logic below to concrete strategies
+     * Use only to as per the spec 
+     */
     // ---------------------------
     // (A) DEPLOY-ONLY while pool > 0
     // ---------------------------
