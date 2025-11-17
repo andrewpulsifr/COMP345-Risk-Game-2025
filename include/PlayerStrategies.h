@@ -19,7 +19,8 @@ class PlayerStrategy {
 	public:
         PlayerStrategy();
 		PlayerStrategy(Player* player);
-		virtual ~PlayerStrategy();
+		virtual ~PlayerStrategy() = default;
+        virtual PlayerStrategy* clone() = 0;
 		
 		virtual bool issueOrder() = 0;
         virtual bool issueOrder(Order* orderIssued) = 0;
@@ -47,11 +48,15 @@ class HumanPlayerStrategy : public PlayerStrategy {
 	public:
 		HumanPlayerStrategy();
 		~HumanPlayerStrategy() override;
+		PlayerStrategy* clone() override;
 		
 		bool issueOrder() override;
+		bool issueOrder(Order* orderIssued) override;
 		std::vector<Territory*> toAttack() override;
-		std::vector<Territory*> toDefend() override;        HumanPlayerStrategy(const HumanPlayerStrategy& other);
-        HumanPlayerStrategy& operator=(const HumanPlayerStrategy& other); 
+		std::vector<Territory*> toDefend() override;
+
+		HumanPlayerStrategy(const HumanPlayerStrategy& other);
+		HumanPlayerStrategy& operator=(const HumanPlayerStrategy& other); 
         friend std::ostream& operator<<(std::ostream& os, const HumanPlayerStrategy& ps);
 };
 
@@ -64,8 +69,10 @@ class AggressivePlayerStrategy : public PlayerStrategy {
 	public:
 		AggressivePlayerStrategy();
 		~AggressivePlayerStrategy() override;
+		PlayerStrategy* clone() override;
 
 		bool issueOrder() override;
+		bool issueOrder(Order* orderIssued) override;
 		std::vector<Territory*> toAttack() override;
 		std::vector<Territory*> toDefend() override;
 
@@ -85,8 +92,10 @@ class BenevolentPlayerStrategy : public PlayerStrategy {
 	public:
 		BenevolentPlayerStrategy();
 		~BenevolentPlayerStrategy() override;
+		PlayerStrategy* clone() override;
 
 		bool issueOrder() override;
+		bool issueOrder(Order* orderIssued) override;
 		std::vector<Territory*> toAttack() override;
 		std::vector<Territory*> toDefend() override;
 
@@ -106,8 +115,10 @@ class NeutralPlayerStrategy : public PlayerStrategy {
 	public:
 		NeutralPlayerStrategy();
 		~NeutralPlayerStrategy() override;
+		PlayerStrategy* clone() override;
 
 		bool issueOrder() override;
+		bool issueOrder(Order* orderIssued) override;
 		std::vector<Territory*> toAttack() override;
 		std::vector<Territory*> toDefend() override;
 
@@ -125,8 +136,10 @@ class CheaterPlayerStrategy : public PlayerStrategy {
 	public:
 		CheaterPlayerStrategy();
 		~CheaterPlayerStrategy() override;
+		PlayerStrategy* clone() override;
 
 		bool issueOrder() override;
+		bool issueOrder(Order* orderIssued) override;
 		std::vector<Territory*> toAttack() override;
 		std::vector<Territory*> toDefend() override;
 

@@ -14,19 +14,13 @@ PlayerStrategy::PlayerStrategy() : player_(nullptr) {}
 
 PlayerStrategy::PlayerStrategy(Player* player) : player_(player) {}
 
-PlayerStrategy::~PlayerStrategy() {
-    // Empty but needed for proper cleanup of derived classes
-}
-
-PlayerStrategy::PlayerStrategy(const PlayerStrategy& other) {
-    (void)other;
-    // Abstract class copy - usually does nothing
-    // Concrete strategies handle their own copying
+PlayerStrategy::PlayerStrategy(const PlayerStrategy& other) : player_(other.player_) {
+    // Base class copy: shallow copy of the player pointer is sufficient here.
 }
 
 PlayerStrategy& PlayerStrategy::operator=(const PlayerStrategy& other) {
     if (this != &other) {
-        // Abstract class assignment does nothing
+        player_ = other.player_;
     }
     return *this;
 }
@@ -68,6 +62,10 @@ AggressivePlayerStrategy& AggressivePlayerStrategy::operator=(const AggressivePl
     return *this;
 }
 
+PlayerStrategy* AggressivePlayerStrategy::clone() {
+    return new AggressivePlayerStrategy(*this);
+}
+
 std::ostream& operator<<(std::ostream& os, const AggressivePlayerStrategy& ps) {
     (void)ps;
     os << "AggressivePlayerStrategy";
@@ -101,6 +99,14 @@ bool AggressivePlayerStrategy::issueOrder() {
     return false;
 }
 
+// Overload that accepts an Order pointer. Default behavior: ignore the provided
+// order and delegate to the parameterless issueOrder(). This satisfies the
+// pure-virtual signature in the header so concrete classes are not abstract.
+bool AggressivePlayerStrategy::issueOrder(Order* orderIssued) {
+    (void)orderIssued;
+    return issueOrder();
+}
+
 // ====================== BenevolentPlayerStrategy =======================
 
 /** Currently all functions are placeholders.
@@ -121,6 +127,10 @@ BenevolentPlayerStrategy& BenevolentPlayerStrategy::operator=(const BenevolentPl
         // Copy any BenevolentPlayerStrategy-specific members here if added in future
     }
     return *this;
+}
+
+PlayerStrategy* BenevolentPlayerStrategy::clone() {
+    return new BenevolentPlayerStrategy(*this);
 }
 
 std::ostream& operator<<(std::ostream& os, const BenevolentPlayerStrategy& ps) {
@@ -155,6 +165,11 @@ bool BenevolentPlayerStrategy::issueOrder() {
     return false;
 }
 
+bool BenevolentPlayerStrategy::issueOrder(Order* orderIssued) {
+    (void)orderIssued;
+    return issueOrder();
+}
+
 // ====================== NeutralPlayerStrategy =======================
 
 NeutralPlayerStrategy::NeutralPlayerStrategy() : PlayerStrategy() {}
@@ -172,6 +187,10 @@ NeutralPlayerStrategy& NeutralPlayerStrategy::operator=(const NeutralPlayerStrat
         // Copy any NeutralPlayerStrategy-specific members here if added in future
     }
     return *this;
+}
+
+PlayerStrategy* NeutralPlayerStrategy::clone() {
+    return new NeutralPlayerStrategy(*this);
 }
 
 std::ostream& operator<<(std::ostream& os, const NeutralPlayerStrategy& ps) {
@@ -202,6 +221,11 @@ bool NeutralPlayerStrategy::issueOrder() {
     return false;
 }
 
+bool NeutralPlayerStrategy::issueOrder(Order* orderIssued) {
+    (void)orderIssued;
+    return issueOrder();
+}
+
 // ====================== HumanPlayerStrategy =======================
 
 /** Currently all functions are placeholders.
@@ -222,6 +246,10 @@ HumanPlayerStrategy& HumanPlayerStrategy::operator=(const HumanPlayerStrategy& o
         // Copy any HumanPlayerStrategy-specific members here if added in future
     }
     return *this;
+}
+
+PlayerStrategy* HumanPlayerStrategy::clone() {
+    return new HumanPlayerStrategy(*this);
 }
 
 std::ostream& operator<<(std::ostream& os, const HumanPlayerStrategy& ps) {
@@ -259,6 +287,11 @@ bool HumanPlayerStrategy::issueOrder() {
     return false;
 }
 
+bool HumanPlayerStrategy::issueOrder(Order* orderIssued) {
+    (void)orderIssued;
+    return issueOrder();
+}
+
 // ====================== CheaterPlayerStrategy =======================
 
 CheaterPlayerStrategy::CheaterPlayerStrategy() : PlayerStrategy() {}
@@ -282,6 +315,10 @@ std::ostream& operator<<(std::ostream& os, const CheaterPlayerStrategy& ps) {
     (void)ps;
     os << "CheaterPlayerStrategy";
     return os;
+}
+
+PlayerStrategy* CheaterPlayerStrategy::clone() {
+    return new CheaterPlayerStrategy(*this);
 }
 
 /**  TODO: Return empty list (doesn't need to defend)
@@ -309,4 +346,9 @@ bool CheaterPlayerStrategy::issueOrder() {
     // Dummy implementation - do nothing
     std::cout << "[CheaterPlayerStrategy] issueOrder() - NOT IMPLEMENTED\n";
     return false;
+}
+
+bool CheaterPlayerStrategy::issueOrder(Order* orderIssued) {
+    (void)orderIssued;
+    return issueOrder();
 }

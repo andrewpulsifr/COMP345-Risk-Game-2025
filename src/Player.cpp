@@ -15,8 +15,8 @@ Player::Player()
     : playerName("defaultName"),
       playerHand(new Hand()),
       ownedTerritories(),
-      cardAwardedThisTurn(false),
       negotiatedPlayers(),
+      cardAwardedThisTurn(false),
       reinforcementPool(0),
       orders_(new OrdersList()), 
       playerStrategy()
@@ -27,8 +27,8 @@ Player::Player(PlayerStrategy* strategy)
     : playerName("defaultName"),
         playerHand(new Hand()),
         ownedTerritories(),
-        cardAwardedThisTurn(false),
         negotiatedPlayers(),
+        cardAwardedThisTurn(false),
         reinforcementPool(0),
         orders_(new OrdersList()),
         playerStrategy(strategy)
@@ -39,12 +39,17 @@ Player::Player(const Player& copyPlayer)
     : playerName(copyPlayer.playerName),
       playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
-      cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn),
       negotiatedPlayers(copyPlayer.negotiatedPlayers),
+      cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn),
       reinforcementPool(copyPlayer.reinforcementPool),
       orders_(new OrdersList(*copyPlayer.orders_)),
-      playerStrategy(copyPlayer.playerStrategy)
-{}
+      playerStrategy(nullptr)
+{
+    if (copyPlayer.playerStrategy) {
+        playerStrategy = copyPlayer.playerStrategy->clone();
+        playerStrategy->setPlayer(this);
+    }
+}
 
 
 // Constructor with name parameter for Player.
@@ -52,8 +57,8 @@ Player::Player(std::string name)
     : playerName(std::move(name)),
       playerHand(new Hand()),
       ownedTerritories(),
-      cardAwardedThisTurn(false),
       negotiatedPlayers(),
+      cardAwardedThisTurn(false),
       reinforcementPool(0),
       orders_(new OrdersList()),
       playerStrategy()
@@ -71,6 +76,7 @@ Player& Player::operator=(const Player& copyPlayer) {
         
         // Delete existing playerHand to prevent memory leak
         delete playerHand;
+        playerHand = nullptr;
         playerHand = new Hand(*copyPlayer.playerHand);
         
         ownedTerritories = copyPlayer.ownedTerritories;
@@ -78,7 +84,17 @@ Player& Player::operator=(const Player& copyPlayer) {
         *orders_ = *copyPlayer.orders_;
         cardAwardedThisTurn = copyPlayer.cardAwardedThisTurn;
         negotiatedPlayers = copyPlayer.negotiatedPlayers;  
-        reinforcementPool = copyPlayer.reinforcementPool;  }
+        reinforcementPool = copyPlayer.reinforcementPool;
+
+        delete playerStrategy;
+        playerStrategy = nullptr;
+        if (copyPlayer.playerStrategy) {
+            playerStrategy = copyPlayer.playerStrategy->clone();
+            playerStrategy->setPlayer(this);
+        }
+    }
+
+       
     return *this;
 }
 
@@ -87,6 +103,10 @@ Player& Player::operator=(const Player& copyPlayer) {
 Player::~Player() {
     delete playerHand;
     delete orders_;
+    delete playerStrategy;
+    playerStrategy = nullptr;
+    playerHand = nullptr;
+    orders_ = nullptr;
 }
 // Neutral player instance
 Player* neutralPlayer = nullptr;
