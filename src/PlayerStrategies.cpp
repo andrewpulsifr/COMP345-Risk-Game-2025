@@ -62,7 +62,7 @@ AggressivePlayerStrategy& AggressivePlayerStrategy::operator=(const AggressivePl
     return *this;
 }
 
-PlayerStrategy* AggressivePlayerStrategy::clone() {
+PlayerStrategy* AggressivePlayerStrategy::clone() const {
     return new AggressivePlayerStrategy(*this);
 }
 
@@ -129,7 +129,7 @@ BenevolentPlayerStrategy& BenevolentPlayerStrategy::operator=(const BenevolentPl
     return *this;
 }
 
-PlayerStrategy* BenevolentPlayerStrategy::clone() {
+PlayerStrategy* BenevolentPlayerStrategy::clone() const {
     return new BenevolentPlayerStrategy(*this);
 }
 
@@ -189,7 +189,7 @@ NeutralPlayerStrategy& NeutralPlayerStrategy::operator=(const NeutralPlayerStrat
     return *this;
 }
 
-PlayerStrategy* NeutralPlayerStrategy::clone() {
+PlayerStrategy* NeutralPlayerStrategy::clone() const {
     return new NeutralPlayerStrategy(*this);
 }
 
@@ -248,7 +248,7 @@ HumanPlayerStrategy& HumanPlayerStrategy::operator=(const HumanPlayerStrategy& o
     return *this;
 }
 
-PlayerStrategy* HumanPlayerStrategy::clone() {
+PlayerStrategy* HumanPlayerStrategy::clone() const {
     return new HumanPlayerStrategy(*this);
 }
 
@@ -317,7 +317,7 @@ std::ostream& operator<<(std::ostream& os, const CheaterPlayerStrategy& ps) {
     return os;
 }
 
-PlayerStrategy* CheaterPlayerStrategy::clone() {
+PlayerStrategy* CheaterPlayerStrategy::clone() const {
     return new CheaterPlayerStrategy(*this);
 }
 

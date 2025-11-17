@@ -19,9 +19,8 @@ Player::Player()
       cardAwardedThisTurn(false),
       reinforcementPool(0),
       orders_(new OrdersList()), 
-      playerStrategy()
+      playerStrategy(nullptr)
       {}
-
 // Constructor with strategy parameter for Player.
 Player::Player(PlayerStrategy* strategy)
     : playerName("defaultName"),
@@ -32,7 +31,11 @@ Player::Player(PlayerStrategy* strategy)
         reinforcementPool(0),
         orders_(new OrdersList()),
         playerStrategy(strategy)
-        {}
+{
+    if (playerStrategy) {
+        playerStrategy->setPlayer(this);
+    }
+}
 
 // Deep Copy Constructor for Player.
 Player::Player(const Player& copyPlayer)
@@ -123,6 +126,9 @@ Hand* Player::getPlayerHand() const {
 
 void Player::setPlayerStrategy(PlayerStrategy* strategy) {
     playerStrategy = strategy;
+    if (playerStrategy) {
+        playerStrategy->setPlayer(this);
+    }
 }
 
 PlayerStrategy* Player::getPlayerStrategy() const {

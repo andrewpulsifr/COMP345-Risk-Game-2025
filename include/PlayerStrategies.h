@@ -20,7 +20,7 @@ class PlayerStrategy {
         PlayerStrategy();
 		PlayerStrategy(Player* player);
 		virtual ~PlayerStrategy() = default;
-        virtual PlayerStrategy* clone() = 0;
+        virtual PlayerStrategy* clone() const = 0;
 		
 		virtual bool issueOrder() = 0;
         virtual bool issueOrder(Order* orderIssued) = 0;
@@ -48,7 +48,7 @@ class HumanPlayerStrategy : public PlayerStrategy {
 	public:
 		HumanPlayerStrategy();
 		~HumanPlayerStrategy() override;
-		PlayerStrategy* clone() override;
+		PlayerStrategy* clone() const override;
 		
 		bool issueOrder() override;
 		bool issueOrder(Order* orderIssued) override;
@@ -69,7 +69,7 @@ class AggressivePlayerStrategy : public PlayerStrategy {
 	public:
 		AggressivePlayerStrategy();
 		~AggressivePlayerStrategy() override;
-		PlayerStrategy* clone() override;
+		PlayerStrategy* clone() const override;
 
 		bool issueOrder() override;
 		bool issueOrder(Order* orderIssued) override;
@@ -92,7 +92,7 @@ class BenevolentPlayerStrategy : public PlayerStrategy {
 	public:
 		BenevolentPlayerStrategy();
 		~BenevolentPlayerStrategy() override;
-		PlayerStrategy* clone() override;
+		PlayerStrategy* clone() const override;
 
 		bool issueOrder() override;
 		bool issueOrder(Order* orderIssued) override;
@@ -115,7 +115,7 @@ class NeutralPlayerStrategy : public PlayerStrategy {
 	public:
 		NeutralPlayerStrategy();
 		~NeutralPlayerStrategy() override;
-		PlayerStrategy* clone() override;
+		PlayerStrategy* clone() const override;
 
 		bool issueOrder() override;
 		bool issueOrder(Order* orderIssued) override;
@@ -136,7 +136,7 @@ class CheaterPlayerStrategy : public PlayerStrategy {
 	public:
 		CheaterPlayerStrategy();
 		~CheaterPlayerStrategy() override;
-		PlayerStrategy* clone() override;
+		PlayerStrategy* clone() const override;
 
 		bool issueOrder() override;
 		bool issueOrder(Order* orderIssued) override;
