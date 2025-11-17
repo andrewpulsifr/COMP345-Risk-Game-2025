@@ -19,7 +19,7 @@ class PlayerStrategy {
 	public:
         PlayerStrategy();
 		PlayerStrategy(Player* player);
-		virtual ~PlayerStrategy() = default;
+		virtual ~PlayerStrategy();
         virtual PlayerStrategy* clone() const = 0;
 		
 		virtual bool issueOrder() = 0;

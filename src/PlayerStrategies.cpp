@@ -12,6 +12,8 @@
 
 PlayerStrategy::PlayerStrategy() : player_(nullptr) {}
 
+PlayerStrategy::~PlayerStrategy() = default;
+
 PlayerStrategy::PlayerStrategy(Player* player) : player_(player) {}
 
 PlayerStrategy::PlayerStrategy(const PlayerStrategy& other) : player_(other.player_) {
