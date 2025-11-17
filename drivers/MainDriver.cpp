@@ -32,6 +32,7 @@ void testCommandProcessor(int argc, char* argv[]);
 void testStartupPhase(int argc, char* argv[]);
 void testLoggingObserver();
 void testMainGameLoop();
+void testPlayerStrategies(); // TODO: not yet implemented
 
 /**
  * @brief Main entry point for Warzone component testing
