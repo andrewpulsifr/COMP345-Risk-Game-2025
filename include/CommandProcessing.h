@@ -11,9 +11,10 @@
  *       The driver `testCommandProcessor()` is implemented in CommandProcessingDriver.cpp.
  */
 
- #pragma once
+#pragma once
 #include <string>
 #include <fstream>
+#include <vector>
 #include "LoggingObserver.h"
 
 class Command;
@@ -33,6 +34,11 @@ class CommandProcessor: public ILoggable , public Subject {
         
         // ILoggable interface
         std::string stringToLog() const override;
+
+
+        // === A3, Part 2: Tournament Mode ===
+        std::string cleanWhiteSpace(const std::string& command);
+        std::vector<int> validateTournament(const std::string& command);
 
     protected:
         Command* saveCommand(std::string& commandRead);
