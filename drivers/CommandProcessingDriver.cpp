@@ -46,3 +46,13 @@ void testCommandProcessor(int argc, char* argv[]) {
     delete commandPro;
     commandPro = nullptr;
 }
+
+
+
+// === A3, PART 2: TOURNAMENT MODE ===
+
+void testTournament() {
+    GameEngine engine;
+    std::string effectMsg = "Placeholder effect";
+    engine.handleTournament("tournament -M   1 -P  2 -G       3 -D  4", effectMsg); // TESTING 
+}
