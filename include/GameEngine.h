@@ -193,8 +193,8 @@ public:
     void startupPhase(GameEngine& engine, CommandProcessor& commandPro);
 
     // === A3, P2: Tournament Mode ===
-    // ** CURRENTLY IN PUBLIC FOR TESTING **
-    bool handleTournament(const std::string& command, std::string& effectMsg);
+    // ** CURRENTLY IN PUBLIC FOR TESTING (ROMAN's IMPLEMENTATION) **
+    bool handleTournament(const std::string& command);
 
 private:
     // Type aliases for readability
@@ -236,8 +236,6 @@ private:
     // Handling Gamestart command in Game startup phase (Part 2 of A2).
     void handleGamestart();
     void printGamestartLog() const;
-
-    // === A3, P2: Tournament Mode ===
 
 };
 

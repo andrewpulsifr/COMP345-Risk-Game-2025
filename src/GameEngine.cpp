@@ -632,7 +632,7 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
         // printGamestartLog();
         effectMsg = "Game started: territories distributed, turn order randomized, cards dealt.";
     } else if (commandOnly == TOURNAMENT) {
-        handleTournament(command, effectMsg);
+        handleTournament(command);
     } else if (commandOnly == END_ISSUE_ORDERS || commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS) {
         handleExecuteOrders(command);
         effectMsg = "Orders executed.";
@@ -1405,23 +1405,18 @@ void GameEngine::printGamestartLog() const {
 
 /**
  * @brief Execuion the tournament command after being validated and processed in the CommandProcessor.
- * @param command, a string that should contain the values of -M (numOfMaps), -P (numOfPlayersIndex), -G (numOfGamesIndex), and -D (maxNumOfTurnsIndex).
- * @param effectMsg, updates the string if the tournament command entered is not valid.
+ * @param command, a string that should contain the values of -M (listOfMaps), -P (listOfPlayerStrats), -G (numOfGames), and -D (maxNumOfTurns).
  * @return boolean value that tells if the string entered is valid or not.
  */
-bool GameEngine::handleTournament(const std::string& command, std::string& effectMsg) {
+bool GameEngine::handleTournament(const std::string& command) {
     cout << "  -> Handling Tournament...\n" << endl;
 
-    // Get values of the parameters entered (-M, -P, -G, -D), stored in a vector of ints:
-    CommandProcessor cmdPro;
-    // std::vector<int> tournamentValues = cmdPro.validateTournament(command);
+    // ** TODO: THE REST IS ROMAN'S IMPLEMENTATION! **
+    // Note: To get the values of the tournament command, see the printTournamentCommandLog() function in CommandProcessor.
+    // use extractMapOrPlayerOfTournament() to return a vector of int values of the tournament (numOfMaps, numOfPlayerStratsIndex, numOfGames, maxNumOfTurns).
+    // use extractMapOrPlayerOfTournament() to return a vector of string values that was entered with the tournament command (to get the listOfMaps, and listOfPlayerStrategies).
+    // Might have to declare a temp. commandprocessor object in this method to use.
     
-    // std::cout << "The values of the parameters are: ";
-    // for(int param : tournamentValues) {
-    //     std::cout << param << ", ";
-    // }
-
-
     return true;
 }
 

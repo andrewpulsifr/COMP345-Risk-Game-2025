@@ -1,13 +1,15 @@
 /**
  * @file CommandProcessing.cpp
- * @brief Implementation of Assignment 2 - Part 1: Command Processor and Command Adapter.
- * @author Chhay (A2, P1)
+ * @brief Implementation of Assignment 2 - Part 1: Command Processor and Command Adapter, and Assignment 3 - Part 2: Tournament Mode.
+ * @author Chhay (A2, P1 and A3, P2)
  * @date November 2025
- * @version 1.0
+ * @version 2.0
  * 
  * This file contains the implementation of the command processor and command adapter that processes
  * the command that is entered either through -console or read through -file. It works with the GameEngine to
  * process the states of the game. The command adapter follows the Adapter Pattern.
+ * 
+ * Additionally, this file also implements the processing and validation of the 'tournament' command.
  */
  
 #include "../include/GameEngine.h"
@@ -180,6 +182,8 @@ std::string CommandProcessor::stringToLog() const {
 }
 
 
+
+
 // ===== A3, Part 2: Tournament Mode =====
 
 /** @brief A Helper Function, that clean the whitespace of commands to extract only the string entered.
@@ -187,94 +191,111 @@ std::string CommandProcessor::stringToLog() const {
  * @return the cleaned string.
  */
 std::string CommandProcessor::cleanWhiteSpace(const std::string& command) {
-    size_t start = command.find_first_not_of(" \t\r\n");
-    size_t end = command.find_last_not_of(" \t\r\n");
+    std::size_t start = command.find_first_not_of(" \t\r\n");
+    std::size_t end = command.find_last_not_of(" \t\r\n");
+
+    // Throw an exception if the string entered is whitespace only.
+    if(start == std::string::npos) {
+        throw std::invalid_argument("One of the parameter values is empty. Please re-enter command.");
+    }
 
     std::string cleanedCommand = command.substr(start, end - start + 1);
 
     return cleanedCommand;
 }
 
+
+/** @brief A helper function for validateTournament() to process the list of map entered with the tournament command.
+ * @param command string to parse, startIndex and endIndex to determine area of command we need to process.
+ * @return a vector that contains the map/playerStrats names.
+ */
+std::vector<std::string> CommandProcessor::extractMapOrPlayerOfTournament(const std::string& command, const std::size_t startIndex, const std::size_t endIndex) {
+    std::vector<std::string> namesEntered; // Temporary vector to store and return the validate values of Map or Player names entered.
+    std::string nameExtracted; // temp string used in while loop below to store each map/player name in the vector.
+
+    // Extract the list of Maps or Players, excluding the letters themselves.
+    std::string listStr = command.substr(startIndex + 2, endIndex - startIndex - 2);
+    listStr = cleanWhiteSpace(listStr);
+
+    // Process the list by reading the items (maps/players) entered.
+    // Use istringstream to continuously read the list of maps entered and store it in the temp vector (namesEntered).
+    std::istringstream iss(listStr);
+
+    while(iss >> nameExtracted) {
+        namesEntered.push_back(nameExtracted);
+    }
+ 
+    return namesEntered; 
+}
+
+
 /** 
  * @brief To validate the parameters entered in the line of tournament command.
- * @return A vector of int values, that corresponds to the value of -M, -P, -G, -D.
+ * @return A vector of int values, that corresponds to the count or number entered of -M, -P, -G, -D.
  */
 std::vector<int> CommandProcessor::validateTournament(const std::string& command) {
-    std::cout << "  -> Validating Tournament...\n" << std::endl;
     
     // Temporary vector to store and return the validate values.
     std::vector<int> tournamentValues;
 
-    // Temp variables and vector for extracting and storing map and player names in the while loop below.
-    std::string nameExtracted; // temp string used in while loop below to store each map/player name in the vector.
-    std::vector<std::string> mapNames;
-    std::vector<std::string> playerNames;
-
-
     // Get the position index of each parameter, used to extract their respective values.
     std::size_t listOfMapsIndex = command.find("-M");
-    std::size_t listOfPlayersIndex = command.find("-P");
+    std::size_t listOfPlayerStratsIndex = command.find("-P");
     std::size_t numOfGamesIndex = command.find("-G");
     std::size_t maxNumOfTurnsIndex = command.find("-D");
 
-    // Throw an exception if the parameters or their values are not found.
-    if(listOfMapsIndex == std::string::npos || listOfPlayersIndex == std::string::npos || numOfGamesIndex == std::string::npos || maxNumOfTurnsIndex == std::string::npos) {
-        throw std::invalid_argument("");
+    // Throw an exception if one or more of the parameters (-M, -P, -G, -D) is not found.
+    if(listOfMapsIndex == std::string::npos || listOfPlayerStratsIndex == std::string::npos || numOfGamesIndex == std::string::npos || maxNumOfTurnsIndex == std::string::npos) {
+        throw std::invalid_argument("One or more of the parameter (-M, -P, -G, -D) is not found. Please re-enter command.");
     }
 
 
 
+    // Extract the list of Maps, entered after -M and before -P.
+    // use the extractMapOrPlayerOfTournament() to return a vector of map names entered and extract the size to check if it's valid.
+    std::vector<std::string> mapNames = extractMapOrPlayerOfTournament(command, listOfMapsIndex, listOfPlayerStratsIndex);
+    std::size_t numOfMaps = mapNames.size();
 
-    // Extract the list of Maps, entered after -M and before -P, excluding the letters themselves.
-    std::string listOfMapsStr = command.substr(listOfMapsIndex + 2, listOfPlayersIndex - listOfMapsIndex - 2);
-    listOfMapsStr = cleanWhiteSpace(listOfMapsStr);
+    // Check the maps entered to make sure they are valid/exist.
+    // (adapted from validateMapFileExists() because it's a private function in GameEngine.)
+    for(std::string mapStr : mapNames) {
+        std::string mapPath = "assets/maps/" + mapStr;
+        
+        std::ifstream fileCheck(mapPath);
+        bool exists = fileCheck.good();
+        fileCheck.close();
 
-    // Process the Maps by validating and counting the number of maps entered.
-    
-        // Use istringstream to continuously read the list of maps entered and store it in a temp vector (called mapNames);
-        std::istringstream iss(listOfMapsStr);
-
-        while(iss >> nameExtracted) {
-            mapNames.push_back(nameExtracted);
+        if(!exists) {
+            throw std::invalid_argument("One or more of the map name(s) entered is not valid. Please re-enter command.");
         }
-
-        // reset istringstream to be reused in the player validation below.
-        iss.clear();
-
-    std::size_t numOfMaps = mapNames.size(); // get size of the vector of map names.
+    }
 
     // Check if it is a valid value. If the value is invalid, an exception is thrown and should be caught in the main command loop that asks user to re-enter a command.
     if(numOfMaps < 1 || numOfMaps > 5)
         throw std::out_of_range("The number of Map(s) entered is invalid. Please re-enter the tournament command, with a -M value between 1 - 5.");
 
-    std::cout << "    The Number of Maps is valid, with a value of: " << numOfMaps << std::endl;
+    // std::cout << "    The Number of Maps is valid, with a value of: " << numOfMaps << std::endl;
     tournamentValues.push_back(numOfMaps);
 
     
     
+    // Extract the list of Player Strat(s), entered after -P and before -G.
+    std::vector<std::string> playerStratNames = extractMapOrPlayerOfTournament(command, listOfPlayerStratsIndex, numOfGamesIndex);
+    std::size_t numOfPlayerStrats = playerStratNames.size(); // get size of the vector of player names.
 
-    // Extract the number of Players.
-    std::string listOfPlayersStr = command.substr(listOfPlayersIndex + 2, numOfGamesIndex - listOfPlayersIndex - 2);
-    listOfPlayersStr = cleanWhiteSpace(listOfPlayersStr);
-
-    // Process the Maps by validating and counting the number of maps entered.
-    
-        // Reuse istringstream declared in map above to read the list of players entered and store it in a temp vector (called playerNames);
-        iss.str(listOfPlayersStr);
-
-        while(iss >> nameExtracted) {
-            playerNames.push_back(nameExtracted);
+    // Chceck to see if the player strategy enter is valid. If not, throw an exception.
+    for(std::string playerStrat : playerStratNames) {
+        if(playerStrat == "Neutral" || playerStrat == "Cheater" || playerStrat == "Human" || playerStrat == "Aggressive" || playerStrat == "Benevolent") {
+        } else {
+            throw std::invalid_argument("One or more of the player strategy(s) entered is not valid. Please re-enter command.");
         }
+    }
 
-    std::size_t numOfPlayers = playerNames.size(); // get size of the vector of player names.
-
-    if(numOfPlayers < 2 || numOfPlayers > 4)
-        throw std::out_of_range("The number of Player(s) entered is invalid. Please re-enter the tournament command, with a -P value between 2 - 4.");
+    if(numOfPlayerStrats < 2 || numOfPlayerStrats > 4)
+        throw std::out_of_range("The number of Player strategy(s) entered is invalid. Please re-enter the tournament command, with a -P value between 2 - 4.");
     
-    std::cout << "    The Number of Players is valid, with a value of: " << numOfPlayers << std::endl;
-    tournamentValues.push_back(numOfPlayers);
-
-
+    // std::cout << "    The Number of Player strategy(s) is valid, with a value of: " << numOfPlayerStrats << std::endl;
+    tournamentValues.push_back(numOfPlayerStrats);
 
 
 
@@ -282,31 +303,57 @@ std::vector<int> CommandProcessor::validateTournament(const std::string& command
     std::string numOfGamesStr = command.substr(numOfGamesIndex + 2, maxNumOfTurnsIndex - numOfGamesIndex - 2);
     numOfGamesStr = cleanWhiteSpace(numOfGamesStr);
 
-    int numOfGames = std::stoi(numOfGamesStr); // convert from string to int value.    
+    // Convert number entered from string to int value.
+    int numOfGames = std::stoi(numOfGamesStr);    
 
     if(numOfGames < 1 || numOfGames > 5)
-            throw std::out_of_range("The number of Game(s) entered is invalid. Please re-enter the tournament command, with a -G value between 1 and 5.");
+        throw std::out_of_range("The number of Game(s) entered is invalid. Please re-enter the tournament command, with a -G value between 1 and 5.");
 
-    std::cout << "    The Number of Games is valid, with a value of: " << numOfGames << std::endl;
+    // std::cout << "    The Number of Games is valid, with a value of: " << numOfGames << std::endl;
     tournamentValues.push_back(numOfGames);
+
 
 
     // Extract the max number of Turns.
     std::string maxNumOfTurnsStr = command.substr(maxNumOfTurnsIndex + 2);
     maxNumOfTurnsStr = cleanWhiteSpace(maxNumOfTurnsStr);
 
-    int maxNumOfTurns = std::stoi(maxNumOfTurnsStr); // convert from string to int value.
+    // convert number entered from string to int value.
+    int maxNumOfTurns = std::stoi(maxNumOfTurnsStr);
 
     if(maxNumOfTurns < 10 || maxNumOfTurns > 50)
         throw std::out_of_range("The number of maximum turn(s) entered is invalid. Please re-enter the tournament command, with a -D value between 10 and 50.");
 
-    std::cout << "    The Max Number of Turns is valid, with a value of: " << maxNumOfTurns << std::endl;
+    // std::cout << "    The Max Number of Turns is valid, with a value of: " << maxNumOfTurns << std::endl;
     tournamentValues.push_back(maxNumOfTurns);
 
-        
-    std::cout << "\n    The Tournament Command is valid!\n" << std::endl;
-
     return tournamentValues;
+}
+
+
+/** @brief To print/display the information and parameters of the tournament command entered.
+ * @param command string.
+ */
+void CommandProcessor::printTournamentCommandLog(const std::string& command) {
+    std::size_t listOfMapsIndex = command.find("-M");
+    std::size_t listOfPlayerStratsIndex = command.find("-P");
+    std::size_t numOfGamesIndex = command.find("-G");
+
+    // tournamentValues will always have a vector of 4 values because a vector is only returned if no errors are thrown in the validateTournament method.
+    std::vector<int> tournamentValues = validateTournament(command); // get the int values of each parameter (4) entered with the tournament command.
+    std::vector<std::string> mapNames = extractMapOrPlayerOfTournament(command, listOfMapsIndex, listOfPlayerStratsIndex); // Get the vector of map(s) entered.
+    std::vector<std::string> playerStratNames = extractMapOrPlayerOfTournament(command, listOfPlayerStratsIndex, numOfGamesIndex); // Get the vector of player strat(s) entered.
+
+    std::cout << "  ============= TOURNAMENT COMMAND LOG =============" << std::endl;
+    std::cout << "    - " << tournamentValues.at(0) << " Map Files (-M) was entered: " << std::endl;
+    for(std::string map : mapNames)
+        std::cout << "        + " << map << std::endl;
+    std::cout << "    - " << tournamentValues.at(1) << " Player Strategies (-P) was entered: " << std::endl;
+    for(std::string playerStrat : playerStratNames)
+        std::cout << "        + " << playerStrat << std::endl;
+    std::cout << "    - " << tournamentValues.at(2) << " Number of Games (-G) was entered." << std::endl;
+    std::cout << "    - " << tournamentValues.at(3) << " Number of Maximum Turns (-D) was entered." << std::endl;
+    std::cout << "  ==================================================" << std::endl;
 }
 
 
@@ -357,11 +404,16 @@ void CommandProcessor::getCommand(GameEngine& engine) {
         if(commandEntered == "tournament" && validCommand) {
             try {
                 validateTournament(lineEntered);
+                std::cout << "  SUCCESS: The Tournament Command entered is valid!" << std::endl;
+                printTournamentCommandLog(lineEntered);
             } catch(const std::out_of_range& valueErr) { // Catch out-of-range errors in the parameters of 'tournament'.
                 std::cout << "ERROR 1: " << valueErr.what() << std::endl;
                 validCommand = false;
-            } catch(const std::invalid_argument& invalidErr) { // Catch invalid 'tournament' without enough parameters/ whitespace.
-                std::cout << "ERROR 2: Please enter a valid 'tournament' command in the following format:\n" <<
+            } catch(const std::invalid_argument& invalidErr) {
+                std::cout << "ERROR 2: " << invalidErr.what() << std::endl;
+                validCommand = false;
+            } catch(...){ // A general catch for all other errors that may occur in 'tournament'.
+                std::cout << "ERROR 3: Please enter a valid 'tournament' command in the following format:\n" <<
                              "       tournament -M <listofmapfiles> -P <listofplayerstrategies> -G <numberofgames> -D <maxnumberofturns>" << std::endl;
                 validCommand = false;
             }
@@ -448,6 +500,7 @@ void FileCommandProcessorAdapter::getCommand(GameEngine& engine) {
         // Read a line from the file.
         lineReadFromFile = readCommand();
 
+
          //Extract only the command, if a mapname or playername is entered.
         std::string commandEntered = lineReadFromFile.substr(0, lineReadFromFile.find(" "));
 
@@ -457,10 +510,32 @@ void FileCommandProcessorAdapter::getCommand(GameEngine& engine) {
             break;
         }
 
+        // Print out the line read.
+        std::cout << "\nCommand read from file: " << lineReadFromFile << std::endl;
+
         // Save the full lineReadFromFile (command + mapname/playername if present) and get its pointer.
         Command* cmdptr = saveCommand(lineReadFromFile);
 
         bool validCommand = validate(engine, *cmdptr);
+
+        // A3, P2 - SAME IMPLEMENTATION FOR TOURNAMENT COMMAND AS THE GETCOMMAND() IN FILEPROCESSOR ABOVE:
+        if(commandEntered == "tournament" && validCommand) {
+            try {
+                validateTournament(lineReadFromFile);
+                std::cout << "  SUCCESS: The Tournament Command entered is valid!" << std::endl;
+                printTournamentCommandLog(lineReadFromFile);
+            } catch(const std::out_of_range& valueErr) { // Catch out-of-range errors in the parameters of 'tournament'.
+                std::cout << "ERROR 1: " << valueErr.what() << std::endl;
+                validCommand = false;
+            } catch(const std::invalid_argument& invalidErr) {
+                std::cout << "ERROR 2: " << invalidErr.what() << std::endl;
+                validCommand = false;
+            } catch(...){ // Catch all other errors that may occur in 'tournament' (ex. not enough parameters).
+                std::cout << "ERROR 3: Please enter a valid 'tournament' command in the following format:\n" <<
+                             "       tournament -M <listofmapfiles> -P <listofplayerstrategies> -G <numberofgames> -D <maxnumberofturns>" << std::endl;
+                validCommand = false;
+            }
+        }
 
         // If Command is valid, process the command to trigger state transition.
         if(validCommand) {
