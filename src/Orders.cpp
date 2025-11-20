@@ -656,6 +656,68 @@ void OrdersList::print() const {
 }
 
 /**
+ * @brief Checks if the orders list is empty
+ * @return bool True if the list is empty
+ */
+bool OrdersList::empty() const {
+    return orders.empty();
+}
+
+/**
+ * @brief Gets the number of orders in the list
+ * @return size_t Number of orders
+ */
+size_t OrdersList::size() const {
+    return orders.size();
+}
+
+/**
+ * @brief Gets the first order in the list without removing it
+ * @return Order* Pointer to the first order, or nullptr if empty
+ */
+Order* OrdersList::front() const {
+    if (orders.empty()) return nullptr;
+    return orders.front();
+}
+
+/**
+ * @brief Removes and returns the first order in the list
+ * @return Order* Pointer to the first order, or nullptr if empty
+ */
+Order* OrdersList::popfront() {
+    if (orders.empty()) return nullptr;
+    Order* frontOrder = orders.front();
+    orders.erase(orders.begin());
+    return frontOrder;
+}
+
+/**
+ * @brief Removes and returns the first order with the specified name
+ * @param name Name of the order to find and remove
+ * @return Order* Pointer to the found order, or nullptr if not found
+ */
+Order* OrdersList::popFirstByName(const std::string& name) {
+    for (size_t i = 0; i < orders.size(); ++i) {
+        Order* o = orders[i];
+        if (o && o->name() == name) {
+            orders.erase(orders.begin() + static_cast<long>(i));
+            return o; // caller is responsible for delete
+        }
+    }
+    return nullptr;
+}
+
+
+/**
+ * @brief Gets a const reference to the internal orders vector
+ * @return const std::vector<Order*>& Reference to the orders vector
+ */
+std::vector<Order*> const& OrdersList::getOrders() const {
+    return orders;
+}
+
+
+/**
  * @brief Stream output operator for OrdersList
  * @param os Output stream to write to
  * @param ordersList OrdersList to output

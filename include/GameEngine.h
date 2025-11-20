@@ -21,6 +21,7 @@
 #include <utility>
 #include "LoggingObserver.h"
 
+
 // Forward declarations
 class Map;
 class Player;
@@ -163,6 +164,12 @@ public:
     void startGame();
     void endGame();
     bool isGameOver() const;
+
+    //Part 3: Main Game Loop Methods
+    void mainGameLoop();
+    void reinforcementPhase();
+    void issueOrdersPhase();
+    void executeOrdersPhase();
     
     // Utility methods for console interface
     void printCurrentState() const;
@@ -172,6 +179,10 @@ public:
     void displayWelcomeMessage() const;
     void displayGameStatus() const;
 
+    // === Part 3: Test hook (used only by testMainGameLoop) ===
+    // Sets the internal map and players so mainGameLoop() has something to run on.
+    // This is only for the driver; normal gameplay should use the proper commands/startup.
+    void setMapAndPlayersForDemo(Map* map, std::vector<Player*>* players);
     // ILoggable interface implementation
     std::string stringToLog() const override;
 
@@ -196,19 +207,23 @@ private:
     void initializeTransitions();
     void transition(GameState newState);
     bool isValidTransition(GameState from, const std::string& command, GameState& to) const;
-    void executeStateTransition(GameState newState, const std::string& command);
+    void executeStateTransition(GameState newState, const std::string& command, std::string& errorMsg);
     
     // State-specific action methods
-    void handleLoadMap(const std::string& command);
-    void handleValidateMap();
-    void handleAddPlayer(const std::string& command);
+    bool handleLoadMap(const std::string& command, std::string& errorMsg);
+    bool handleValidateMap(std::string& errorMsg);
+    bool handleAddPlayer(const std::string& command, std::string& errorMsg);
     void handleAssignCountries(const std::string& command);
     void handleIssueOrder(const std::string& command);
     void handleExecuteOrders(const std::string& command);
     void handleEndGame(const std::string& command);
 
+    // ------------ Part 3 helpers ------------
+    void removeDefeatedPlayers();
+    bool checkWinCondition(Player*& winner) const;
+
     // Helper methods for map loading validation
-    bool extractMapFilename(const std::string& command, std::string& mapName) const;
+    bool extractMapFilename(const std::string& command, std::string& mapName, std::string& errorMsg) const;
     bool validateMapFileExists(const std::string& mapPath) const;
 
     // Handling Gamestart command in Game startup phase (Part 2 of A2).
@@ -224,3 +239,4 @@ private:
  * Invalid commands result in error messages without state transitions.
  */
 void testGameStates();
+void testMainGameLoop();
