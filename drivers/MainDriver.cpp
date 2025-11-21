@@ -23,15 +23,16 @@
 #include "../include/GameEngine.h"
 
 // Forward declarations of driver test functions
-void testLoadMaps();
-void testPlayers();
-void testOrdersLists();
-void testCards();
-void testGameStates();
-void testCommandProcessor(int argc, char* argv[]);
-void testStartupPhase(int argc, char* argv[]);
-void testLoggingObserver();
-void testMainGameLoop();
+// void testLoadMaps();
+// void testPlayers();
+// void testOrdersLists();
+// void testCards();
+// void testGameStates();
+// void testCommandProcessor(int argc, char* argv[]);
+// void testStartupPhase(int argc, char* argv[]);
+// void testLoggingObserver();
+// void testMainGameLoop();
+void testTournament(int argc, char* argv[]);
 
 /**
  * @brief Main entry point for Warzone component testing
@@ -46,16 +47,16 @@ void testMainGameLoop();
 int main(int argc, char* argv[]) {
     std::cout << "=== Starting Warzone Test Drivers ===\n\n";
     
-    testLoadMaps(); // Test map loading, validation, and operations
-    testPlayers(); // Test player functionality, territories, and hand management
-    testOrdersLists(); // Test order creation, execution, and OrdersList operations
-    testCards(); // Test deck, hand, drawing, and card playing with Order generation
-    testGameStates(); // Test state transitions, command processing, and game flow
-    testMainGameLoop(); // Test the main game loop with real map and players
-    testCommandProcessor(argc, argv);
-    testStartupPhase(argc, argv);
-    testLoggingObserver(); // Test Part 5: Observer pattern for logging
-  
+    // testLoadMaps(); // Test map loading, validation, and operations
+    // testPlayers(); // Test player functionality, territories, and hand management
+    // testOrdersLists(); // Test order creation, execution, and OrdersList operations
+    // testCards(); // Test deck, hand, drawing, and card playing with Order generation
+    // testGameStates(); // Test state transitions, command processing, and game flow
+    // testMainGameLoop(); // Test the main game loop with real map and players
+    // testCommandProcessor(argc, argv); // A2, Part 1: Test the command processor when reading from -file or -console.
+    // testStartupPhase(argc, argv); // A2, Part 2: Test the implementation of commands entered.
+    // testLoggingObserver(); // Test Part 5: Observer pattern for logging
+    testTournament(argc, argv); // A3, Part 2: Test the game in Tournament Mode.
 
     std::cout << "\n";
     std::cout << "\n=== Program finished successfully ===\n";

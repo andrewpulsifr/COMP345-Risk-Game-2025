@@ -83,6 +83,7 @@ namespace GameCommands {
     constexpr std::string_view LOAD_MAP = "loadmap";
     constexpr std::string_view VALIDATE_MAP = "validatemap";
     constexpr std::string_view ADD_PLAYER = "addplayer";
+    constexpr std::string_view ASSIGN_REINFORCEMENT = "assignreinforcement";
     constexpr std::string_view ASSIGN_COUNTRIES = "assigncountries";
     constexpr std::string_view ISSUE_ORDER = "issueorder";
     constexpr std::string_view END_ISSUE_ORDERS = "endissueorders";
@@ -92,6 +93,7 @@ namespace GameCommands {
     constexpr std::string_view PLAY = "play";
     constexpr std::string_view END = "end";
     constexpr std::string_view GAME_START = "gamestart";
+    constexpr std::string_view TOURNAMENT = "tournament";
     constexpr std::string_view REPLAY = "replay";
     constexpr std::string_view START = "start";
     constexpr std::string_view QUIT = "quit";
@@ -122,6 +124,7 @@ enum class GameState {
     Win,
     End,
     Gamestart,
+    Tournament,
     Replay
 };
 
@@ -189,6 +192,10 @@ public:
     // === A2, PART 2: Game Startup Phase ===
     void startupPhase(GameEngine& engine, CommandProcessor& commandPro);
 
+    // === A3, P2: Tournament Mode ===
+    // ** CURRENTLY IN PUBLIC FOR TESTING (ROMAN's IMPLEMENTATION) **
+    bool handleTournament(const std::string& command);
+
 private:
     // Type aliases for readability
     using GameStateCmdPair = std::pair<GameState, std::string>;
@@ -207,12 +214,12 @@ private:
     void initializeTransitions();
     void transition(GameState newState);
     bool isValidTransition(GameState from, const std::string& command, GameState& to) const;
-    void executeStateTransition(GameState newState, const std::string& command, std::string& errorMsg);
+    void executeStateTransition(GameState newState, const std::string& command, std::string& effectMsg);
     
-    // State-specific action methods
-    bool handleLoadMap(const std::string& command, std::string& errorMsg);
-    bool handleValidateMap(std::string& errorMsg);
-    bool handleAddPlayer(const std::string& command, std::string& errorMsg);
+    // State-specific action methods (effectMsg captures success or error message)
+    bool handleLoadMap(const std::string& command, std::string& effectMsg);
+    bool handleValidateMap(std::string& effectMsg);
+    bool handleAddPlayer(const std::string& command, std::string& effectMsg);
     void handleAssignCountries(const std::string& command);
     void handleIssueOrder(const std::string& command);
     void handleExecuteOrders(const std::string& command);
@@ -229,6 +236,7 @@ private:
     // Handling Gamestart command in Game startup phase (Part 2 of A2).
     void handleGamestart();
     void printGamestartLog() const;
+
 };
 
 /**

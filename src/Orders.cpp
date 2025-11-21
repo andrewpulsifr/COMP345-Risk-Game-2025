@@ -377,20 +377,19 @@ void BlockadeOrder::execute() {
         notify();
         return;
     }
-    Player* neutral = getOrCreateNeutral();
-    int armiesBefore = target_->getArmies();
-    target_->addArmies(armiesBefore);
-    Player* oldOwner = target_->getOwner();
-    if (oldOwner && oldOwner != neutral) {
-        oldOwner->removePlayerTerritory(target_);
-    }
-    target_->setOwner(neutral);
-    neutral->addPlayerTerritory(target_);
+
+    // Double armies and transfer to Neutral
+    target_->addArmies(target_->getArmies());  // double
+    target_->setOwner(neutralPlayer);
+    neutralPlayer->addPlayerTerritory(target_);
+    issuer_->removePlayerTerritory(target_);
+
     std::ostringstream ss;
     ss << "Blockade on " << target_->getName()
        << ". Armies doubled to " << target_->getArmies()
        << ". Territory now owned by Neutral.";
     effect_ = ss.str();
+
     notify();
 }
 
