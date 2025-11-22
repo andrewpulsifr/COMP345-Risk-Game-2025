@@ -35,6 +35,8 @@ void testOrdersLists() {
     // ======================= Test Setup =======================
     // Create test players for order ownership and execution
     Player alice("Alice"), bob("Bob");
+    alice.setReinforcementPool(20);  // or whatever your method is
+    bob.setReinforcementPool(20); 
     OrdersList ol;
     
     // Build minimal map with territories for order execution testing
@@ -53,7 +55,7 @@ void testOrdersLists() {
     m.addTerritory(t3);
 
     // Assign owners and armies to players
-    t1->setOwner(&alice);
+    t1->setOwner(&alice); 
     t1->setArmies(10);
 
     t2->setOwner(&bob);
@@ -61,6 +63,10 @@ void testOrdersLists() {
 
     t3->setOwner(&alice);
     t3->setArmies(6);
+
+    alice.addPlayerTerritory(t1);
+    alice.addPlayerTerritory(t3);
+    bob.addPlayerTerritory(t2);
 
     // ======================= Order Creation and OrdersList Testing =======================
     // Create different order types to test polymorphic behavior
@@ -112,6 +118,9 @@ void testOrderExecution() {
 
     //Setup players and territories
     Player alice("Alice"), bob("Bob");
+    alice.setReinforcementPool(20);  // or whatever your method is
+    bob.setReinforcementPool(20);
+
     neutralPlayer = new Player("Neutral"); 
 
     Map m;
@@ -129,6 +138,10 @@ void testOrderExecution() {
     t1->setOwner(&alice); t1->setArmies(10);
     t2->setOwner(&bob);   t2->setArmies(8);
     t3->setOwner(&alice); t3->setArmies(6);
+
+    alice.addPlayerTerritory(t1);
+    alice.addPlayerTerritory(t3);
+    bob.addPlayerTerritory(t2);
 
     //deploy
     DeployOrder deploy(&alice, t1, 5);
@@ -153,15 +166,6 @@ void testOrderExecution() {
     bomb.execute();
     std::cout << "Bomb: " << bomb.effect() 
         << ", t2 armies: " << t2->getArmies() << "\n";
-    
-    //blockade
-    BlockadeOrder blockade(&alice, t3);
-    blockade.validate();
-    blockade.execute();
-    std::cout << "Blockade: " << blockade.effect() 
-        << ", t3 armies: " << t3->getArmies()
-        << ", t3 new owner: " << (t3->getOwner() ? t3->getOwner()->getPlayerName() : "none") << "\n";
-
     //airlift
     AirliftOrder airlift(&alice, t1, t3, 2);
     airlift.validate();
@@ -170,6 +174,14 @@ void testOrderExecution() {
         << ", t1 armies: " << t1->getArmies()
         << ", t3 armies: " << t3->getArmies() << "\n";
 
+    //blockade
+    BlockadeOrder blockade(&alice, t3);
+    blockade.validate();
+    blockade.execute();
+    std::cout << "Blockade: " << blockade.effect() 
+        << ", t3 armies: " << t3->getArmies()
+        << ", t3 new owner: " << (t3->getOwner() ? t3->getOwner()->getPlayerName() : "none") << "\n";
+
     //negotiate
     NegotiateOrder negotiate(&alice, &bob);
     negotiate.validate();
@@ -177,7 +189,7 @@ void testOrderExecution() {
     std::cout << "Negotiate: " << negotiate.effect() << "\n";
 
     //Cleanup
-    delete t1; delete t2; delete t3; delete neutralPlayer;
+     //delete neutralPlayer;
 
     std::cout << "=== end testOrderExecution ===\n";
 }
