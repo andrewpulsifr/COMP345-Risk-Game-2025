@@ -75,7 +75,7 @@ std::ostream& operator<<(std::ostream& os, const AggressivePlayerStrategy& ps) {
     return os;
 }
 
-/** TODO: Return territories sorted by army count (descending) - strongest first
+/** Return territories sorted by army count (descending) - strongest first
  Strategy: Focus on strongest territory for defense */
 std::vector<Territory*> AggressivePlayerStrategy::toDefend() {
     std::vector<Territory*> defendList = player_->getOwnedTerritories();
