@@ -88,8 +88,12 @@ std::vector<Territory*> AggressivePlayerStrategy::toDefend() {
 /** Returns all adjacent enemy territories.
  * Strategy: Attack any/all reachable enemies. */
 std::vector<Territory*> AggressivePlayerStrategy::toAttack() {
-    Territory* strongest = toDefend().front();
+    std::vector<Territory*> defendList = toDefend();
     std::vector<Territory*> attackList;
+    if (defendList.empty()) {
+        return attackList;
+    }
+    Territory* strongest = defendList.front();
     for (Territory* adj : strongest->getAdjacents()) {
         if (adj->getOwner() != player_) {
             attackList.push_back(adj);
@@ -118,7 +122,11 @@ bool AggressivePlayerStrategy::deployToStrongest() {
         return false;
     }
     
-    Territory* strongest = toDefend().front();
+    std::vector<Territory*> defendList = toDefend();
+    if (defendList.empty()) {
+        return false;
+    }
+    Territory* strongest = defendList.front();
     DeployOrder* deployOrder = new DeployOrder(player_, strongest, numReinforcements);
     player_->getOrdersList()->add(deployOrder);
     player_->subtractFromReinforcementPool(numReinforcements);
