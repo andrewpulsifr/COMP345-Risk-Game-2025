@@ -32,7 +32,7 @@ void testCommandProcessor(int argc, char* argv[]);
 void testStartupPhase(int argc, char* argv[]);
 void testLoggingObserver();
 void testMainGameLoop();
-void testPlayerStrategies(); // TODO: not yet implemented
+void testPlayerStrategies();
 
 /**
  * @brief Main entry point for Warzone component testing
@@ -46,6 +46,8 @@ void testPlayerStrategies(); // TODO: not yet implemented
  */
 int main(int argc, char* argv[]) {
     std::cout << "=== Starting Warzone Test Drivers ===\n\n";
+    
+    testPlayerStrategies(); // A3, Part 1: Test player strategies (Aggressive, Neutral, etc.)
     
     testLoadMaps(); // Test map loading, validation, and operations
     testPlayers(); // Test player functionality, territories, and hand management
