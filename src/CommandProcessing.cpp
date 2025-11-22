@@ -283,11 +283,21 @@ std::vector<int> CommandProcessor::validateTournament(const std::string& command
     std::vector<std::string> playerStratNames = extractMapOrPlayerOfTournament(command, listOfPlayerStratsIndex, numOfGamesIndex);
     std::size_t numOfPlayerStrats = playerStratNames.size(); // get size of the vector of player names.
 
-    // Chceck to see if the player strategy enter is valid. If not, throw an exception.
-    for(std::string playerStrat : playerStratNames) {
-        if(playerStrat == "Neutral" || playerStrat == "Cheater" || playerStrat == "Human" || playerStrat == "Aggressive" || playerStrat == "Benevolent") {
+    // Check to see if the player strategy enter is (1) valid, and (2) if there are duplicates. If both conditions are not met, throw an exception.
+    for(std::size_t i = 0; i < numOfPlayerStrats; i++) {
+        
+        std::string playerStrat = playerStratNames.at(i); // get player strategy entered.
+    
+        // Check to see if the player strategy entered is a valid one. Else, throw error.
+        if(playerStrat == "Neutral" || playerStrat == "Cheater" || playerStrat == "Aggressive" || playerStrat == "Benevolent") {
         } else {
             throw std::invalid_argument("One or more of the player strategy(s) entered is not valid. Please re-enter command.");
+        }
+
+        // Check to sere if there are duplicates of the same player strategy.
+        for(std::size_t j = i+1; j < numOfPlayerStrats; j++) {
+            if(playerStrat == playerStratNames.at(j))
+                throw std::invalid_argument(std::string("The player strategy entered (") + playerStrat + ") has duplicates. Please re-enter command.");
         }
     }
 
