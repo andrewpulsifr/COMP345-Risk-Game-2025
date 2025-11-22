@@ -85,8 +85,8 @@ std::vector<Territory*> AggressivePlayerStrategy::toDefend() {
     return defendList;
 }
 
-/** TODO: Return all adjacent enemy territories
- Strategy: Attack any/all reachable enemies */
+/** Returns all adjacent enemy territories.
+ * Strategy: Attack any/all reachable enemies. */
 std::vector<Territory*> AggressivePlayerStrategy::toAttack() {
     Territory* strongest = toDefend().front();
     std::vector<Territory*> attackList;
