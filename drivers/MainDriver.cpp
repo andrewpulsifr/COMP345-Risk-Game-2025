@@ -26,8 +26,7 @@
 // void testLoadMaps();
 // void testPlayers();
 void testOrderExecution();
-
- void testOrdersLists();
+void testOrdersLists();
 // void testCards();
 // void testGameStates();
 // void testCommandProcessor(int argc, char* argv[]);
