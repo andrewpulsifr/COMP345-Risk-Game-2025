@@ -2,6 +2,7 @@
 #include "../include/Map.h"
 #include "../include/Orders.h"
 #include "../include/Cards.h"
+#include "../include/PlayerStrategies.h"
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -14,23 +15,44 @@ Player::Player()
     : playerName("defaultName"),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()), 
-      cardAwardedThisTurn(false),
       negotiatedPlayers(),
-      reinforcementPool(0)
+      cardAwardedThisTurn(false),
+      reinforcementPool(0),
+      orders_(new OrdersList()), 
+      playerStrategy(nullptr)
       {}
-
+// Constructor with strategy parameter for Player.
+Player::Player(PlayerStrategy* strategy)
+    : playerName("defaultName"),
+        playerHand(new Hand()),
+        ownedTerritories(),
+        negotiatedPlayers(),
+        cardAwardedThisTurn(false),
+        reinforcementPool(0),
+        orders_(new OrdersList()),
+        playerStrategy(strategy)
+{
+    if (playerStrategy) {
+        playerStrategy->setPlayer(this);
+    }
+}
 
 // Deep Copy Constructor for Player.
 Player::Player(const Player& copyPlayer)
     : playerName(copyPlayer.playerName),
       playerHand(new Hand(*copyPlayer.playerHand)),
       ownedTerritories(copyPlayer.ownedTerritories),
-      orders_(new OrdersList(*copyPlayer.orders_)),
-      cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn),
       negotiatedPlayers(copyPlayer.negotiatedPlayers),
-      reinforcementPool(copyPlayer.reinforcementPool)
-{}
+      cardAwardedThisTurn(copyPlayer.cardAwardedThisTurn),
+      reinforcementPool(copyPlayer.reinforcementPool),
+      orders_(new OrdersList(*copyPlayer.orders_)),
+      playerStrategy(nullptr)
+{
+    if (copyPlayer.playerStrategy) {
+        playerStrategy = copyPlayer.playerStrategy->clone();
+        playerStrategy->setPlayer(this);
+    }
+}
 
 
 // Constructor with name parameter for Player.
@@ -38,10 +60,11 @@ Player::Player(std::string name)
     : playerName(std::move(name)),
       playerHand(new Hand()),
       ownedTerritories(),
-      orders_(new OrdersList()),
-      cardAwardedThisTurn(false),
       negotiatedPlayers(),
-      reinforcementPool(0)
+      cardAwardedThisTurn(false),
+      reinforcementPool(0),
+      orders_(new OrdersList()),
+      playerStrategy()
 {}
 
 
@@ -56,6 +79,7 @@ Player& Player::operator=(const Player& copyPlayer) {
         
         // Delete existing playerHand to prevent memory leak
         delete playerHand;
+        playerHand = nullptr;
         playerHand = new Hand(*copyPlayer.playerHand);
         
         ownedTerritories = copyPlayer.ownedTerritories;
@@ -63,7 +87,17 @@ Player& Player::operator=(const Player& copyPlayer) {
         *orders_ = *copyPlayer.orders_;
         cardAwardedThisTurn = copyPlayer.cardAwardedThisTurn;
         negotiatedPlayers = copyPlayer.negotiatedPlayers;  
-        reinforcementPool = copyPlayer.reinforcementPool;  }
+        reinforcementPool = copyPlayer.reinforcementPool;
+
+        delete playerStrategy;
+        playerStrategy = nullptr;
+        if (copyPlayer.playerStrategy) {
+            playerStrategy = copyPlayer.playerStrategy->clone();
+            playerStrategy->setPlayer(this);
+        }
+    }
+
+       
     return *this;
 }
 
@@ -72,6 +106,10 @@ Player& Player::operator=(const Player& copyPlayer) {
 Player::~Player() {
     delete playerHand;
     delete orders_;
+    delete playerStrategy;
+    playerStrategy = nullptr;
+    playerHand = nullptr;
+    orders_ = nullptr;
 }
 // Neutral player instance
 Player* neutralPlayer = nullptr;
@@ -84,6 +122,17 @@ std::string Player::getPlayerName() const {
 // Getter for Player's Hand.
 Hand* Player::getPlayerHand() const {
     return playerHand;
+}
+
+void Player::setPlayerStrategy(PlayerStrategy* strategy) {
+    playerStrategy = strategy;
+    if (playerStrategy) {
+        playerStrategy->setPlayer(this);
+    }
+}
+
+PlayerStrategy* Player::getPlayerStrategy() const {
+    return playerStrategy;
 }
 
 // Card Awarded This Turn Setter 
@@ -137,7 +186,11 @@ void Player::subtractFromReinforcementPool(int amt) { reinforcementPool -= amt; 
 
 // Returns a player's attackable territory.
 std::vector<Territory*> Player::toDefend() {
-    return ownedTerritories;
+    //  if I have a strategy, delegate to it.
+    if (playerStrategy) {
+        return playerStrategy->toDefend();
+    }
+    return ownedTerritories; // TODO: delete once strategies are implemented
 }
 
 /**
@@ -145,6 +198,13 @@ std::vector<Territory*> Player::toDefend() {
  * @return std::vector<Territory*> List of all adjacent enemy territories that can be attacked
  */
 std::vector<Territory*> Player::toAttack() {
+    // if I have a strategy, delegate to it.
+    if (playerStrategy) {
+        return playerStrategy->toAttack();
+    }
+    /** TODO: Remove and migrate logic below to concrete strategies
+     * Use only to as per the spec 
+     */
     std::vector<Territory*> attackList;
     for (Territory* mine : ownedTerritories) {
         for (Territory* adj : mine->getAdjacents()) {
@@ -164,9 +224,18 @@ std::vector<Territory*> Player::toAttack() {
  * @brief Issues a new order and adds it to the player's order list
  * @param orderIssued Pointer to the order being issued
  */
-void Player::issueOrder(Order* orderIssued) {
-    if (!orders_ || !orderIssued) return;
+bool Player::issueOrder(Order* orderIssued) {
+    if (!orders_ || !orderIssued) return false;
+
+    // If I have a strategy, delegate to it.
+    if(playerStrategy)
+        return playerStrategy->issueOrder(orderIssued);
+     /** TODO: Remove and migrate logic below to concrete strategies
+     * Use only to as per the spec 
+     */
+        
     orders_->add(orderIssued);
+    return true;
 }
 
 
@@ -197,6 +266,14 @@ bool Player::issueOrder() {
         return false;
     }
 
+    // If I have a strategy, delegate to it.
+    if(playerStrategy) {
+        return playerStrategy->issueOrder();
+    }
+
+    /** TODO: Remove and migrate logic below to concrete strategies
+     * Use only to as per the spec 
+     */
     // ---------------------------
     // (A) DEPLOY-ONLY while pool > 0
     // ---------------------------
@@ -283,7 +360,6 @@ bool Player::issueOrder() {
     return false;
 }
 
-
 /**
  * @brief Issues the next order in the player's order list
  * @return bool True if an order was issued, false if no orders are available
@@ -354,11 +430,6 @@ bool Player::hasTerritories() const {
     return !ownedTerritories.empty();
 }
 
-
-
-
-
-//Debug / Print
 
 // Stream overloading for Player.
 std::ostream& operator<<(std::ostream& os, const Player& player) {
