@@ -256,9 +256,12 @@ void GameEngine::initializeTransitions() {
         {{GameState::MapLoaded,            string{VALIDATE_MAP}},       GameState::MapValidated},
         {{GameState::MapValidated,         string{ADD_PLAYER}},         GameState::PlayersAdded},
         {{GameState::PlayersAdded,         string{ADD_PLAYER}},         GameState::PlayersAdded},
-        {{GameState::PlayersAdded,         string{GAME_START}},         GameState::AssignReinforcement},
+        {{GameState::PlayersAdded,         string{GAME_START}},         GameState::Gamestart},
+
         
         // Main game loop transitions
+        {{GameState::Gamestart,            string{TOURNAMENT}},         GameState::Tournament},
+        {{GameState::Gamestart,          string{ASSIGN_REINFORCEMENT}}, GameState::AssignReinforcement},
         {{GameState::AssignReinforcement,  string{ISSUE_ORDER}},        GameState::IssueOrders},
         {{GameState::IssueOrders,          string{ISSUE_ORDER}},        GameState::IssueOrders},
         {{GameState::IssueOrders,          string{END_ISSUE_ORDERS}},   GameState::ExecuteOrders},
@@ -364,6 +367,7 @@ string GameEngine::getStateName(GameState state) const {
         case GameState::MapValidated: return "MapValidated";
         case GameState::PlayersAdded: return "PlayersAdded";
         case GameState::Gamestart: return "GameStart";
+        case GameState::Tournament: return "Tournament";
         case GameState::AssignReinforcement: return "AssignReinforcement";
         case GameState::IssueOrders: return "IssueOrders";
         case GameState::ExecuteOrders: return "ExecuteOrders";
@@ -405,7 +409,7 @@ bool GameEngine::validCommandSpelling(const string& commandEntered) const {
     if(commandOnly == LOAD_MAP || commandOnly == VALIDATE_MAP || commandOnly == ADD_PLAYER ||
         commandOnly == ASSIGN_COUNTRIES || commandOnly == ISSUE_ORDER || commandOnly == END_ISSUE_ORDERS ||
         commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS || commandOnly == WIN ||
-        commandOnly == PLAY || commandOnly == END || commandOnly == GAME_START || 
+        commandOnly == PLAY || commandOnly == END || commandOnly == GAME_START || commandOnly == TOURNAMENT ||
         commandOnly == REPLAY || commandOnly == START || commandOnly == QUIT) {
         return true;
     } else {
@@ -511,6 +515,7 @@ std::string GameEngine::printTypoErrorMessage(const string& invalidCommand) cons
     cout << "  " << ADD_PLAYER << " <playername>  - Add a player" << endl;
     cout << "  " << GAME_START << "              - Start the game" << endl;
     cout << "\nPlay Phase:" << endl;
+    cout << "  " << TOURNAMENT << "              - Start Tournament Mode" << endl;
     cout << "  " << ISSUE_ORDER << "             - Issue an order" << endl;
     cout << "  " << END_ISSUE_ORDERS << "        - End issuing orders" << endl;
     cout << "  " << EXEC_ORDER << "              - Execute an order" << endl;
@@ -547,7 +552,7 @@ void GameEngine::displayGameStatus() const {
         state == GameState::MapValidated || state == GameState::PlayersAdded || 
         state == GameState::Gamestart) {
         cout << "Phase: Startup" << endl;
-    } else if (state == GameState::AssignReinforcement || state == GameState::IssueOrders || 
+    } else if (state == GameState::Tournament || state == GameState::AssignReinforcement || state == GameState::IssueOrders || 
                state == GameState::ExecuteOrders) {
         cout << "Phase: Main Game Loop" << endl;
     } else if (state == GameState::Win || state == GameState::Replay || state == GameState::End) {
@@ -625,8 +630,10 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
         effectMsg = "Order issued.";
     } else if (commandOnly == GAME_START) {
         handleGamestart();
-        printGamestartLog();
+        // printGamestartLog();
         effectMsg = "Game started: territories distributed, turn order randomized, cards dealt.";
+    } else if (commandOnly == TOURNAMENT) {
+        handleTournament(command);
     } else if (commandOnly == END_ISSUE_ORDERS || commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS) {
         handleExecuteOrders(command);
         effectMsg = "Orders executed.";
@@ -1337,9 +1344,9 @@ void GameEngine::handleGamestart() {
         std::cout << "  ...Each player draws 2 cards from Deck.\n\n";
         for(Player* p : *players) {
             Hand* playerHand = p->getPlayerHand();
-            std::cout << "  ------Player " << p->getPlayerName() << ":\n    ";
+            // std::cout << "  ------Player " << p->getPlayerName() << ":\n    ";
             deck->draw(*playerHand);
-            std::cout << "    ";
+            // std::cout << "    ";
             deck->draw(*playerHand);
         }
 
@@ -1398,3 +1405,26 @@ void GameEngine::printGamestartLog() const {
     // (e) Switch game to play phase (the assignreinforcement state).
         std::cout << "=== (e) Switch game to play phase: ===" << std::endl;
 }
+
+
+
+
+// === A3, PART 2: TOURNAMENT MODE ===
+
+/**
+ * @brief Execuion the tournament command after being validated and processed in the CommandProcessor.
+ * @param command, a string that should contain the values of -M (listOfMaps), -P (listOfPlayerStrats), -G (numOfGames), and -D (maxNumOfTurns).
+ * @return boolean value that tells if the string entered is valid or not.
+ */
+bool GameEngine::handleTournament(const std::string& command) {
+    cout << "  -> Handling Tournament...\n" << endl;
+
+    // ** TODO: THE REST IS ROMAN'S IMPLEMENTATION! **
+    // Note: To get the values of the tournament command, see the printTournamentCommandLog() function in CommandProcessor.
+    // use extractMapOrPlayerOfTournament() to return a vector of int values of the tournament (numOfMaps, numOfPlayerStratsIndex, numOfGames, maxNumOfTurns).
+    // use extractMapOrPlayerOfTournament() to return a vector of string values that was entered with the tournament command (to get the listOfMaps, and listOfPlayerStrategies).
+    // Might have to declare a temp. commandprocessor object in this method to use.
+    
+    return true;
+}
+

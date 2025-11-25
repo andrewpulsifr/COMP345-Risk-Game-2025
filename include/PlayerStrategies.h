@@ -80,7 +80,13 @@ class AggressivePlayerStrategy : public PlayerStrategy {
 		std::vector<Territory*> toDefend() override;
 
         AggressivePlayerStrategy(const AggressivePlayerStrategy& other);
-        AggressivePlayerStrategy& operator=(const AggressivePlayerStrategy& other); 
+        AggressivePlayerStrategy& operator=(const AggressivePlayerStrategy& other);
+
+    private:
+        // Helper methods for issueOrder()
+        bool deployToStrongest();
+        bool attackAdjacentEnemies();
+        bool consolidateToStrongest();
         friend std::ostream& operator<<(std::ostream& os, const AggressivePlayerStrategy& ps);
 
 };

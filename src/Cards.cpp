@@ -251,8 +251,7 @@ std::string Deck::draw(Hand &hand) {
         // Add drawn card to hand.
         hand.addCard(cardDrawn);
 
-        // std::cout << "The " << cardDrawnString << " Card is drawn from the Deck, and added to the Player's Hand." << std::endl;
-        std::cout << "The " << cardDrawnString << " card is drawn from the deck." << std::endl;
+        // std::cout << "The " << cardDrawnString << " card is drawn from the deck." << std::endl;
     } else {
         std::cout << "The Deck is empty." << std::endl;
        

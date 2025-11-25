@@ -1,6 +1,6 @@
 /**
  * @file CommandProcessing.h
- * @brief Assignment 1 – Part 1: Assignment 2 - Part 1: Command Processor and Command Adapter.
+ * @brief Assignment 1 – Part 1: Assignment 2 - Part 1: Command Processor and Command Adapter, and Assignment 3 - Part 2: Tournament Mode.
  *
  * @details
  *  This file contains the declaration of the command processor and command adapter that processes
@@ -11,9 +11,10 @@
  *       The driver `testCommandProcessor()` is implemented in CommandProcessingDriver.cpp.
  */
 
- #pragma once
+#pragma once
 #include <string>
 #include <fstream>
+#include <vector>
 #include "LoggingObserver.h"
 
 class Command;
@@ -33,6 +34,13 @@ class CommandProcessor: public ILoggable , public Subject {
         
         // ILoggable interface
         std::string stringToLog() const override;
+
+
+        // === A3, Part 2: Tournament Mode ===
+        std::string cleanWhiteSpace(const std::string& command);
+        std::vector<std::string> extractMapOrPlayerOfTournament(const std::string& command, const std::size_t startIndex, const std::size_t endIndex);
+        std::vector<int> validateTournament(const std::string& command);
+        void printTournamentCommandLog(const std::string& command);
 
     protected:
         Command* saveCommand(std::string& commandRead);
