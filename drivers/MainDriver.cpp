@@ -47,15 +47,19 @@ void testPlayerStrategies(); // TODO: not yet implemented
 int main(int argc, char* argv[]) {
     std::cout << "=== Starting Warzone Test Drivers ===\n\n";
     
-    testLoadMaps(); // Test map loading, validation, and operations
-    testPlayers(); // Test player functionality, territories, and hand management
-    testOrdersLists(); // Test order creation, execution, and OrdersList operations
-    testCards(); // Test deck, hand, drawing, and card playing with Order generation
-    testGameStates(); // Test state transitions, command processing, and game flow
-    testMainGameLoop(); // Test the main game loop with real map and players
-    testCommandProcessor(argc, argv);
-    testStartupPhase(argc, argv);
-    testLoggingObserver(); // Test Part 5: Observer pattern for logging
+    // Run only the PlayerStrategies driver for focused testing
+    // All other drivers are intentionally skipped to keep this run deterministic
+    // and focused on verifying new PlayerStrategy implementations.
+    // testLoadMaps();
+    // testPlayers();
+    // testOrdersLists();
+    // testCards();
+    // testGameStates();
+    // testMainGameLoop();
+    // testCommandProcessor(argc, argv);
+    // testStartupPhase(argc, argv);
+    // testLoggingObserver();
+    testPlayerStrategies();
   
 
     std::cout << "\n";

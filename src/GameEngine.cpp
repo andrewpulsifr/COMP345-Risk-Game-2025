@@ -15,6 +15,7 @@
 #include "../include/GameEngine.h"
 #include "../include/Map.h"
 #include "../include/Player.h"
+#include "../include/PlayerStrategies.h"
 #include "../include/Orders.h"
 #include "../include/Cards.h"
 #include "../include/CommandProcessing.h"
@@ -909,6 +910,13 @@ void GameEngine::reinforcementPhase() {
 void GameEngine::issueOrdersPhase() {
     std::cout << "\n--- Issue Orders Phase ---\n";
     if (!players || players->empty()) return;
+
+    // Reset per-strategy per-round state (strategies may track whether they acted this issuing-phase)
+    for (Player* p : *players) {
+        if (!p) continue;
+        PlayerStrategy* strat = p->getPlayerStrategy();
+        if (strat) strat->resetForNewRound();
+    }
 
     const std::size_t n = players->size();
     // Track whether each player already issued a non-deploy in THIS phase

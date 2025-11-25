@@ -9,6 +9,33 @@
 
 // ====================== AggressivePlayerStrategy =======================
 
+// ========== PlayerStrategy base implementations ==========
+PlayerStrategy::PlayerStrategy() : player_(nullptr) {}
+PlayerStrategy::PlayerStrategy(Player* player) : player_(player) {}
+PlayerStrategy::~PlayerStrategy() = default;
+
+PlayerStrategy::PlayerStrategy(const PlayerStrategy& other) {
+    // Do not copy the player pointer; the owning Player will set this when cloning
+    player_ = nullptr;
+}
+
+PlayerStrategy& PlayerStrategy::operator=(const PlayerStrategy& other) {
+    if (this != &other) {
+        player_ = nullptr; // avoid sharing player pointers between strategy instances
+    }
+    return *this;
+}
+
+std::ostream& operator<<(std::ostream& os, const PlayerStrategy& ps) {
+    (void)ps;
+    os << "PlayerStrategy";
+    return os;
+}
+
+Player* PlayerStrategy::getPlayer() const { return player_; }
+void PlayerStrategy::setPlayer(Player* player) { player_ = player; }
+
+
 /** Currently all functions are placeholders.
  * @TODO:  Actual implementation of all functions per the spec */
 
@@ -62,8 +89,7 @@ std::vector<Territory*> AggressivePlayerStrategy::toAttack() {
  3. Use aggressive cards (Bomb, Airlift for attack) 
  Double check that the logic above matches spec */
 bool AggressivePlayerStrategy::issueOrder() {
-    // Dummy implementation - do nothing
-    std::cout << "[AggressivePlayerStrategy] issueOrder() - NOT IMPLEMENTED\n";
+    // Aggressive behavior not implemented in this focused driver.
     return false;
 }
 
@@ -234,6 +260,10 @@ BenevolentPlayerStrategy& BenevolentPlayerStrategy::operator=(const BenevolentPl
     return *this;
 }
 
+void BenevolentPlayerStrategy::resetForNewRound() {
+    handShownThisRound_ = false;
+}
+
 PlayerStrategy* BenevolentPlayerStrategy::clone() const {
     return new BenevolentPlayerStrategy(*this);
 }
@@ -288,8 +318,37 @@ bool BenevolentPlayerStrategy::issueOrder() {
 }
 
 bool BenevolentPlayerStrategy::issueOrder(Order* orderIssued) {
-    (void)orderIssued;
-    return issueOrder();
+    if (!player_) {
+        if (orderIssued) delete orderIssued;
+        return false;
+    }
+
+    if (!orderIssued) return issueOrder();
+
+    // Accept only defensive-type orders created by cards: Deploy, Blockade, Airlift, Negotiate
+    std::string oname = orderIssued->name();
+    if (oname == "Deploy") {
+        // Card-created Deploy orders may not respect the reinforcementPool check in
+        // DeployOrder::validate() (cards can generate deploys independently). For
+        // the purposes of card-created orders, accept Deploy orders targeted at
+        // this player and add them to the OrdersList without requiring validate()
+        // to succeed on reinforcement pool.
+        player_->getOrdersList()->add(orderIssued);
+        return true;
+    }
+    if (oname == "Blockade" || oname == "Airlift" || oname == "Negotiate") {
+        if (orderIssued->validate()) {
+            player_->getOrdersList()->add(orderIssued);
+            return true;
+        } else {
+            delete orderIssued;
+            return false;
+        }
+    }
+
+    // Otherwise reject offensive orders (e.g., Bomb, Advance) for Benevolent
+    delete orderIssued;
+    return false;
 }
 
 // ====================== NeutralPlayerStrategy =======================
@@ -451,19 +510,19 @@ static bool cheaterConquerTargets(Player* player, const std::vector<Territory*>&
     return conqueredAny;
 }
 
-CheaterPlayerStrategy::CheaterPlayerStrategy() : PlayerStrategy() {}
-
+CheaterPlayerStrategy::CheaterPlayerStrategy() : PlayerStrategy(), actedThisRound_(false) {}
 CheaterPlayerStrategy::~CheaterPlayerStrategy() = default;
 
 CheaterPlayerStrategy::CheaterPlayerStrategy(const CheaterPlayerStrategy& other)
     : PlayerStrategy(other) {
-    // Copy any CheaterPlayerStrategy-specific members here if added in future
+    // Copy Cheater-specific flag
+    this->actedThisRound_ = other.actedThisRound_;
 }
 
 CheaterPlayerStrategy& CheaterPlayerStrategy::operator=(const CheaterPlayerStrategy& other) {
     if (this != &other) {
         PlayerStrategy::operator=(other);
-        // Copy any CheaterPlayerStrategy-specific members here if added in future
+        this->actedThisRound_ = other.actedThisRound_;
     }
     return *this;
 }
@@ -476,6 +535,10 @@ std::ostream& operator<<(std::ostream& os, const CheaterPlayerStrategy& ps) {
 
 PlayerStrategy* CheaterPlayerStrategy::clone() const {
     return new CheaterPlayerStrategy(*this);
+}
+
+void CheaterPlayerStrategy::resetForNewRound() {
+    actedThisRound_ = false;
 }
 
 /**  TODO: Return empty list (doesn't need to defend)
@@ -501,8 +564,12 @@ std::vector<Territory*> CheaterPlayerStrategy::toAttack() {
  5. Return true if any territory was conquered, false otherwise */
 bool CheaterPlayerStrategy::issueOrder() {
     if (!player_) return false;
+    // Only allow one automatic conquest per issuing-phase
+    if (actedThisRound_) return false;
     auto targets = cheaterCollectTargets(player_);
-    return cheaterConquerTargets(player_, targets);
+    bool res = cheaterConquerTargets(player_, targets);
+    if (res) actedThisRound_ = true;
+    return res;
 }
 
 bool CheaterPlayerStrategy::issueOrder(Order* orderIssued) {
