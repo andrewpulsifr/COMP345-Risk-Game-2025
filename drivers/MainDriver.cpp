@@ -33,6 +33,7 @@ void testStartupPhase(int argc, char* argv[]);
 void testLoggingObserver();
 void testMainGameLoop();
 void testPlayerStrategies(); // TODO: not yet implemented
+void testTournament(int argc, char* argv[]);
 
 /**
  * @brief Main entry point for Warzone component testing
@@ -53,10 +54,10 @@ int main(int argc, char* argv[]) {
     testCards(); // Test deck, hand, drawing, and card playing with Order generation
     testGameStates(); // Test state transitions, command processing, and game flow
     testMainGameLoop(); // Test the main game loop with real map and players
-    testCommandProcessor(argc, argv);
-    testStartupPhase(argc, argv);
+    testCommandProcessor(argc, argv); // A2, Part 1: Test the command processor when reading from -file or -console.
+    testStartupPhase(argc, argv); // A2, Part 2: Test the implementation of commands entered.
     testLoggingObserver(); // Test Part 5: Observer pattern for logging
-  
+    testTournament(argc, argv); // A3, Part 2: Test the game in Tournament Mode.
 
     std::cout << "\n";
     std::cout << "\n=== Program finished successfully ===\n";
