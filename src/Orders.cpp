@@ -6,6 +6,7 @@
 #include "../include/Map.h"
 #include "../include/Player.h"
 #include "../include/Cards.h"
+#include "../include/PlayerStrategies.h"
 
 // ===== Base Order =====
 
@@ -196,6 +197,13 @@ void AdvanceOrder::execute() {
     // Battle simulation
     int attackerAmount = amount_;
     int defenderAmount = target_->getArmies();
+    
+    // If neutral transform defender to aggressive
+    Player* defender = target_->getOwner();
+    if (defender && dynamic_cast<NeutralPlayerStrategy*>(defender->getPlayerStrategy())) {
+        delete defender->getPlayerStrategy();
+        defender->setPlayerStrategy(new AggressivePlayerStrategy());
+    }
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -300,6 +308,15 @@ void BombOrder::execute() {
         effect_ = "Invalid bomb";
         notify();
         return;
+    }
+    
+    // Check if target owner is neutral - if so, transform to aggressive
+    Player* defender = target_->getOwner();
+    if (defender && dynamic_cast<NeutralPlayerStrategy*>(defender->getPlayerStrategy())) {
+        std::cout << "[Transform] Neutral player " << defender->getPlayerName() 
+                  << " becomes Aggressive after being bombed!\n";
+        delete defender->getPlayerStrategy();
+        defender->setPlayerStrategy(new AggressivePlayerStrategy());
     }
 
     int before = target_->getArmies();
