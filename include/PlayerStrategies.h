@@ -21,6 +21,9 @@ class PlayerStrategy {
 		PlayerStrategy(Player* player);
 		virtual ~PlayerStrategy();
         virtual PlayerStrategy* clone() const = 0;
+		// Called at the start of each issuing-phase to allow strategies
+		// to reset per-round state (e.g., Cheater acts only once per round).
+		virtual void resetForNewRound() {}
 		
 		virtual bool issueOrder() = 0;
         virtual bool issueOrder(Order* orderIssued) = 0;
@@ -77,7 +80,13 @@ class AggressivePlayerStrategy : public PlayerStrategy {
 		std::vector<Territory*> toDefend() override;
 
         AggressivePlayerStrategy(const AggressivePlayerStrategy& other);
-        AggressivePlayerStrategy& operator=(const AggressivePlayerStrategy& other); 
+        AggressivePlayerStrategy& operator=(const AggressivePlayerStrategy& other);
+
+    private:
+        // Helper methods for issueOrder()
+        bool deployToStrongest();
+        bool attackAdjacentEnemies();
+        bool consolidateToStrongest();
         friend std::ostream& operator<<(std::ostream& os, const AggressivePlayerStrategy& ps);
 
 };
@@ -102,6 +111,12 @@ class BenevolentPlayerStrategy : public PlayerStrategy {
         BenevolentPlayerStrategy(const BenevolentPlayerStrategy& other);
         BenevolentPlayerStrategy& operator=(const BenevolentPlayerStrategy& other); 
         friend std::ostream& operator<<(std::ostream& os, const BenevolentPlayerStrategy& ps);
+
+		// Reset per-issuing-phase state (used to control one-time prints)
+		void resetForNewRound() override;
+
+	    private:
+	        bool handShownThisRound_ = false;
 };
 
 
@@ -146,6 +161,12 @@ class CheaterPlayerStrategy : public PlayerStrategy {
         CheaterPlayerStrategy(const CheaterPlayerStrategy& other);
         CheaterPlayerStrategy& operator=(const CheaterPlayerStrategy& other); 
         friend std::ostream& operator<<(std::ostream& os, const CheaterPlayerStrategy& ps);
+		// Reset per-issuing-phase state
+		void resetForNewRound() override;
+
+	private:
+		// When true, the cheater has already performed its automatic conquest this issuing-phase
+		bool actedThisRound_ = false;
 };
 
 void testPlayerStrategies();
