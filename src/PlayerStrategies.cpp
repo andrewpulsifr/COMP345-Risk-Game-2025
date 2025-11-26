@@ -2,47 +2,39 @@
 #include "../include/Player.h"
 #include "../include/Map.h"
 #include "../include/Orders.h"
+#include "../include/Cards.h"
 #include <iostream>
 #include <algorithm>
 
-// ====================== PlayerStrategy Base Class =======================
 
-/** Currently all functions are placeholders.
- * @TODO: Determine if these must be implemented or if they can all be
- * defaulted. */
+// ====================== AggressivePlayerStrategy =======================
 
+// ========== PlayerStrategy base implementations ==========
 PlayerStrategy::PlayerStrategy() : player_(nullptr) {}
-
+PlayerStrategy::PlayerStrategy(Player* player) : player_(player) {}
 PlayerStrategy::~PlayerStrategy() = default;
 
-PlayerStrategy::PlayerStrategy(Player* player) : player_(player) {}
-
-PlayerStrategy::PlayerStrategy(const PlayerStrategy& other) : player_(other.player_) {
-    // Base class copy: shallow copy of the player pointer is sufficient here.
+PlayerStrategy::PlayerStrategy(const PlayerStrategy& other) {
+    // Do not copy the player pointer; the owning Player will set this when cloning
+    player_ = nullptr;
 }
 
 PlayerStrategy& PlayerStrategy::operator=(const PlayerStrategy& other) {
     if (this != &other) {
-        player_ = other.player_;
+        player_ = nullptr; // avoid sharing player pointers between strategy instances
     }
     return *this;
 }
 
-std::ostream& operator<<(std::ostream& os, const PlayerStrategy& strategy) {
-    (void)strategy;
-    os << "PlayerStrategy Unknown Type";
+std::ostream& operator<<(std::ostream& os, const PlayerStrategy& ps) {
+    (void)ps;
+    os << "PlayerStrategy";
     return os;
 }
 
-Player* PlayerStrategy::getPlayer() const {
-    return player_;
-}
+Player* PlayerStrategy::getPlayer() const { return player_; }
+void PlayerStrategy::setPlayer(Player* player) { player_ = player; }
 
-void PlayerStrategy::setPlayer(Player* player) {
-    player_ = player;
-}
-
-// ====================== AggressivePlayerStrategy =======================
 
 /** Currently all functions are placeholders.
  * @TODO:  Actual implementation of all functions per the spec */
@@ -329,6 +321,143 @@ bool AggressivePlayerStrategy::issueOrder(Order* orderIssued) {
 
 // ====================== BenevolentPlayerStrategy =======================
 
+// Benevolent helpers (local to benevolent strategy)
+static bool playDefensiveCardIfAvailable(Player* player) {
+    if (!player) return false;
+    Hand* hand = player->getPlayerHand();
+    if (!hand) return false;
+
+    auto cards = hand->getCardsOnHand();
+    if (cards.empty()) return false;
+
+    // Look for Blockade or Airlift or Diplomacy (in that priority)
+    for (Card* card : cards) {
+        if (!card) continue;
+        switch (card->getCard()) {
+            case Card::Blockade: {
+                // target: weakest owned territory
+                auto defendList = player->getOwnedTerritories();
+                if (defendList.empty()) break;
+                Territory* weakest = *std::min_element(defendList.begin(), defendList.end(),
+                    [](Territory* a, Territory* b){ return a->getArmies() < b->getArmies(); });
+                if (!weakest) break;
+                Order* order = new BlockadeOrder(player, weakest);
+                if (order->validate()) {
+                    player->getOrdersList()->add(order);
+                    hand->removeCard(card);
+                    delete card; // return to deck is not available here; free to avoid leak
+                    std::cout << "Benevolent plays Blockade on " << weakest->getName() << "\n";
+                    return true;
+                }
+                delete order;
+                break;
+            }
+            case Card::Airlift: {
+                // choose a strong source and weak owned target
+                auto owned = player->getOwnedTerritories();
+                Territory* source = nullptr;
+                Territory* target = nullptr;
+                for (Territory* t : owned) {
+                    if (!t) continue;
+                    if (!source || t->getArmies() > source->getArmies()) source = t;
+                    if (!target || t->getArmies() < target->getArmies()) target = t;
+                }
+                if (!source || !target || source == target) break;
+                int amount = source->getArmies() - 1;
+                if (amount <= 0) break;
+                Order* order = new AirliftOrder(player, source, target, amount);
+                if (order->validate()) {
+                    player->getOrdersList()->add(order);
+                    hand->removeCard(card);
+                    delete card;
+                    std::cout << "Benevolent plays Airlift from " << source->getName() << " to " << target->getName() << "\n";
+                    return true;
+                }
+                delete order;
+                break;
+            }
+            case Card::Diplomacy: {
+                // Negotiate with first adjacent enemy player found
+                for (Territory* mine : player->getOwnedTerritories()) {
+                    for (Territory* adj : mine->getAdjacents()) {
+                        if (!adj) continue;
+                        Player* other = adj->getOwner();
+                        if (other && other != player) {
+                            Order* order = new NegotiateOrder(player, other);
+                            if (order->validate()) {
+                                player->getOrdersList()->add(order);
+                                hand->removeCard(card);
+                                delete card;
+                                std::cout << "Benevolent plays Diplomacy with " << other->getPlayerName() << "\n";
+                                return true;
+                            }
+                            delete order;
+                        }
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    return false;
+}
+
+static bool benevolentDeployPhase(Player* player) {
+    if (!player) return false;
+    if (player->getReinforcementPool() <= 0) return false;
+    std::vector<Territory*> defendList = player->toDefend();
+    if (defendList.empty()) return false;
+    Territory* weakest = defendList.front();
+    int deployAmount = player->getReinforcementPool();
+    if (deployAmount <= 0) return false;
+    Order* deployOrder = new DeployOrder(player, weakest, deployAmount);
+    if (deployOrder->validate()) {
+        player->getOrdersList()->add(deployOrder);
+        player->subtractFromReinforcementPool(deployAmount);
+        std::cout << "Player " << player->getPlayerName() << " issues Deploy(" << deployAmount
+                  << " on " << weakest->getName() << ")\n";
+        return true;
+    }
+    delete deployOrder;
+    return false;
+}
+
+static bool benevolentRedistributePhase(Player* player) {
+    if (!player) return false;
+    std::vector<Territory*> owned = player->getOwnedTerritories();
+    if (owned.size() <= 1) return false;
+    Territory* source = nullptr;
+    for (Territory* t : owned) {
+        if (!t) continue;
+        if (t->getArmies() > 1) {
+            if (!source || t->getArmies() > source->getArmies()) source = t;
+        }
+    }
+    if (!source) return false;
+    Territory* target = nullptr;
+    for (Territory* adj : source->getAdjacents()) {
+        if (!adj) continue;
+        if (adj->getOwner() == player) {
+            if (!target || adj->getArmies() < target->getArmies()) target = adj;
+        }
+    }
+    if (!target) return false;
+    if (target->getArmies() >= source->getArmies()) return false;
+    int advanceAmount = source->getArmies() - 1;
+    if (advanceAmount <= 0) return false;
+    Order* adv = new AdvanceOrder(player, source, target, advanceAmount);
+    if (adv->validate()) {
+        player->getOrdersList()->add(adv);
+        std::cout << "Player " << player->getPlayerName() << " issues Advance(" << advanceAmount
+                  << " from " << source->getName() << " to " << target->getName() << ")\n";
+        return true;
+    }
+    delete adv;
+    return false;
+}
+
 /** Currently all functions are placeholders.
  * @TODO:  Actual implementation of all functions per the spec */
 
@@ -349,6 +478,10 @@ BenevolentPlayerStrategy& BenevolentPlayerStrategy::operator=(const BenevolentPl
     return *this;
 }
 
+void BenevolentPlayerStrategy::resetForNewRound() {
+    handShownThisRound_ = false;
+}
+
 PlayerStrategy* BenevolentPlayerStrategy::clone() const {
     return new BenevolentPlayerStrategy(*this);
 }
@@ -359,11 +492,18 @@ std::ostream& operator<<(std::ostream& os, const BenevolentPlayerStrategy& ps) {
     return os;
 }
 
-/** TODO: Return territories sorted by army count (ascending) - weakest first
- Strategy: Protect weak territories */
+/**
+ * @brief Returns territories sorted by army count (ascending) - weakest first
+ * Strategy: Focus on weakest territory for defense
+ */
 std::vector<Territory*> BenevolentPlayerStrategy::toDefend() {
-    // Dummy implementation - return all owned territories unsorted
-    return player_->getOwnedTerritories();
+    std::vector<Territory*> territories = player_->getOwnedTerritories();
+    // Sort by army count (ascending) - weakest first
+    std::sort(territories.begin(), territories.end(),
+        [](Territory* a, Territory* b) {
+            return a->getArmies() < b->getArmies();
+        });
+    return territories;
 }
 
 /** TODO: Return empty list (never attacks)
@@ -373,21 +513,60 @@ std::vector<Territory*> BenevolentPlayerStrategy::toAttack() {
     return std::vector<Territory*>();
 }
 
-/** TODO: Deploy all armies to weakest territory, advance only to own weak territories
+/** 
+ @brief Issue orders to reinforce weakest territories and avoid attacks
  Strategy: Reinforce weakest positions defensively
  1. While reinforcementPool > 0: Deploy all to weakest territory
  2. When pool == 0: Advance from strong territories to own weak territories
  3. May use cards defensively (Blockade, Diplomacy) but never to harm others
- Double check that the logic above matches spec */
+*/
 bool BenevolentPlayerStrategy::issueOrder() {
-    // Dummy implementation - do nothing
-    std::cout << "[BenevolentPlayerStrategy] issueOrder() - NOT IMPLEMENTED\n";
-    return false;
+    if (!player_) return false;
+
+    // (A) Deploy phase
+    if (player_->getReinforcementPool() > 0) {
+        return benevolentDeployPhase(player_);
+    }
+
+    // (B) Try to play a defensive card first (if any)
+    if (playDefensiveCardIfAvailable(player_)) return true;
+
+    // (C) Defensive redistribution
+    return benevolentRedistributePhase(player_);
 }
 
 bool BenevolentPlayerStrategy::issueOrder(Order* orderIssued) {
-    (void)orderIssued;
-    return issueOrder();
+    if (!player_) {
+        if (orderIssued) delete orderIssued;
+        return false;
+    }
+
+    if (!orderIssued) return issueOrder();
+
+    // Accept only defensive-type orders created by cards: Deploy, Blockade, Airlift, Negotiate
+    std::string oname = orderIssued->name();
+    if (oname == "Deploy") {
+        // Card-created Deploy orders may not respect the reinforcementPool check in
+        // DeployOrder::validate() (cards can generate deploys independently). For
+        // the purposes of card-created orders, accept Deploy orders targeted at
+        // this player and add them to the OrdersList without requiring validate()
+        // to succeed on reinforcement pool.
+        player_->getOrdersList()->add(orderIssued);
+        return true;
+    }
+    if (oname == "Blockade" || oname == "Airlift" || oname == "Negotiate") {
+        if (orderIssued->validate()) {
+            player_->getOrdersList()->add(orderIssued);
+            return true;
+        } else {
+            delete orderIssued;
+            return false;
+        }
+    }
+
+    // Otherwise reject offensive orders (e.g., Bomb, Advance) for Benevolent
+    delete orderIssued;
+    return false;
 }
 
 // ====================== NeutralPlayerStrategy =======================
@@ -527,19 +706,54 @@ bool HumanPlayerStrategy::issueOrder(Order* orderIssued) {
 
 // ====================== CheaterPlayerStrategy =======================
 
-CheaterPlayerStrategy::CheaterPlayerStrategy() : PlayerStrategy() {}
+// Cheater helpers (local to cheater strategy)
+static std::vector<Territory*> cheaterCollectTargets(Player* player) {
+    std::vector<Territory*> toConquer;
+    if (!player) return toConquer;
+    for (Territory* mine : player->getOwnedTerritories()) {
+        if (!mine) continue;
+        for (Territory* adj : mine->getAdjacents()) {
+            if (!adj) continue;
+            if (adj->getOwner() != player) {
+                if (std::find(toConquer.begin(), toConquer.end(), adj) == toConquer.end()) {
+                    toConquer.push_back(adj);
+                }
+            }
+        }
+    }
+    return toConquer;
+}
 
+static bool cheaterConquerTargets(Player* player, const std::vector<Territory*>& targets) {
+    if (!player) return false;
+    bool conqueredAny = false;
+    for (Territory* t : targets) {
+        if (!t) continue;
+        Player* prev = t->getOwner();
+        if (prev == player) continue;
+        if (prev) prev->removePlayerTerritory(t);
+        player->addPlayerTerritory(t);
+        // Set a minimal occupying force so the territory isn't left empty.
+        t->setArmies(1);
+        std::cout << "[Cheater] " << player->getPlayerName() << " automatically conquers " << t->getName() << "\n";
+        conqueredAny = true;
+    }
+    return conqueredAny;
+}
+
+CheaterPlayerStrategy::CheaterPlayerStrategy() : PlayerStrategy(), actedThisRound_(false) {}
 CheaterPlayerStrategy::~CheaterPlayerStrategy() = default;
 
 CheaterPlayerStrategy::CheaterPlayerStrategy(const CheaterPlayerStrategy& other)
     : PlayerStrategy(other) {
-    // Copy any CheaterPlayerStrategy-specific members here if added in future
+    // Copy Cheater-specific flag
+    this->actedThisRound_ = other.actedThisRound_;
 }
 
 CheaterPlayerStrategy& CheaterPlayerStrategy::operator=(const CheaterPlayerStrategy& other) {
     if (this != &other) {
         PlayerStrategy::operator=(other);
-        // Copy any CheaterPlayerStrategy-specific members here if added in future
+        this->actedThisRound_ = other.actedThisRound_;
     }
     return *this;
 }
@@ -552,6 +766,10 @@ std::ostream& operator<<(std::ostream& os, const CheaterPlayerStrategy& ps) {
 
 PlayerStrategy* CheaterPlayerStrategy::clone() const {
     return new CheaterPlayerStrategy(*this);
+}
+
+void CheaterPlayerStrategy::resetForNewRound() {
+    actedThisRound_ = false;
 }
 
 /**  TODO: Return empty list (doesn't need to defend)
@@ -568,7 +786,7 @@ std::vector<Territory*> CheaterPlayerStrategy::toAttack() {
     return std::vector<Territory*>();
 }
 
-/** TODO: Automatically conquer all adjacent enemy territories (once per turn)
+/** @brief Issue orders to automatically conquer adjacent enemy territories
  Strategy: Iterate through owned territories, transfer ownership of all adjacent enemies
  1. For each owned territory, find all adjacent territories
  2. For each adjacent enemy territory, set owner to this player
@@ -576,9 +794,13 @@ std::vector<Territory*> CheaterPlayerStrategy::toAttack() {
  4. Print conquest messages
  5. Return true if any territory was conquered, false otherwise */
 bool CheaterPlayerStrategy::issueOrder() {
-    // Dummy implementation - do nothing
-    std::cout << "[CheaterPlayerStrategy] issueOrder() - NOT IMPLEMENTED\n";
-    return false;
+    if (!player_) return false;
+    // Only allow one automatic conquest per issuing-phase
+    if (actedThisRound_) return false;
+    auto targets = cheaterCollectTargets(player_);
+    bool res = cheaterConquerTargets(player_, targets);
+    if (res) actedThisRound_ = true;
+    return res;
 }
 
 bool CheaterPlayerStrategy::issueOrder(Order* orderIssued) {
