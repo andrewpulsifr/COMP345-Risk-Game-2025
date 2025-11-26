@@ -189,7 +189,7 @@ void testOrderExecution() {
     std::cout << "Negotiate: " << negotiate.effect() << "\n";
 
     //Cleanup
-     //delete neutralPlayer;
+    delete t1; delete t2; delete t3; 
 
     std::cout << "=== end testOrderExecution ===\n";
 }

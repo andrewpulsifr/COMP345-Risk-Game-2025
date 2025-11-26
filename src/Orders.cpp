@@ -91,6 +91,7 @@ DeployOrder::DeployOrder(const DeployOrder& other)
 bool DeployOrder::validate() const {
     if (!issuer_ || !target_ || amount_ <= 0) return false;
     if (target_->getOwner() != issuer_) return false;
+    if (issuer_->getReinforcementPool() < amount_) return false;
     return true;
 }
 
@@ -104,6 +105,9 @@ void DeployOrder::execute() {
         notify();              
         return;
     }
+    // Deduct from reinforcement pool
+    issuer_->subtractFromReinforcementPool(amount_);
+
 
     // Apply side effect
     target_->addArmies(amount_);
