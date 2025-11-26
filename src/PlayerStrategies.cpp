@@ -673,15 +673,26 @@ std::ostream& operator<<(std::ostream& os, const HumanPlayerStrategy& ps) {
 /** TODO: Return all owned territories (human decides priority)
  Strategy: Present all options to user */
 std::vector<Territory*> HumanPlayerStrategy::toDefend() {
-    // Dummy implementation - return all owned territories
+    if (!player_) return std::vector<Territory*>();
     return player_->getOwnedTerritories();
 }
 
 /** TODO: Return all adjacent enemy territories (human decides which to attack)
  Strategy: Present all attackable options to user */
 std::vector<Territory*> HumanPlayerStrategy::toAttack() {
-    // Dummy implementation - return empty list
     std::vector<Territory*> attackList;
+    if (!player_) return attackList;
+    for (Territory* mine : player_->getOwnedTerritories()) {
+        if (!mine) continue;
+        for (Territory* adj : mine->getAdjacents()) {
+            if (!adj) continue;
+            Player* owner = adj->getOwner();
+            if (owner != player_ && owner != nullptr &&
+                std::find(attackList.begin(), attackList.end(), adj) == attackList.end()) {
+                attackList.push_back(adj);
+            }
+        }
+    }
     return attackList;
 }
 
@@ -693,15 +704,301 @@ std::vector<Territory*> HumanPlayerStrategy::toAttack() {
  4. Create and add order to player's order list
  5. Return true if order created, false if user chose to end turn */
 bool HumanPlayerStrategy::issueOrder() {
-    // Dummy implementation - do nothing
-    std::cout << "[HumanPlayerStrategy] issueOrder() - NOT IMPLEMENTED\n";
-    std::cout << "Player " << player_->getPlayerName() << " needs user input.\n";
+    if (!player_) return false;
+
+    // Helper to read an integer from stdin with validation
+    auto readInt = [](int minVal, int maxVal) -> int {
+        int choice;
+        while (true) {
+            if (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::string dummy;
+                std::getline(std::cin, dummy);
+                std::cout << "Invalid input. Enter a number: ";
+                continue;
+            }
+            if (choice < minVal || choice > maxVal) {
+                std::cout << "Please enter a number in range [" << minVal << ", " << maxVal << "]: ";
+                continue;
+            }
+            return choice;
+        }
+    };
+
+    // Show basic menu
+    std::cout << "\n[Human] " << player_->getPlayerName() << " - Available actions:\n";
+    int pool = player_->getReinforcementPool();
+    if (pool > 0) {
+        std::cout << " 1) Deploy (reinforcements available: " << pool << ")\n";
+        std::cout << " 2) View hand\n";
+        std::cout << " 3) End turn (skip)\n";
+        std::cout << "Choose an action (1-3): ";
+        int action = readInt(1,3);
+
+        if (action == 3) return false; // end this issuing pass
+
+        if (action == 2) {
+            Hand* h = player_->getPlayerHand();
+            if (h) h->showHand();
+            return true;
+        }
+
+        // Deploy
+        auto owned = player_->getOwnedTerritories();
+        if (owned.empty()) return false;
+        std::cout << "Select territory to deploy to:\n";
+        for (size_t i = 0; i < owned.size(); ++i) {
+            Territory* t = owned[i];
+            std::cout << " " << (i+1) << ") " << (t ? t->getName() : std::string("<null>"))
+                      << " (armies=" << (t ? t->getArmies() : 0) << ")\n";
+        }
+        std::cout << "Choice: ";
+        int idx = readInt(1, (int)owned.size()) - 1;
+        Territory* target = owned[idx];
+        std::cout << "Enter number of armies to deploy (1-" << pool << "): ";
+        int amt = readInt(1, pool);
+        Order* deploy = new DeployOrder(player_, target, amt);
+        if (deploy->validate()) {
+            player_->getOrdersList()->add(deploy);
+            player_->subtractFromReinforcementPool(amt);
+            std::cout << "Issued Deploy(" << amt << " on " << target->getName() << ")\n";
+            return true;
+        }
+        delete deploy;
+        std::cout << "Invalid Deploy order.\n";
+        return false;
+    }
+
+    // When no reinforcements left, present more actions
+    std::cout << " 1) Advance\n";
+    std::cout << " 2) Play Card\n";
+    std::cout << " 3) View hand\n";
+    std::cout << " 4) End turn (skip)\n";
+    std::cout << "Choose an action (1-4): ";
+    int action = readInt(1,4);
+    if (action == 4) return false;
+
+    if (action == 3) {
+        Hand* h = player_->getPlayerHand();
+        if (h) h->showHand();
+        return true;
+    }
+
+    if (action == 1) {
+        // Advance: choose source (owned with armies>1)
+        std::vector<Territory*> sources;
+        for (Territory* t : player_->getOwnedTerritories()) if (t && t->getArmies() > 1) sources.push_back(t);
+        if (sources.empty()) {
+            std::cout << "No territories with movable armies.\n";
+            return false;
+        }
+        std::cout << "Select source territory:\n";
+        for (size_t i = 0; i < sources.size(); ++i) {
+            std::cout << " " << (i+1) << ") " << sources[i]->getName() << " (armies=" << sources[i]->getArmies() << ")\n";
+        }
+        std::cout << "Choice: ";
+        int sidx = readInt(1, (int)sources.size()) - 1;
+        Territory* source = sources[sidx];
+
+        // List adjacents
+        auto adjs = source->getAdjacents();
+        std::vector<Territory*> validTargets;
+        for (Territory* a : adjs) if (a) validTargets.push_back(a);
+        if (validTargets.empty()) {
+            std::cout << "No adjacent targets.\n";
+            return false;
+        }
+        std::cout << "Select target territory:\n";
+        for (size_t i = 0; i < validTargets.size(); ++i) {
+            Territory* t = validTargets[i];
+            std::string ownerName = t->getOwner() ? t->getOwner()->getPlayerName() : std::string("<none>");
+            std::cout << " " << (i+1) << ") " << t->getName() << " (owner=" << ownerName << ", armies=" << t->getArmies() << ")\n";
+        }
+        std::cout << "Choice: ";
+        int tidx = readInt(1, (int)validTargets.size()) - 1;
+        Territory* target = validTargets[tidx];
+        int maxMove = source->getArmies() - 1;
+        std::cout << "Enter number of armies to advance (1-" << maxMove << "): ";
+        int amt = readInt(1, maxMove);
+        Order* adv = new AdvanceOrder(player_, source, target, amt);
+        if (adv->validate()) {
+            player_->getOrdersList()->add(adv);
+            std::cout << "Issued Advance(" << amt << " from " << source->getName() << " to " << target->getName() << ")\n";
+            return true;
+        }
+        delete adv;
+        std::cout << "Invalid Advance order.\n";
+        return false;
+    }
+
+    if (action == 2) {
+        Hand* hand = player_->getPlayerHand();
+        if (!hand) return false;
+        auto cards = hand->getCardsOnHand();
+        if (cards.empty()) {
+            std::cout << "No cards in hand.\n";
+            return false;
+        }
+        std::cout << "Select a card to play:\n";
+        for (size_t i = 0; i < cards.size(); ++i) {
+            std::cout << " " << (i+1) << ") " << cardToString(cards[i]->getCard()) << "\n";
+        }
+        std::cout << "Choice: ";
+        int cidx = readInt(1, (int)cards.size()) - 1;
+        Card* chosen = cards[cidx];
+        if (!chosen) return false;
+
+        switch (chosen->getCard()) {
+            case Card::Bomb: {
+                // choose target among attackable territories
+                auto attackable = toAttack();
+                if (attackable.empty()) {
+                    std::cout << "No valid enemy targets for Bomb.\n";
+                    return false;
+                }
+                std::cout << "Select target to bomb:\n";
+                for (size_t i = 0; i < attackable.size(); ++i)
+                    std::cout << " " << (i+1) << ") " << attackable[i]->getName() << "\n";
+                std::cout << "Choice: ";
+                int targ = readInt(1, (int)attackable.size()) - 1;
+                Order* bomb = new BombOrder(player_, attackable[targ]);
+                if (bomb->validate()) {
+                    player_->getOrdersList()->add(bomb);
+                    hand->removeCard(chosen);
+                    delete chosen;
+                    std::cout << "Played Bomb on " << attackable[targ]->getName() << "\n";
+                    return true;
+                }
+                delete bomb;
+                std::cout << "Bomb order invalid.\n";
+                return false;
+            }
+            case Card::Blockade: {
+                auto owned = player_->getOwnedTerritories();
+                if (owned.empty()) return false;
+                std::cout << "Select owned territory for Blockade:\n";
+                for (size_t i = 0; i < owned.size(); ++i)
+                    std::cout << " " << (i+1) << ") " << owned[i]->getName() << "\n";
+                std::cout << "Choice: ";
+                int tid = readInt(1, (int)owned.size()) - 1;
+                Order* block = new BlockadeOrder(player_, owned[tid]);
+                if (block->validate()) {
+                    player_->getOrdersList()->add(block);
+                    hand->removeCard(chosen);
+                    delete chosen;
+                    std::cout << "Played Blockade on " << owned[tid]->getName() << "\n";
+                    return true;
+                }
+                delete block;
+                std::cout << "Blockade invalid.\n";
+                return false;
+            }
+            case Card::Airlift: {
+                auto owned = player_->getOwnedTerritories();
+                std::vector<Territory*> sources;
+                for (Territory* t : owned) if (t && t->getArmies() > 1) sources.push_back(t);
+                if (sources.empty()) { std::cout << "No valid source for Airlift.\n"; return false; }
+                std::cout << "Select source for Airlift:\n";
+                for (size_t i = 0; i < sources.size(); ++i)
+                    std::cout << " " << (i+1) << ") " << sources[i]->getName() << " (armies=" << sources[i]->getArmies() << ")\n";
+                std::cout << "Choice: ";
+                int s = readInt(1, (int)sources.size()) - 1;
+                Territory* src = sources[s];
+                std::cout << "Select destination (owned territory):\n";
+                for (size_t i = 0; i < owned.size(); ++i)
+                    std::cout << " " << (i+1) << ") " << owned[i]->getName() << "\n";
+                std::cout << "Choice: ";
+                int d = readInt(1, (int)owned.size()) - 1;
+                Territory* dst = owned[d];
+                int maxMove = src->getArmies() - 1;
+                std::cout << "Enter number of armies to airlift (1-" << maxMove << "): ";
+                int amt = readInt(1, maxMove);
+                Order* air = new AirliftOrder(player_, src, dst, amt);
+                if (air->validate()) {
+                    player_->getOrdersList()->add(air);
+                    hand->removeCard(chosen);
+                    delete chosen;
+                    std::cout << "Played Airlift from " << src->getName() << " to " << dst->getName() << "\n";
+                    return true;
+                }
+                delete air;
+                std::cout << "Airlift invalid.\n";
+                return false;
+            }
+            case Card::Diplomacy: {
+                // Choose an adjacent enemy player to negotiate with
+                std::vector<Player*> candidates;
+                for (Territory* mine : player_->getOwnedTerritories()) {
+                    for (Territory* adj : mine->getAdjacents()) {
+                        if (!adj) continue;
+                        Player* other = adj->getOwner();
+                        if (other && other != player_ && std::find(candidates.begin(), candidates.end(), other) == candidates.end())
+                            candidates.push_back(other);
+                    }
+                }
+                if (candidates.empty()) { std::cout << "No adjacent players to negotiate with.\n"; return false; }
+                std::cout << "Select player to negotiate with:\n";
+                for (size_t i = 0; i < candidates.size(); ++i)
+                    std::cout << " " << (i+1) << ") " << candidates[i]->getPlayerName() << "\n";
+                std::cout << "Choice: ";
+                int pidx = readInt(1, (int)candidates.size()) - 1;
+                Order* neg = new NegotiateOrder(player_, candidates[pidx]);
+                if (neg->validate()) {
+                    player_->getOrdersList()->add(neg);
+                    hand->removeCard(chosen);
+                    delete chosen;
+                    std::cout << "Played Diplomacy with " << candidates[pidx]->getPlayerName() << "\n";
+                    return true;
+                }
+                delete neg;
+                std::cout << "Diplomacy invalid.\n";
+                return false;
+            }
+            case Card::Reinforcement: {
+                // Treat as a deploy card: choose an owned territory and amount
+                auto owned = player_->getOwnedTerritories();
+                if (owned.empty()) return false;
+                std::cout << "Select territory to reinforce:\n";
+                for (size_t i = 0; i < owned.size(); ++i)
+                    std::cout << " " << (i+1) << ") " << owned[i]->getName() << "\n";
+                std::cout << "Choice: ";
+                int tid = readInt(1, (int)owned.size()) - 1;
+                std::cout << "Enter number of armies to deploy with card (>=1): ";
+                int amt = readInt(1, 1000000);
+                Order* d = new DeployOrder(player_, owned[tid], amt);
+                if (d->validate()) {
+                    player_->getOrdersList()->add(d);
+                    hand->removeCard(chosen);
+                    delete chosen;
+                    std::cout << "Played Reinforcement deploying " << amt << " to " << owned[tid]->getName() << "\n";
+                    return true;
+                }
+                delete d;
+                std::cout << "Reinforcement invalid.\n";
+                return false;
+            }
+            default:
+                break;
+        }
+    }
+
     return false;
 }
 
 bool HumanPlayerStrategy::issueOrder(Order* orderIssued) {
-    (void)orderIssued;
-    return issueOrder();
+    if (!player_) {
+        if (orderIssued) delete orderIssued;
+        return false;
+    }
+    if (!orderIssued) return issueOrder();
+
+    // Validate and accept the externally-created order when possible
+    if (orderIssued->validate()) {
+        player_->getOrdersList()->add(orderIssued);
+        return true;
+    }
+    delete orderIssued;
+    return false;
 }
 
 // ====================== CheaterPlayerStrategy =======================
