@@ -629,7 +629,7 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
         effectMsg = "Order issued.";
     } else if (commandOnly == GAME_START) {
         handleGamestart();
-        // printGamestartLog();
+        printGamestartLog();
         effectMsg = "Game started: territories distributed, turn order randomized, cards dealt.";
     } else if (commandOnly == TOURNAMENT) {
         success   = handleTournament(command);
@@ -1349,7 +1349,18 @@ void GameEngine::handleGamestart() {
 
 
     // (d) Let each player draw 2 initial cards from Deck.
+
+        // LOAD DECK WITH 50 CARDS, 10 of each of the five variations.
+        for(std::size_t i = 0; i < 10; i++) {
+            deck->addCard(new Card(Card::Reinforcement));
+            deck->addCard(new Card(Card::Bomb));
+            deck->addCard(new Card(Card::Blockade));
+            deck->addCard(new Card(Card::Diplomacy));
+            deck->addCard(new Card(Card::Airlift));
+        }
+
         std::cout << "  ...Each player draws 2 cards from Deck.\n\n";
+
         for(Player* p : *players) {
             Hand* playerHand = p->getPlayerHand();
             // std::cout << "  ------Player " << p->getPlayerName() << ":\n    ";
