@@ -45,10 +45,13 @@ void testTournament()
         "tournament -M World.map -P Crazy AI -G 0 -D 5",
 
         // (c) Same player strategy is entered twice.
-        "tournament -M World.map -P Benevolent Benevolent -G 3 -D 10"
+        "tournament -M World.map -P Benevolent Benevolent -G 3 -D 10",
+
+        // (d) Invalid tournament command line with missing params.
+        "tournament -M -P -G -D"
     };
 
-    for (std::size_t i = 0; i < invalidCmds.size(); ++i) {
+    for (std::size_t i = 0; i < invalidCmds.size(); i++) {
         cout << "  Invalid command #" << (i + 1) << ":\n";
         cout << "    " << invalidCmds.at(i) << "\n";
 
