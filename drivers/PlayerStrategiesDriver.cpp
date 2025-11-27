@@ -4,7 +4,6 @@
 #include "../include/Orders.h"
 #include "../include/Cards.h"
 
-void testPlayerStrategies() {
 #include <iostream>
 #include <cassert>
 
@@ -77,6 +76,9 @@ static void setupMap(Map& gameMap, Continent* continent,
     }
 }
 
+// Forward declaration for testHumanStrategy
+static void testHumanStrategy();
+
 /**
  * @brief Test driver for Player Strategies functionality
  * 
@@ -121,7 +123,7 @@ void testPlayerStrategies(){
     
     // Validate the map to ensure it's properly constructed
     assert(gameMap.validate() && "Map validation failed - map must be connected");
-    cout << "Map validation: PASSED ✓\n\n";
+    cout << "Map validation: PASSED OK\n\n";
     
     // ======================= Create Players with Different Strategies =======================
     cout << "=== Creating Players with Different Strategies ===\n";
@@ -161,7 +163,7 @@ void testPlayerStrategies(){
     assert(issued && "Aggressive player should issue deploy order when reinforcements available");
     assert(aggressivePlayer->getReinforcementPool() == 0 && "All reinforcements should be deployed");
     assert(aggressivePlayer->getOrdersList()->size() == 1 && "Should have one deploy order");
-    cout << "✓ Aggressive player deploys all reinforcements to strongest territory\n\n";
+    cout << "OK Aggressive player deploys all reinforcements to strongest territory\n\n";
     
     // ======================= Test 2: Aggressive Strategy - Attack Phase =======================
     cout << "=== Test 2: Aggressive Strategy - Attack Phase ===\n";
@@ -170,7 +172,7 @@ void testPlayerStrategies(){
     issued = aggressivePlayer->issueOrder();
     assert(issued && "Aggressive player should issue advance order to attack enemy");
     assert(aggressivePlayer->getOrdersList()->size() == 2 && "Should have two orders (deploy + advance)");
-    cout << "✓ Aggressive player advances to attack adjacent enemy territory\n\n";
+    cout << "OK Aggressive player advances to attack adjacent enemy territory\n\n";
     
     // ======================= Test 3: Neutral Strategy Behavior =======================
     cout << "=== Test 3: Neutral Strategy - Never Issues Orders ===\n";
@@ -181,7 +183,7 @@ void testPlayerStrategies(){
     assert(neutralPlayer->getOrdersList()->size() == 0 && "Neutral should have no orders");
     assert(neutralPlayer->getReinforcementPool() == TestConstants::NEUTRAL_REINFORCEMENTS 
            && "Neutral should not use reinforcements");
-    cout << "✓ Neutral player never issues orders even with reinforcements\n\n";
+    cout << "OK Neutral player never issues orders even with reinforcements\n\n";
     
     // ======================= Test 4: Neutral to Aggressive Transformation =======================
     cout << "=== Test 4: Dynamic Strategy Change - Neutral Becomes Aggressive ===\n";
@@ -207,7 +209,7 @@ void testPlayerStrategies(){
     assert(isAggressiveAfter && "Neutral player should transform to aggressive after being attacked");
     assert(notNeutralAfter && "Should no longer have neutral strategy");
     
-    cout << "✓ Neutral player transforms to aggressive when attacked\n\n";
+    cout << "OK Neutral player transforms to aggressive when attacked\n\n";
     
     // ======================= Test 5: Transformed Neutral Now Behaves Aggressively =======================
     cout << "=== Test 5: Transformed Player Behaves Aggressively ===\n";
@@ -222,7 +224,7 @@ void testPlayerStrategies(){
            && "Transformed player should have added an order");
     assert(neutralPlayer->getReinforcementPool() == 0 
            && "Transformed aggressive player should deploy all reinforcements");
-    cout << "✓ Transformed player issues aggressive orders (dynamic strategy change works)\n\n";
+    cout << "OK Transformed player issues aggressive orders (dynamic strategy change works)\n\n";
     
     // ======================= Test 6: toDefend() and toAttack() Methods =======================
     cout << "=== Test 6: Strategy-Specific toDefend() and toAttack() ===\n";
@@ -237,7 +239,7 @@ void testPlayerStrategies(){
         bool isSortedDescending = defendList[i-1]->getArmies() >= defendList[i]->getArmies();
         assert(isSortedDescending && "toDefend() should return territories sorted by armies (descending)");
     }
-    cout << "✓ Aggressive toDefend() returns territories sorted by strength (descending)\n";
+    cout << "OK Aggressive toDefend() returns territories sorted by strength (descending)\n";
     
     // Test 6b: Aggressive toAttack - should list adjacent enemies
     std::vector<Territory*> attackList = aggressivePlayer->toAttack();
@@ -247,24 +249,26 @@ void testPlayerStrategies(){
         bool isEnemyTerritory = territory->getOwner() != aggressivePlayer;
         assert(isEnemyTerritory && "toAttack() should only return enemy territories");
     }
-    cout << "✓ Aggressive toAttack() returns adjacent enemy territories\n";
-    cout << "✓ toAttack() methods work correctly for different strategies\n\n";
+    cout << "OK Aggressive toAttack() returns adjacent enemy territories\n";
+    cout << "OK toAttack() methods work correctly for different strategies\n\n";
     
     // ======================= Cleanup =======================
     cout << "=== Cleanup ===\n";
     delete aggressivePlayer;
     delete neutralPlayer;
     // Map destructor will clean up territories
+
+    testHumanStrategy(); // Call the human player strategy test
     
   
     cout << "\n========================================" << endl;
     cout << "   Now Testing: Benevolent & Cheater" << endl;
     cout << "========================================\n" << endl;
 
-    // Create a simple map and continent
-    Map gameMap;
+    // Create a simple map and continent for benevolent/cheater tests
+    Map gameMap2;
     Continent* cont = new Continent(1, "Cont", 5);
-    gameMap.addContinent(cont);
+    gameMap2.addContinent(cont);
 
     // Create territories used across tests
     Territory* tA = new Territory(1, "A");
@@ -278,15 +282,15 @@ void testPlayerStrategies(){
     tC->addAdjacent(tD); tD->addAdjacent(tC);
 
     // Add to map and continent
-    gameMap.addTerritory(tA); gameMap.addTerritory(tB);
-    gameMap.addTerritory(tC); gameMap.addTerritory(tD);
+    gameMap2.addTerritory(tA); gameMap2.addTerritory(tB);
+    gameMap2.addTerritory(tC); gameMap2.addTerritory(tD);
     // Ensure territories are members of the continent (both sides of relationship)
     tA->addContinent(cont); cont->addTerritory(tA);
     tB->addContinent(cont); cont->addTerritory(tB);
     tC->addContinent(cont); cont->addTerritory(tC);
     tD->addContinent(cont); cont->addTerritory(tD);
 
-    assert(gameMap.validate() && "Map should be valid (connected chain)");
+    assert(gameMap2.validate() && "Map should be valid (connected chain)");
 
     // --- Benevolent test ---
     cout << "--- Benevolent strategy test ---\n";
@@ -299,8 +303,8 @@ void testPlayerStrategies(){
 
     // Reinforcements: expect deploy to weakest (tA)
     benevo->setReinforcementPool(4);
-    bool issued = benevo->issueOrder();
-    assert(issued && "Benevolent should issue deploy when reinforcements available");
+    bool benevoIssued = benevo->issueOrder();
+    assert(benevoIssued && "Benevolent should issue deploy when reinforcements available");
     assert(benevo->getOrdersList()->size() == 1 && "One deploy order should be queued");
 
     // Show state before card plays
@@ -326,7 +330,7 @@ void testPlayerStrategies(){
     Player* enemy = new Player("Enemy");
     Territory* tX = new Territory(99, "X");
     tX->addAdjacent(tB); tB->addAdjacent(tX);
-    gameMap.addTerritory(tX); cont->addTerritory(tX);
+    gameMap2.addTerritory(tX); cont->addTerritory(tX);
     tX->setOwner(enemy); tX->setArmies(3); enemy->addPlayerTerritory(tX);
 
     // Play a Bomb card (offensive) - Benevolent should reject it (order not queued)
@@ -386,7 +390,7 @@ void testPlayerStrategies(){
     // Add a new victim territory adjacent to tC and assign to victim
     Territory* tE = new Territory(5, "E");
     tE->addAdjacent(tC); tC->addAdjacent(tE);
-    gameMap.addTerritory(tE); cont->addTerritory(tE);
+    gameMap2.addTerritory(tE); cont->addTerritory(tE);
     tE->setOwner(victim); tE->setArmies(2); victim->addPlayerTerritory(tE);
 
     bool c3 = cheater->issueOrder();
@@ -404,6 +408,160 @@ void testPlayerStrategies(){
     delete victim;
 
     cout << "PlayerStrategies focused driver complete.\n";
+}
+
+/**
+ * @brief Test driver for Human Player Strategy functionality
+ * 
+ * @details Tests both interactive and non-interactive paths:
+ *          1. Non-interactive tests validate toDefend(), toAttack(), and issueOrder(Order*)
+ *          2. Optional interactive test allows user to test menu-driven issueOrder()
+ */
+static void testHumanStrategy() {
+    cout << "\n========================================" << endl;
+    cout << "   Testing: Human Strategy" << endl;
+    cout << "========================================\n" << endl;
+
+    // ======================= Test Setup =======================
+    cout << "=== Test Setup: Creating Simple Map ===\n";
+    
+    Map gameMap;
+    Continent* continent = new Continent(1, "TestContinent", 3);
+    gameMap.addContinent(continent);
+    
+    // Create 3 territories
+    Territory* myTerritory1 = new Territory(1, "MyLand1");
+    Territory* myTerritory2 = new Territory(2, "MyLand2");
+    Territory* enemyTerritory = new Territory(3, "EnemyLand");
+    
+    // Set up adjacencies
+    myTerritory1->addAdjacent(myTerritory2);
+    myTerritory2->addAdjacent(myTerritory1);
+    myTerritory2->addAdjacent(enemyTerritory);
+    enemyTerritory->addAdjacent(myTerritory2);
+    
+    // Add to map and continent
+    gameMap.addTerritory(myTerritory1);
+    gameMap.addTerritory(myTerritory2);
+    gameMap.addTerritory(enemyTerritory);
+    continent->addTerritory(myTerritory1);
+    continent->addTerritory(myTerritory2);
+    continent->addTerritory(enemyTerritory);
+    myTerritory1->addContinent(continent);
+    myTerritory2->addContinent(continent);
+    enemyTerritory->addContinent(continent);
+    
+    assert(gameMap.validate() && "Map should be valid");
+    cout << "Created simple map with 3 territories\n\n";
+    
+    // ======================= Create Players =======================
+    cout << "=== Creating Human Player and Enemy ===\n";
+    
+    Player* humanPlayer = new Player("Human");
+    humanPlayer->setPlayerStrategy(new HumanPlayerStrategy());
+    
+    Player* enemyPlayer = new Player("Enemy");
+    enemyPlayer->setPlayerStrategy(new AggressivePlayerStrategy());
+    
+    // Assign territories
+    myTerritory1->setOwner(humanPlayer);
+    myTerritory1->setArmies(5);
+    humanPlayer->addPlayerTerritory(myTerritory1);
+    
+    myTerritory2->setOwner(humanPlayer);
+    myTerritory2->setArmies(3);
+    humanPlayer->addPlayerTerritory(myTerritory2);
+    
+    enemyTerritory->setOwner(enemyPlayer);
+    enemyTerritory->setArmies(4);
+    enemyPlayer->addPlayerTerritory(enemyTerritory);
+    
+    cout << "Human owns: MyLand1 (5 armies), MyLand2 (3 armies)\n";
+    cout << "Enemy owns: EnemyLand (4 armies)\n\n";
+    
+    // ======================= Test 1: toDefend() Returns All Territories =======================
+    cout << "=== Test 1: Human toDefend() Returns All Owned Territories ===\n";
+    std::vector<Territory*> defendList = humanPlayer->toDefend();
+    assert(defendList.size() == 2 && "Human should have 2 territories to defend");
+    
+    bool hasMyLand1 = false, hasMyLand2 = false;
+    for (Territory* t : defendList) {
+        if (t->getName() == "MyLand1") hasMyLand1 = true;
+        if (t->getName() == "MyLand2") hasMyLand2 = true;
+    }
+    assert(hasMyLand1 && hasMyLand2 && "toDefend() should include all owned territories");
+    cout << "OK Human toDefend() returns all owned territories for user choice\n\n";
+    
+    // ======================= Test 2: toAttack() Returns Adjacent Enemies =======================
+    cout << "=== Test 2: Human toAttack() Returns Adjacent Enemy Territories ===\n";
+    std::vector<Territory*> attackList = humanPlayer->toAttack();
+    assert(!attackList.empty() && "Human should have adjacent enemies to attack");
+    
+    bool hasEnemyLand = false;
+    for (Territory* t : attackList) {
+        if (t->getName() == "EnemyLand") hasEnemyLand = true;
+        assert(t->getOwner() != humanPlayer && "toAttack() should only return enemy territories");
+    }
+    assert(hasEnemyLand && "toAttack() should include adjacent enemy territory");
+    cout << "OK Human toAttack() returns adjacent enemy territories for user choice\n\n";
+    
+    // ======================= Test 3: issueOrder(Order*) Accepts Valid Orders =======================
+    cout << "=== Test 3: Human issueOrder(Order*) Accepts Pre-Created Orders ===\n";
+    
+    // Create a deploy order and pass to human player
+    humanPlayer->setReinforcementPool(5);
+    Order* deployOrder = new DeployOrder(humanPlayer, myTerritory1, 3);
+    humanPlayer->issueOrder(deployOrder);
+    
+    assert(humanPlayer->getOrdersList()->size() == 1 && "Human should accept deploy order");
+    cout << "OK Human issueOrder(Order*) accepts valid deploy orders\n";
+    
+    // Create an advance order and pass to human player
+    Order* advanceOrder = new AdvanceOrder(humanPlayer, myTerritory1, myTerritory2, 2);
+    humanPlayer->issueOrder(advanceOrder);
+    
+    assert(humanPlayer->getOrdersList()->size() == 2 && "Human should accept advance order");
+    cout << "OK Human issueOrder(Order*) accepts valid advance orders\n\n";
+    
+    // ======================= Test 4: Interactive Path =======================
+    cout << "=== Test 4: Interactive Path ===\n";
+    cout << "The Human strategy includes a full interactive menu system that:\n";
+    cout << "  - Prompts user for Deploy/Advance/Card actions\n";
+    cout << "  - Validates territory selection and army counts\n";
+    cout << "  - Handles all 5 card types interactively\n";
+    cout << "  - Allows viewing hand and ending turn\n\n";
+    
+    cout << "Would you like to test the interactive menu? (y/n): ";
+    std::string response;
+    std::getline(std::cin, response);
+    
+    if (response == "y" || response == "Y") {
+        cout << "\n--- Interactive Test ---\n";
+        cout << "Calling humanPlayer->issueOrder() for interactive testing...\n\n";
+        
+        // Give player some cards to play with
+        Deck testDeck;
+        humanPlayer->getPlayerHand()->addCard(new Card(Card::Bomb));
+        humanPlayer->getPlayerHand()->addCard(new Card(Card::Airlift));
+        
+        bool issued = humanPlayer->issueOrder();
+        
+        if (issued) {
+            cout << "\nOK Interactive order issued successfully\n";
+        } else {
+            cout << "\nUser chose to end turn (no order issued)\n";
+        }
+    } else {
+        cout << "Skipping interactive test (run manually to test full menu system)\n";
+    }
+    
+    cout << "\n";
+    
+    // ======================= Cleanup =======================
+    cout << "=== Cleanup ===\n";
+    delete humanPlayer;
+    delete enemyPlayer;
+    cout << "Human strategy test complete\n\n";
 }
 
 // Register for main driver discovery (MainDriver.cpp expects a test function with this name in drivers)
