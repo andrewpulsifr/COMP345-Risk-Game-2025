@@ -37,6 +37,10 @@ void testOrdersLists() {
     Player alice("Alice"), bob("Bob");
     alice.setReinforcementPool(20);  // or whatever your method is
     bob.setReinforcementPool(20); 
+    
+    // Initialize global neutral player for Blockade orders
+    neutralPlayer = new Player("Neutral");
+    
     OrdersList ol;
     
     // Build minimal map with territories for order execution testing
@@ -109,6 +113,16 @@ void testOrdersLists() {
     // Test remove functionality by removing order at index 2
     ol.remove(2);
     cout << "After remove(2):\n" << ol;
+
+    // ======================= Cleanup =======================
+    // Null out territory owners before players go out of scope
+    t1->setOwner(nullptr);
+    t2->setOwner(nullptr);
+    t3->setOwner(nullptr);
+    
+    // Clean up global neutral player
+    delete neutralPlayer;
+    neutralPlayer = nullptr;
 
     cout << "=== end testOrdersLists ===\n";
 }
@@ -189,6 +203,9 @@ void testOrderExecution() {
     std::cout << "Negotiate: " << negotiate.effect() << "\n";
 
     //Cleanup
+    t1->setOwner(nullptr);
+    t2->setOwner(nullptr);
+    t3->setOwner(nullptr);
     delete t1; delete t2; delete t3; 
 
     std::cout << "=== end testOrderExecution ===\n";

@@ -64,7 +64,7 @@ Player::Player(std::string name)
       cardAwardedThisTurn(false),
       reinforcementPool(0),
       orders_(new OrdersList()),
-      playerStrategy()
+      playerStrategy(nullptr)
 {}
 
 
