@@ -78,6 +78,13 @@ void testLoggingObserver() {
     Player* player1 = new Player("Alice");
     player1->addPlayerTerritory(territory1);
     player1->addPlayerTerritory(territory2);
+    
+    // Set up territory ownership and reinforcement pool for valid deploy
+    territory1->setOwner(player1);
+    territory2->setOwner(player1);
+    territory1->setArmies(10);
+    territory2->setArmies(10);
+    player1->setReinforcementPool(5);
 
     DeployOrder* deployOrder = new DeployOrder(player1, territory1, 5);
     OrdersList* ordersList = new OrdersList();
@@ -453,7 +460,7 @@ void testLoggingObserver() {
              << (hasOrdersList3 ? "PASS" : "FAIL") << endl;
         
         // Assert: Check for Order executions
-        bool hasDeployEffect = logContents.find("Order: Deploy | Effect: Deploy 5 to Canada (owner: Alice)") != string::npos;
+        bool hasDeployEffect = logContents.find("Order: Deploy | Effect: Deployed 5 armies to Canada") != string::npos;
         bool hasAdvanceEffect = logContents.find("Order: Advance | Effect:") != string::npos;
         bool hasBombEffect = logContents.find("Order: Bomb | Effect:") != string::npos;
         
