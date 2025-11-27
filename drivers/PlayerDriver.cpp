@@ -121,5 +121,10 @@ void testPlayers() {
     alice.issueOrder(new AdvanceOrder(&alice, canada, mexico, 2));
     cout << "Advance 2 armies from Canada to Mexico\n";
 
+    // ======================= Cleanup =======================
+    canada->setOwner(nullptr);
+    usa->setOwner(nullptr);
+    mexico->setOwner(nullptr);
+
     cout << "\n=== Player Class Testing Complete ===\n";
 }
