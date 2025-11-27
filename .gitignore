@@ -1,5 +1,6 @@
 # Prerequisites
 *.d
+*.txt
 
 # Compiled Object files
 *.slo
@@ -64,3 +65,4 @@ test_commands.txt
 test_error_commands.txt
 .gitignore
 test_success_commands.txt
+warzone

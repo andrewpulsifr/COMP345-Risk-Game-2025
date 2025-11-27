@@ -23,8 +23,9 @@
 #include "../include/GameEngine.h"
 
 // Forward declarations of driver test functions
-void testLoadMaps();
-void testPlayers();
+// void testLoadMaps();
+// void testPlayers();
+void testOrderExecution();
 void testOrdersLists();
 void testCards();
 void testGameStates();

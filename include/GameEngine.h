@@ -195,6 +195,8 @@ public:
     // === A3, P2: Tournament Mode ===
     // ** CURRENTLY IN PUBLIC FOR TESTING (ROMAN's IMPLEMENTATION) **
     bool handleTournament(const std::string& command);
+    std::string runSingleTournamentGame(const std::string& mapName, const std::vector<std::string>& stratNames,int maxTurns);
+    std::string runGameWithTurnLimit(int maxTurns);
 
 private:
     // Type aliases for readability

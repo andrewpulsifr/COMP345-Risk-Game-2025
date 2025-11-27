@@ -630,10 +630,11 @@ void GameEngine::executeStateTransition(GameState newState, const string& comman
         effectMsg = "Order issued.";
     } else if (commandOnly == GAME_START) {
         handleGamestart();
-        // printGamestartLog();
+        printGamestartLog();
         effectMsg = "Game started: territories distributed, turn order randomized, cards dealt.";
     } else if (commandOnly == TOURNAMENT) {
-        handleTournament(command);
+        success   = handleTournament(command);
+        effectMsg = success ? "Tournament executed successfully." : "ERROR: Tournament execution failed.";
     } else if (commandOnly == END_ISSUE_ORDERS || commandOnly == EXEC_ORDER || commandOnly == END_EXEC_ORDERS) {
         handleExecuteOrders(command);
         effectMsg = "Orders executed.";
@@ -1124,13 +1125,28 @@ void GameEngine::mainGameLoop() {
     executeOrdersPhase();
     
     // Award cards to players who conquered at least one territory this turn
+    std::size_t cardsRemaining = deck->getCardsOnDeck().size();
+    bool deckBecameEmptyThisTurn = false;
+
     for (Player* player : *players) {
-        if (player->getCardAwardedThisTurn()) {
-            deck->draw(*player->getPlayerHand());
-            std::cout << "  -> " << player->getPlayerName() 
-                      << " conquered a territory and draws a card!\n";
-            player->setCardAwardedThisTurn(false); // Reset for next turn
-        }
+        if (!player) continue;
+        if (!player->getCardAwardedThisTurn()) continue;
+        if (cardsRemaining == 0) {
+        // No more cards to give – just clear the flag
+        player->setCardAwardedThisTurn(false);
+        deckBecameEmptyThisTurn = true;  // remember to maybe log once
+        continue;
+      }
+
+        // Draw 1 card and award it
+        deck->draw(*player->getPlayerHand());
+        std::cout << "  -> " << player->getPlayerName() << " conquered a territory and draws a card!\n";
+        player->setCardAwardedThisTurn(false);
+        --cardsRemaining;
+    }
+
+    if (deckBecameEmptyThisTurn) {
+    std::cout << "The Deck is empty. No further cards will be drawn.\n";
     }
     
     removeDefeatedPlayers();
@@ -1341,7 +1357,18 @@ void GameEngine::handleGamestart() {
 
 
     // (d) Let each player draw 2 initial cards from Deck.
+
+        // LOAD DECK WITH 50 CARDS, 10 of each of the five variations.
+        for(std::size_t i = 0; i < 10; i++) {
+            deck->addCard(new Card(Card::Reinforcement));
+            deck->addCard(new Card(Card::Bomb));
+            deck->addCard(new Card(Card::Blockade));
+            deck->addCard(new Card(Card::Diplomacy));
+            deck->addCard(new Card(Card::Airlift));
+        }
+
         std::cout << "  ...Each player draws 2 cards from Deck.\n\n";
+
         for(Player* p : *players) {
             Hand* playerHand = p->getPlayerHand();
             // std::cout << "  ------Player " << p->getPlayerName() << ":\n    ";
@@ -1419,6 +1446,67 @@ void GameEngine::printGamestartLog() const {
 bool GameEngine::handleTournament(const std::string& command) {
     cout << "  -> Handling Tournament...\n" << endl;
 
+    CommandProcessor tempHelper;
+
+    std::vector<int> values = tempHelper.validateTournament(command);
+    int numMaps = values[0];
+    int numPlayerStrats = values[1];
+    int numGames = values[2];
+    int maxNumTurns = values[3];
+
+    std::size_t pos_M = command.find("-M");
+    std::size_t pos_P = command.find("-P");
+    std::size_t pos_G = command.find("-G");
+
+    std::vector<std::string> mapNames = tempHelper.extractMapOrPlayerOfTournament(command, pos_M, pos_P);
+    std::vector<std::string> playerStrats = tempHelper.extractMapOrPlayerOfTournament(command, pos_P, pos_G);
+
+    if((int)mapNames.size() != numMaps || (int)playerStrats.size() != numPlayerStrats){
+        std::cout << "  -> ERROR: internal mismatch between parsed sizes.\n" << std::endl;
+        return false;
+    }
+
+    std::cout << "\nTournament mode:\n";
+    std::cout << "M: ";
+    for (std::size_t i = 0; i < mapNames.size(); ++i) {
+        std::cout << mapNames[i];
+        if (i + 1 < mapNames.size()) std::cout << ", ";
+    }
+    std::cout << "\nP: ";
+    for (std::size_t i = 0; i < playerStrats.size(); ++i) {
+        std::cout << playerStrats[i];
+        if (i + 1 < playerStrats.size()) std::cout << ", ";
+    }
+    std::cout << "\nG: " << numGames << "\n";
+    std::cout << "D: " << maxNumTurns << "\n\n";
+
+    std::vector<std::vector<std::string>> results(
+        mapNames.size(),
+        std::vector<std::string>(numGames, "Draw")
+    );
+
+    for (std::size_t m = 0; m < mapNames.size(); ++m) {
+        for (int g = 0; g < numGames; ++g) {
+            std::cout << "  -> Running game " << (g + 1) << " on map " << mapNames[m] << "...\n";
+            results[m][g] = runSingleTournamentGame(mapNames[m], playerStrats, maxNumTurns);
+        }
+    }
+
+    std::cout << "\nResults:\n\t";
+    for (int g = 0; g < numGames; ++g) {
+        std::cout << "Game " << (g + 1) << "\t";
+    }
+    std::cout << "\n";
+
+    for (std::size_t m = 0; m < mapNames.size(); ++m) {
+        std::cout << "Map " << (m + 1) << "\t";
+        for (int g = 0; g < numGames; ++g) {
+            std::cout << results[m][g] << "\t";
+        }
+        std::cout << "\n";
+    }
+
+    std::cout << std::endl;
     // ** TODO: THE REST IS ROMAN'S IMPLEMENTATION! **
     // Note: To get the values of the tournament command, see the printTournamentCommandLog() function in CommandProcessor.
     // use extractMapOrPlayerOfTournament() to return a vector of int values of the tournament (numOfMaps, numOfPlayerStratsIndex, numOfGames, maxNumOfTurns).
@@ -1427,4 +1515,96 @@ bool GameEngine::handleTournament(const std::string& command) {
     
     return true;
 }
+/**
+ * @brief Run a single game in tournament mode with specified parameters
+ * @param mapName The name of the map to load
+ * @param playerStrats Vector of player strategy names
+ * @param maxNumTurns Maximum number of turns before declaring a draw
+ * @return The name of the winning player, or "Draw" if no winner
+ */
+std::string GameEngine::runSingleTournamentGame(const std::string& mapName, const std::vector<std::string>& playerStrats, int maxNumTurns) {
+    GameEngine game;
 
+    std::string effect;
+    std::string loadCmd = "loadmap " + mapName;
+    if (!game.handleLoadMap(loadCmd, effect)) {
+        std::cout << "    ERROR loading map " << mapName << ": " << effect << "\n";
+        return "Draw";
+    }
+
+    if (!game.handleValidateMap(effect)) {
+        std::cout << "    ERROR validating map " << mapName << ": " << effect << "\n";
+        return "Draw";
+    }
+
+    for (const std::string& strat : playerStrats) {
+        std::string addCmd = "addplayer " + strat;    
+        if (!game.handleAddPlayer(addCmd, effect)) {
+            std::cout << "    ERROR adding player " << strat << ": " << effect << "\n";
+            return "Draw";
+        }
+    }
+
+    game.handleGamestart();
+
+    std::string winner = game.runGameWithTurnLimit(maxNumTurns);
+    return winner;
+}
+
+/**
+ * @brief Run the game with a turn limit for tournament mode
+ * @param maxTurns Maximum number of turns before declaring a draw
+ * @return The name of the winning player, or "Draw" if no winner
+ */
+std::string GameEngine::runGameWithTurnLimit(int maxTurns) {
+    if (!gameMap || !players || players->empty()) {
+        std::cout << "Cannot start tournament game: map or players not initialized.\n";
+        return "Draw";
+    }
+
+    bool gameOver = false;
+    int turn = 1;
+    Player* winner = nullptr;
+
+    while (!gameOver && turn <= maxTurns) {
+        std::cout << "\n===== TOURNAMENT TURN " << turn << " =====\n";
+
+        reinforcementPhase();
+        issueOrdersPhase();
+        executeOrdersPhase();
+
+    std::size_t cardsRemaining = deck->getCardsOnDeck().size();
+
+    for (Player* player : *players) {
+    if (!player) continue;
+    if (!player->getCardAwardedThisTurn()) continue;
+
+    if (cardsRemaining == 0) {
+        // Silent for tournament, just clear flag
+        player->setCardAwardedThisTurn(false);
+        continue;
+    }
+
+    deck->draw(*player->getPlayerHand());
+    std::cout << "  -> " << player->getPlayerName()
+              << " conquered a territory and draws a card!\n";
+
+    player->setCardAwardedThisTurn(false);
+    --cardsRemaining;
+ }
+
+        removeDefeatedPlayers();
+
+        if (checkWinCondition(winner)) {
+            gameOver = true;
+        }
+
+        ++turn;
+    }
+
+    if (gameOver && winner) {
+        return winner->getPlayerName();   
+    }
+
+    return "Draw";
+}

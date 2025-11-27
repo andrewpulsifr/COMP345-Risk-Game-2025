@@ -106,9 +106,9 @@ void DeployOrder::execute() {
         notify();              
         return;
     }
-
-    // Subtract from the player's reinforcement pool
+    // Deduct from reinforcement pool
     issuer_->subtractFromReinforcementPool(amount_);
+
 
     // Apply side effect
     target_->addArmies(amount_);
@@ -216,10 +216,18 @@ void AdvanceOrder::execute() {
 
     if (defenderAmount == 0) {
         // Conquer territory
+        Player* oldOwner = target_->getOwner();
+
+        if (oldOwner) {
+            oldOwner->removePlayerTerritory(target_);
+       }
+
         target_->setOwner(issuer_);
+        issuer_->addPlayerTerritory(target_);
+
         target_->setArmies(attackerAmount);
         source_->removeArmies(amount_);
-
+        
         std::ostringstream ss;
         ss << "Conquered " << target_->getName()
            << " with " << attackerAmount << " armies remaining.";

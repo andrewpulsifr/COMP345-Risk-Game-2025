@@ -1,53 +1,99 @@
-/**
- * @file TournamentDriver.cpp
- * @brief Test driver for the tournament command entered by user for the game.
- * @details This driver tests the 'tournament' command, a part of the CommandProcessor class to demonstrate:
- *              - 1. The 'tournament' command can be processed and validated in the CommandProcessor.
-                - 2. The 'tournament' command can be executed in the GameEngine.
- * @author Chhay, and 
- * @date November 2025
- * @version 1.0
- */
-
 #include <iostream>
-#include "../include/CommandProcessing.h"
+#include <vector>
+#include <string>
 #include "../include/GameEngine.h"
+#include "../include/CommandProcessing.h"
+#include "../include/Cards.h"
+using std::cout;
+using std::endl;
+using std::string;
+using std::vector;
 
-// === A3, PART 2: TOURNAMENT MODE ===
-void testTournament(int argc, char* argv[]) {
-    std::cout << "=== Starting Tournament Mode Test Drivers ===" << std::endl;
-    
+/**
+ * @brief Driver for Assignment 3 – Part 2: Tournament Mode.
+ *
+ * Demonstrates that:
+ *  (1) The 'tournament' command line is parsed and validated by CommandProcessor
+ *      (including both valid and invalid examples).
+ *  (2) GameEngine executes a tournament completely automatically (no user input),
+ *      using GameEngine::handleTournament(), which in turn runs multiple games
+ *      via runSingleTournamentGame() and runGameWithTurnLimit().
+ */
+void testTournament()
+{
+    cout << "=============================================\n";
+    cout << "          testTournament() - Part 2\n";
+    cout << "=============================================\n\n";
+
+    CommandProcessor cp;
     GameEngine engine;
-    CommandProcessor *commandPro = nullptr;
-    
-    try {
-        if(argc == 2 && std::string(argv[1]) == "-console") {
-            std::cout << "\nMode Selected: Console..." << std::endl;
-            commandPro = new CommandProcessor();
-            commandPro->getCommand(engine);
 
-            std::cout << *commandPro << std::endl;
-        } else if (argc == 3 && std::string(argv[1]) == "-file") {
-            std::string fileName = argv[2];
-            std::cout << "\nMode Selected: File...." << std::endl;
 
-            commandPro = new FileCommandProcessorAdapter(fileName);
-            commandPro->getCommand(engine);
+    engine.getDeck()->showDeck();
 
-            std::cout << *commandPro << std::endl;
-        } else {
-            throw std::invalid_argument("");
+    // ---------------------------------------------------------------------
+    // 1) INVALID TOURNAMENT COMMANDS: show  error messages
+    // ---------------------------------------------------------------------
+    cout << "[1] Testing CommandProcessor with INVALID tournament commands\n\n";
+
+    // A couple of different error cases
+    vector<string> invalidCmds = {
+        // (a) Too many maps (> 5)
+        "tournament -M A.map B.map C.map D.map E.map F.map -P Aggressive Benevolent -G 2 -D 10",
+
+        // (b) Bad strategy name + G and D out of range
+        "tournament -M World.map -P Crazy AI -G 0 -D 5",
+
+        // (c) Same player strategy is entered twice.
+        "tournament -M World.map -P Benevolent Benevolent -G 3 -D 10"
+    };
+
+    for (std::size_t i = 0; i < invalidCmds.size(); ++i) {
+        cout << "  Invalid command #" << (i + 1) << ":\n";
+        cout << "    " << invalidCmds.at(i) << "\n";
+
+        try {
+            cp.printTournamentCommandLog(invalidCmds[i]);
+            //cout << "    -> ERROR: command should have been rejected but was accepted!\n\n";
         }
-    } catch (const std::invalid_argument& invalidErr) {
-        std::cerr << "\nERROR: Invalid command line. Please enter a command line in one of the two formats:\n\n"
-                    "   1. Console Mode:    <./executable-file-name> -console\n"
-                    "   2. File Mode:       <./executable-file-name> -file <file-name>\n\n"
-                    "   Example: ./tournament -file test.txt" << std::endl;
+        catch (const std::exception& ex) {
+            cout << "    -> Correctly rejected with message:\n";
+            cout << "       " << ex.what() << "\n\n";
+        }
     }
 
-    // Delete and free up memory.
-    delete commandPro;
-    commandPro = nullptr;
+    // ---------------------------------------------------------------------
+    // 2) VALID TOURNAMENT COMMAND: parsed & validated by CommandProcessor
+    // ---------------------------------------------------------------------
+    string validTournamentCmd = "tournament -M World.map Vernon.map -P Aggressive Benevolent Cheater Neutral -G 1 -D 10";
 
-    std::cout << "=== End of Tournament Mode Test Drivers ===" << std::endl;
+    cout << "[2] Testing CommandProcessor with a VALID tournament command\n";
+    cout << "    Command: " << validTournamentCmd << "\n\n";
+
+    try {
+        // This internally calls validateTournament() and prints a detailed log
+        cp.printTournamentCommandLog(validTournamentCmd);
+        cout << "    -> validateTournament() accepted the command.\n\n";
+    }
+    catch (const std::exception& ex) {
+        cout << "    -> UNEXPECTED ERROR for a supposedly valid command:\n";
+        cout << "       " << ex.what() << "\n\n";
+    }
+
+    // ---------------------------------------------------------------------
+    // 3) Run a full tournament via GameEngine::handleTournament()
+    // ---------------------------------------------------------------------
+    cout << "[3] Running full tournament via GameEngine::handleTournament()\n\n";
+
+    bool ok = engine.handleTournament(validTournamentCmd);
+
+    if (ok) {
+        cout << "  -> Tournament finished successfully.\n";
+    } else {
+        cout << "  -> Tournament failed to complete.\n";
+    }
+
+    cout << "\n=============================================\n";
+    cout << "      End of testTournament() demonstration\n";
+    cout << "=============================================\n\n";
 }

@@ -296,11 +296,10 @@ bool Player::issueOrder() {
 
         // Simple heuristic: dump the whole pool this pass.
         const int deployAmount = reinforcementPool;
+        reinforcementPool -= deployAmount;
         if (deployAmount <= 0) {
             return false;
         }
-
-        reinforcementPool = 0;
 
         Order* deployOrder = new DeployOrder(this, target, deployAmount);
         orders_->add(deployOrder);
