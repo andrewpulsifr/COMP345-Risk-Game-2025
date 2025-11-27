@@ -48,7 +48,8 @@ void testTournament();
  */
 int main(int argc, char* argv[]) {
     std::cout << "=== Starting Warzone Test Drivers ===\n\n";
-    
+
+    testPlayerStrategies(); // A3, Part 1: Test player strategies (Aggressive, Neutral, etc.)
     
     testLoadMaps(); // Test map loading, validation, and operations
     testPlayers(); // Test player functionality, territories, and hand management
@@ -59,7 +60,6 @@ int main(int argc, char* argv[]) {
     testCommandProcessor(argc, argv); // A2, Part 1: Test the command processor when reading from -file or -console.
     testStartupPhase(argc, argv); // A2, Part 2: Test the implementation of commands entered.
     testLoggingObserver(); // Test Part 5: Observer pattern for logging
-    testPlayerStrategies(); // A3, Part 1: Test player strategies (Aggressive, Neutral, etc.)
     testTournament(); // A3, Part 2: Test the game in Tournament Mode.
 
     std::cout << "\n";
